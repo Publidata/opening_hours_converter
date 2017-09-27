@@ -1,3 +1,0 @@
-class Month
-
-end
