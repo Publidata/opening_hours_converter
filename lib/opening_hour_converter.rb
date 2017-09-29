@@ -1,4 +1,6 @@
 require 'date'
+# require 'pry'
+require 'pry-nav'
 
 DAYS = {
   LUNDI: 0,
@@ -47,7 +49,6 @@ class Interval
       @end = MINUTES_MAX
     end
   end
-
 end
 
 class WideInterval
@@ -82,8 +83,10 @@ class WideInterval
       if !@end.nil?
         result += "-#{OSM_MONTHS[@end[:month]-1]}"
       end
+    when "always"
+      result = ""
     else
-      raise ArgumentError
+      result = ""
     end
     result
   end
@@ -96,7 +99,7 @@ class WideInterval
       if !@end.nil?
         result = "toutes les semaines du #{@start[:day]} #{IRL_MONTHS[@start[:month] - 1]}"
         if @start[:month] != @end[:month]
-          result += "#{@end[:day]} #{IRL_MONTHS[@end[:month] - 1]}"
+          result += " au #{@end[:day]} #{IRL_MONTHS[@end[:month] - 1]}"
         end
       else
         result = "le #{@start[:day]} #{IRL_MONTHS[@start[:month] - 1]}"
@@ -178,7 +181,7 @@ class WideInterval
   end
 
   def ends_month?
-    @type == "month" || @type == "always" || (@type == "day" && @end[:day] == MONTH_END_DAY[@end[:month] - 1])
+    @type == "month" || @type == "always" || (@type == "day" && !@end.nil? && @end[:day] == MONTH_END_DAY[@end[:month] - 1])
   end
 
   def contains?(o)
@@ -189,7 +192,7 @@ class WideInterval
       result = true
     elsif @type ==  "day"
       if o.type == "day"
-        if o.start[:month] > @start[:month] || (o.start[:month] == @start[:month] && @start[:day] >= @start[:day])
+        if o.start[:month] > @start[:month] || (o.start[:month] == @start[:month] && o.start[:day] >= @start[:day])
 
           if !o.end.nil?
             if !@end.nil? && (o.end[:month] < @end[:month] || (o.end[:month] == @end[:month] && o.end[:day] <= @end[:day]))
@@ -203,8 +206,8 @@ class WideInterval
 
         end
       elsif o.type == "month"
-        if o.start[:month] > this.start[:month] || (o.start[:month] == this.start[:month] && this.start[:day] == 1)
-          if !o.end.nil? && !@end.nil? && (o.end[:month] < this.end[:month] || (o.end[:month] == this.end[:month] && this.end[:day] == MONTH_END_DAY[@end.month-1]))
+        if o.start[:month] > @start[:month] || (o.start[:month] == @start[:month] && @start[:day] == 1)
+          if !o.end.nil? && !@end.nil? && (o.end[:month] < @end[:month] || (o.end[:month] == @end[:month] && @end[:day] == MONTH_END_DAY[@end.month-1]))
             result = true
           elsif o.end.nil? && (!@end.nil? && o.start[:month] < @end[:month])
             result = true
@@ -238,15 +241,15 @@ class WideInterval
               ((o.start[:day] >= 1 && o.end[:day] < MONTH_END_DAY[o.start[:month]-1]) ||
               (o.start[:day] > 1 && o.end[:day] <= MONTH_END_DAY[o.start[:month]-1]))
               result = true
-            else
-              if o.start[:month] >= @start[:month] && o.end[:month] <= @end[:month]
-                if (o.start[:month] > this.start[:month] && o.end[:month] < this.end[:month]) ||
-                  (o.start[:month] == this.start[:month] && o.end[:month] < this.end[:month] && start.day > 1) ||
-                  (o.start[:month] > this.start[:month] && o.end[:month] == this.end[:month] && o.end[:day] < MONTH_END_DAY[o.end[:month]-1]) ||
-                  (o.start[:day] >= 1 && o.end[:day] < MONTH_END_DAY[o.end[:month]-1]) ||
-                  (o.start[:day] > 1 && o.end[:day] <= MONTH_END_DAY[o.end[:month]-1])
-                  result = true
-                end
+            end
+          else
+            if o.start[:month] >= @start[:month] && o.end[:month] <= @end[:month]
+              if ((o.start[:month] > @start[:month] && o.end[:month] < @end[:month]) ||
+                (o.start[:month] == @start[:month] && o.end[:month] < @end[:month] && o.start.day > 1) ||
+                (o.start[:month] > @start[:month] && o.end[:month] == @end[:month] && o.end[:day] < MONTH_END_DAY[o.end[:month]-1]) ||
+                (o.start[:day] >= 1 && o.end[:day] < MONTH_END_DAY[o.end[:month]-1]) ||
+                (o.start[:day] > 1 && o.end[:day] <= MONTH_END_DAY[o.end[:month]-1]))
+                result = true
               end
             end
           end
@@ -256,7 +259,7 @@ class WideInterval
               result = true
             end
           else
-            if @start[:month] == o.start[:month] && o.start[:month] < @end[:month]
+            if o.start[:month] >= @start[:month] && o.start[:month] <= @end[:month]
               result = true
             end
           end
@@ -283,11 +286,10 @@ class WideInterval
           o.end[:month] == @end[:month] &&
           o.end[:day] == @end[:day]))) ||
         (o.type == "month" &&
-        o.start[:month] = @start[:month] &&
+        o.start[:month] == @start[:month] &&
         (o.is_full_month? && is_full_month?) ||
         (!o.end.nil? && !@end.nil? &&
           o.end[:month] == @end[:month] &&
-          o.end[:day] == @end[:day] &&
           o.ends_month? && ends_month?)))
     when "week"
       result = (o.type == "week" &&
@@ -301,40 +303,42 @@ class WideInterval
         (!o.end.nil? && @end.nil? && o.end[:month] == @start[:month] && o.ends_month?) ||
         (!o.end.nil? && !@end.nil? && o.end[:month] == @end[:month] && o.ends_month?)) ||
         (o.type == "month" &&
-        o.start[:month] == @start[:month] &&
+        (o.start[:month] == @start[:month] &&
         (o.end.nil? && @end.nil?) ||
-        (!o.end.nil? && !@end.nil? && o.end[:month] == @end[:month]))
+        (!o.end.nil? && !@end.nil? && o.end[:month] == @end[:month])))
     end
     result
   end
-
 end
 
 class Day
-  attr_accessor :intervals
+  attr_accessor :intervals, :next_interval
 
   def initialize
     @intervals = []
+    @next_interval = 0
   end
 
   def get_as_minute_array
-    minute_array = Array.new(MINUTES_MAX, false)
+    minute_array = Array.new(MINUTES_MAX + 1, false)
 
     @intervals.each do |interval|
-      start_minute = nil
-      end_minute = nil
+      if !interval.nil?
+        start_minute = nil
+        end_minute = nil
 
-      if interval.day_start == interval.day_end || interval.day_end == DAYS_MAX && interval.end == MINUTES_MAX
-        start_minute = interval.start
-        end_minute = interval.end
-      end
-
-      unless start_minute.nil? && end_minute.nil?
-        for minute in start_minute...end_minute
-          minute_array[minute] = true
+        if interval.day_start == interval.day_end || interval.day_end == DAYS_MAX && interval.end == MINUTES_MAX
+          start_minute = interval.start
+          end_minute = interval.end
         end
-      else
-        raise "Invalid interval"
+
+        unless start_minute.nil? && end_minute.nil?
+          for minute in start_minute..end_minute
+            minute_array[minute] = true
+          end
+        else
+          raise "Invalid interval #{interval.inspect}"
+        end
       end
     end
 
@@ -362,6 +366,7 @@ class Day
             minute_start = i
           elsif !minute && minute_start >= 0
             intervals << Interval.new(0, minute_start, 0, i - 1)
+            minute_start = -1
           end
         end
       end
@@ -372,7 +377,9 @@ class Day
   end
 
   def add_interval(interval)
-    @intervals.push(interval)
+    @intervals[@next_interval] = interval
+    @next_interval += 1
+    return @next_interval - 1
   end
 
   def edit_interval(id, interval)
@@ -383,11 +390,15 @@ class Day
     @intervals[id] = nil
   end
 
-  def copy_interval(intervals)
+  def clear_intervals
+    @intervals = []
+  end
+
+  def copy_intervals(intervals)
     @intervals = []
     intervals.each do |interval|
-      if !interval.nil? && interval.start_day == 0 && interval.end_day == 0
-        @interval << interval.dup
+      if !interval.nil? && interval.day_start == 0 && interval.day_end == 0
+        @intervals << interval.dup
       end
     end
     @intervals = get_intervals(true)
@@ -400,27 +411,29 @@ end
 
 
 class Week
-  attr_accessor :intervals
+  attr_accessor :intervals, :next_interval
 
   def initialize
     @intervals = []
+    @next_interval = 0
   end
 
   def get_as_minute_array
-    minute_array = Array.new(DAYS_MAX, Array.new(MINUTES_MAX, false))
+    minute_array = Array.new(DAYS_MAX + 1) { Array.new(MINUTES_MAX + 1, false) }
 
     @intervals.each do |interval|
-
-      for day in interval.day_start...interval.day_end
-        start_minute = (day == interval.day_start) ? interval.min_start : 0;
-        end_minute = (day == interval.day_end) ? interval.min_end : MINUTES_MAX;
-        for minute in start_minute...end_minute
-          minute_array[day][minute] = true
+      if !interval.nil?
+        for day in interval.day_start..interval.day_end
+          start_minute = (day == interval.day_start) ? interval.start : 0
+          end_minute = (day == interval.day_end) ? interval.end : MINUTES_MAX
+          if start_minute && end_minute
+            for minute in start_minute..end_minute
+              minute_array[day][minute] = true
+            end
+          end
         end
       end
-
     end
-
     minute_array
   end
 
@@ -431,6 +444,7 @@ class Week
       day_start = -1
       minute_start = -1
       minute_end = nil
+
 
       minute_array.each_with_index do |day, day_index|
         day.each_with_index do |minute, minute_index|
@@ -466,11 +480,69 @@ class Week
   end
 
   def get_intervals_diff(week)
-    # TODO
+    self_minutes_array = get_as_minute_array
+    other_minutes_array = get_as_minute_array
+
+    intervals = { open: [], closed: [] }
+    day_start = -1
+    min_start = -1
+
+
+    for d in 0...DAYS_MAX do
+      diff_day = false
+      m = 0
+      intervals_length = intervals[:open].length
+      while m <= MINUTES_MAX
+        if diff_day
+          if d == 0 && m == 0
+            if self_minutes_array[d][m]
+              day_start = d
+              min_start = m
+            end
+          elsif d == DAYS_MAX && m == MINUTES_MAX
+            if day_start >= 0 && self_minutes_array[d][m]
+              intervals[:open] << Interval.new(day_start, min_start, d, m)
+            end
+          else
+            if self_minutes_array[d][m] && day_start < 0
+              day_start = d
+              min_start = m
+
+            elsif !self_minutes_array[d][m] && day_start >= 0
+              if m == 0
+                intervals.open << Interval.new(day_start, min_start, d - 1, MINUTES_MAX)
+              else
+                intervals.open << Interval.new(day_start, min_start, d, m - 1)
+              end
+              day_start = -1
+              min_start = -1
+            end
+          end
+          m += 1
+        else
+          diff_day = self_minutes_array[d][m] ? !other_minutes_array[d][m] : other_minutes_array[d][m]
+
+          if diff_day
+            m = 0
+          else
+            m += 1
+          end
+        end
+        if !diff_day && day_start > -1
+          binding.pry
+          intervals[:open] << Interval.new(day_start, min_start, d-1, MINUTES_MAX)
+          day_start = -1
+          min_start = -1
+        end
+      end
+    end
+    return intervals
   end
 
   def add_interval(interval)
-    @intervals.push(interval)
+    @intervals[@next_interval] = interval
+    @next_interval += 1
+    return @next_interval - 1
   end
 
   def edit_interval(id, interval)
@@ -503,11 +575,15 @@ class Week
     end
   end
 
-  def copy_interval(intervals)
+  def clear_intervals
+    @intervals = []
+  end
+
+  def copy_intervals(intervals)
     @intervals = []
     intervals.each do |interval|
       unless interval.nil?
-        @interval << interval.dup
+        @intervals << interval.dup
       end
     end
   end
@@ -558,12 +634,12 @@ class DateRange
   def has_same_typical?(date_range)
     defines_typical_day? == date_range.defines_typical_day? && @typical.same_as?(date_range.typical)
   end
+
   def is_general_for?(date_range)
     defines_typical_day? == date_range.defines_typical_day? && @wide_interval.contains?(date_range.wide_interval)
   end
 end
 
-# DONE
 class OpeningHoursTime
   attr_accessor :start, :end
 
@@ -599,18 +675,97 @@ class OpeningHoursDate
     if wide.nil? || wide_type.nil? || weekdays.nil?
       raise ArgumentError
     end
+
     @wide = wide
     @wide_type = wide_type
     @weekdays = weekdays.sort
+    @weekdays_over = []
   end
 
   def get_weekdays
 
+    result = ""
+    wd = @weekdays.concat(@weekdays_over).sort
+
+    if wd.length > 0 && wd.include?(6) && wd.include?(0) && (wd.include?(5) || wd.include?(1))
+      start_we = 6
+      i = wd.length - 2
+      stop_looking = false
+
+      while !stop_looking && i >= 0
+        if wd[i] == wd[i+1] - 1
+          start_we = wd[i]
+          i -= 1
+        else
+          stop_looking = true
+        end
+      end
+
+      i = 1
+      stop_looking = false
+      end_we = 0
+
+      while !stop_looking && i < wd.length
+        if wd[i-1] == wd[i] - 1
+          end_we = wd[i]
+          i += 1
+        else
+          stop_looking = true
+        end
+      end
+
+      length = 7 - start_we + end_we + 1
+
+      if length >= 3 && start_we > end_we
+        if result.length > 0
+          result += ","
+        end
+        result += "#{OSM_DAYS[start_we]}-#{OSM_DAYS[end_we]}"
+
+        j=0
+        while j < wd.length
+          if wd[j] <= end_we || wd[j] >= start_we
+            wd.slice!(j, 1)
+          else
+            j+=1
+          end
+        end
+      end
+    end
+
+    if wd.length > 1 || (wd.length == 1 && wd[0] != -1)
+      result += result.length > 0 ? ",#{OSM_DAYS[wd[0]]}" : OSM_DAYS[wd[0]]
+      first_in_row = wd[0]
+      for i in 1...wd.length
+        if wd[i-1] != wd[i] - 1
+          if first_in_row != wd[i-1]
+            if wd[i-1] - first_in_row == 1
+              result += ",#{OSM_DAYS[wd[i-1]]}"
+            else
+              result += "-#{OSM_DAYS[wd[i-1]]}"
+            end
+          end
+          result += ",#{OSM_DAYS[wd[i]]}"
+          first_in_row = wd[i]
+        elsif i == wd.length - 1
+          if wd[i] - first_in_row == 1
+            result += ",#{OSM_DAYS[wd[i]]}"
+          else
+            result += "-#{OSM_DAYS[wd[i]]}"
+          end
+        end
+      end
+    end
+
+    if result == "Mo-Su"
+      result = ""
+    end
+    return result
   end
 
   def add_weekday(weekday)
-    unless @weekdays.include?(weekday) && @weekdays_over.include?(weekday)
-      @weekdays << wd
+    if !@weekdays.include?(weekday) && !@weekdays_over.include?(weekday)
+      @weekdays << weekday
       @weekdays.sort!
     end
   end
@@ -627,8 +782,6 @@ class OpeningHoursDate
   end
 
   def same_weekdays(weekdays)
-    puts self
-    puts weekdays
     weekdays.equals(@weekdays)
   end
 
@@ -658,6 +811,13 @@ class OpeningHoursRule
       end
     end
 
+    if @date.length > 0
+      wd = @date[0].get_weekdays
+      if wd.length > 0
+        result += " #{wd}"
+      end
+    end
+
     if @time.length > 0
       result += " "
       @time.each_with_index do |t, i|
@@ -673,7 +833,7 @@ class OpeningHoursRule
       result = "24/7"
     end
 
-    result
+    result.strip
   end
 
   def same_time?(o)
@@ -722,7 +882,7 @@ class OpeningHoursRule
   end
 
   def add_time(time)
-    if (@time.length > 0 || @time.first.get != "off") && !@time.include?(time)
+    if (@time.length == 0 || @time[0].get != "off") && !@time.include?(time)
       @time << time
     else
       raise "This time can't be added to this rule"
@@ -753,8 +913,9 @@ class OpeningHoursBuilder
               range_general_for = range_general_id
             end
           end
-          range_general_id-=1
+          range_general_id -= 1
         end
+
         if date_range_index == 0 || range_general.nil?
           if date_range.defines_typical_week?
             if !range_general_for.nil?
@@ -768,20 +929,16 @@ class OpeningHoursBuilder
         end
 
         oh_rule_index = 0
-        oh_rule_length = oh_rules.length
 
-        while oh_rule_index < oh_rule_length do
+        while oh_rule_index < oh_rules.length
           oh_rule = oh_rules[oh_rule_index]
           oh_rule_added = false
           rule_index = 0
 
           while !oh_rule_added && rule_index < rules.length
-
             if rules[rule_index].same_time?(oh_rule)
               begin
-                puts oh_rule.date.length
                 for date_id in 0...oh_rule.date.length
-                  # puts oh_rule.date[date_id]
                   rules[rule_index].add_date(oh_rule.date[date_id])
                 end
                 oh_rule_added = true
@@ -853,24 +1010,317 @@ class OpeningHoursBuilder
 
     intervals.each do |interval|
       if !interval.nil?
-        rule.add_time(OpeningHoursTime(interval.start, interval.end))
+        rule.add_time(OpeningHoursTime.new(interval.start, interval.end))
       end
     end
 
     return [ rule ]
+  end
+
+  def build_week(date_range)
+    result = []
+    intervals = date_range.typical.get_intervals(true)
+    time_intervals = create_time_intervals(date_range.wide_interval.get_time_selector, date_range.wide_interval.type, intervals)
+
+    monday0 = time_intervals[0]
+    sunday24 = time_intervals[1]
+    days = time_intervals[2]
+
+    days = night_monday_sunday(days, monday0, sunday24)
+
+    days_status = Array.new(OSM_DAYS.length, 0)
+
+    days.each_with_index do |day, index|
+      if day.is_off? && days_status[index] == 0
+        days_status[index] = 8
+      elsif day.is_off? && days_status[index] < 0 && days_status[index] > -8
+        days_status[index] = -8
+        merged = false
+        md_off = 0
+        while !merged && md_off < index
+          if days[md_off].is_off?
+            days[md_off].add_weekday(i)
+            merged = true
+          else
+            md_off += 1
+          end
+          if !merged
+            result << days[index]
+          end
+        end
+      elsif days_status[index] <= 0 && days_status[index] > -8
+        days_status[index] = index + 1
+        last_same_day = index
+        same_day_count = 1
+
+        for j in (index+1)...days.length do
+          if day.same_time?(days[j])
+            days_status[j] = index + 1
+            day.add_weekday(j)
+            last_same_day = j
+            same_day_count += 1
+          end
+        end
+        if same_day_count == 1
+          result << day
+        elsif same_day_count == 2
+          day.add_weekday(last_same_day)
+          result << day
+        elsif same_day_count > 2
+          for j in (index+1)...last_same_day do
+            if days_status[j] == 0
+              days_status[j] = -index -1
+              day.add_overwritten_weekday(j)
+            end
+          end
+          day.add_weekday(last_same_day)
+          result << day
+        end
+      end
+    end
+
+    result = merge_days(result)
+    return result
+  end
+
+  def build_week_diff(date_range, general_date_range)
+    intervals = date_range.typical.get_intervals_diff(general_date_range.typical)
+
+    time_intervals = create_time_intervals(
+      date_range.wide_interval.get_time_selector,
+      date_range.wide_interval.type,
+      intervals[:open])
+    monday0 = time_intervals[0]
+    sunday24 = time_intervals[1]
+    days = time_intervals[2]
+
+    intervals.closed.each do |interval|
+      for i in interval.start_day...interval.end_day do
+        days[i].add_time(OpeningHoursTime.new)
+      end
+    end
+
+    days = night_monday_sunday(days, monday0, sunday24)
+
+    days_status = Array.new(OSM_DAYS.length, 0)
+    result = []
+
+    days.each_with_index do |day, index|
+      if day.is_off? && day.time.length == 1
+        days_status[index] = -8
+        merged = false
+        md_off = 0
+
+        while !merged && md_off < index
+          if days[md_off].is_off? && days[md_off].time.length == 1
+            days[md_off].add_weekday(index)
+            merged = true
+          else
+            md_off += 1
+          end
+        end
+
+        if !merged
+          result << day
+        end
+      elsif day.is_off? && day.time.length == 0
+        days_status[index] = 8
+      elsif days_status[index] <= 0 && days_status[index] > -8
+        days_status[index] = index + 1
+        same_day_count = 1
+        last_same_day = 1
+        result << day
+
+        for j in (index + 1)...days.length do
+          if day.same_time?(days[j])
+            days_status[j] = index + 1
+            day.add_weekday(j)
+            last_same_day = j
+            same_day_count += 1
+          end
+        end
+
+        if same_day_count == 1
+          result << day
+        elsif same_day_count == 2
+          day.add_weekday(last_same_day)
+          result << day
+        elsif same_day_count > 2
+          for j in (index + 1)...last_same_day do
+            if days_status[j] == 0
+              days_status[j] = -i - 1
+              if days[j].time.length > 0
+                day.add_overwritten_weekday(j)
+              end
+            end
+          end
+          day.add_weekday(last_same_day)
+          result << day
+        end
+
+      end
+    end
+    result = merge_days(result)
+    return result
+  end
+
+  def merge_days(rules)
+    return rules if rules.length == 0
+    result = []
+    result << rules[0]
+    dm = 0
+
+    for d in 1...rules.length do
+      date_merged = false
+      dm = 0
+      while !date_merged && dm < d
+        if rules[dm].same_time?(rules[d])
+          wds = rules[d].date[0].weekdays
+          wds.each do |wd|
+            rules[dm].add_weekday(wd)
+          end
+          date_merged = true
+        end
+        dm += 1
+      end
+      if !date_merged
+        result << rules[d]
+      end
+    end
+
+    return result
+  end
+
+  def create_time_intervals(time_selector, type, intervals)
+    monday0 = -1
+    sunday24 = -1
+
+    days = []
+    for i in 0...7 do
+      days << OpeningHoursRule.new
+      days[i].add_date(OpeningHoursDate.new(time_selector, type, [ i ]))
+    end
+
+    intervals.each do |interval|
+      if !interval.nil?
+        if interval.day_start == DAYS_MAX && interval.day_end == DAYS_MAX && interval.end == MINUTES_MAX
+          sunday24 = interval.start
+        end
+        if interval.day_start == 0 && interval.day_end == 0 && interval.end == 0
+          monday0 = interval.end
+        end
+        begin
+
+          if interval.day_start == interval.day_end
+            days[interval.day_start].add_time(OpeningHoursTime.new(interval.start, interval.end))
+          elsif interval.day_end - interval.day_start == 1
+            if interval.start > interval.end
+              days[interval.day_start].add_time(OpeningHoursTime.new(interval.start, interval.end))
+            else
+              days[interval.day_start].add_time(OpeningHoursTime.new(interval.start, MINUTES_MAX))
+              days[interval.day_end].add_time(OpeningHoursTime.new(0, interval.end))
+            end
+          else
+            for j in interval.start...interval.end do
+              if j == interval.day_start
+
+                days[j].add_time(OpeningHoursTime.new(interval.start, MINUTES_MAX))
+              elsif j == interval.day_end
+                days[j].add_time(OpeningHoursTime.new(0, interval.end))
+              else
+                days[j].add_time(OpeningHoursTime.new(0, MINUTES_MAX))
+              end
+            end
+          end
+        rescue Exception => e
+          puts e
+        end
+      end
+    end
+
+    return [ monday0, sunday24, days ]
+  end
+
+  def night_monday_sunday(days, monday0, sunday24)
+    if monday0 >= 0 && sunday24 >= 0 && monday0 < sunday24
+      days[0].time.sort! { |a, b| a.start <=> b.start }
+      days[6].time.sort! { |a, b| a.start <=> b.start }
+
+      days[6].time[days[6].time.length - 1] = OpeningHoursTime.new(sunday24, monday0)
+      days[0].time.shift
+    end
+    return days
   end
 end
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def test
+
   interval1 = WideInterval.new.day(1, 1)
-  interval2 = WideInterval.new.day(2, 2)
+  interval2 = WideInterval.new.week(1, 1)
+
 
   date_range1 = DateRange.new(interval1)
-  date_range2 = DateRange.new(interval2)
-  OpeningHoursBuilder.new.build([date_range1, date_range2])
+  # date_range2 = DateRange.new(interval2)
+  date_range1.typical.add_interval(Interval.new(0, 0, 0, MINUTES_MAX))
+
+  OpeningHoursBuilder.new.build([date_range1])
+
+
 end
 
 class Month
@@ -917,6 +1367,626 @@ class Month
     @intervals[id] = nil
   end
 end
+  date_ranges = [DateRange.new(WideInterval.new.always)]
+  date_ranges[0].typical.add_interval(Interval.new(0, 23*60, 0, 24*60))
+  date_ranges[0].typical.add_interval(Interval.new(1, 0, 1, 3*60))
+  date_ranges[0].typical.add_interval(Interval.new(1, 23*60, 1, 24*60))
+  date_ranges[0].typical.add_interval(Interval.new(2, 0, 2, 3*60))
+  puts OpeningHoursBuilder.new.build(date_ranges).inspect
+
+#     QUnit.module("Model > OpeningHoursBuilder");
+#     QUnit.test("Build void", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       assert.equal(builder.build([]), "");
+#     });
+#     QUnit.test("Build Mo 08:00-10:00", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+      # var dateranges = [ new DateRange(new WideInterval().always()) ];
+
+      # dateranges[0].getTypical().addInterval(new Interval(0, 0, 8*60, 10*60));
+
+#       assert.equal(builder.build(dateranges), "Mo 08:00-10:00");
+#     });
+#     QUnit.test("Build Mo,We 08:00-10:00", function(assert) {
+      # var builder = new OpeningHoursBuilder();
+      # var dateranges = [ new DateRange(new WideInterval().always()) ];
+
+      # dateranges[0].getTypical().addInterval(new Interval(0, 0, 8*60, 10*60));
+      # dateranges[0].getTypical().addInterval(new Interval(2, 2, 8*60, 10*60));
+
+#       assert.equal(builder.build(dateranges), "Mo,We 08:00-10:00");
+#     });
+#     QUnit.test("Build Mo-We 08:00-10:00", function(assert) {
+      # var builder = new OpeningHoursBuilder();
+      # var dateranges = [ new DateRange(new WideInterval().always()) ];
+
+      # dateranges[0].getTypical().addInterval(new Interval(0, 0, 8*60, 10*60));
+      # dateranges[0].getTypical().addInterval(new Interval(1, 1, 8*60, 10*60));
+      # dateranges[0].getTypical().addInterval(new Interval(2, 2, 8*60, 10*60));
+
+      # assert.equal(builder.build(dateranges), "Mo-We 08:00-10:00");
+#     });
+#     QUnit.test("Build Mo-We 08:00-10:00; Sa,Su 07:00-13:00", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+      # var dateranges = [ new DateRange(new WideInterval().always()) ];
+
+      # dateranges[0].getTypical().addInterval(new Interval(0, 0, 8*60, 10*60));
+      # dateranges[0].getTypical().addInterval(new Interval(1, 1, 8*60, 10*60));
+      # dateranges[0].getTypical().addInterval(new Interval(2, 2, 8*60, 10*60));
+      # dateranges[0].getTypical().addInterval(new Interval(5, 5, 7*60, 13*60));
+      # dateranges[0].getTypical().addInterval(new Interval(6, 6, 7*60, 13*60));
+
+      # assert.equal(builder.build(dateranges), "Mo-We 08:00-10:00; Sa,Su 07:00-13:00");
+#     });
+#     QUnit.test("Build Mo,Tu 23:00-03:00 continuous", function(assert) {
+      # var builder = new OpeningHoursBuilder();
+      # var dateranges = [ new DateRange(new WideInterval().always()) ];
+
+      # dateranges[0].getTypical().addInterval(new Interval(0, 1, 23*60, 3*60));
+      # dateranges[0].getTypical().addInterval(new Interval(1, 2, 23*60, 3*60));
+
+      # assert.equal(builder.build(dateranges), "Mo,Tu 23:00-03:00");
+#     });
+#     QUnit.test("Build Mo,Tu 23:00-03:00 following", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [ new DateRange(new WideInterval().always()) ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 23*60, 24*60));
+#       dateranges[0].getTypical().addInterval(new Interval(1, 1, 0, 3*60));
+#       dateranges[0].getTypical().addInterval(new Interval(1, 1, 23*60, 24*60));
+#       dateranges[0].getTypical().addInterval(new Interval(2, 2, 0, 3*60));
+
+#       assert.equal(builder.build(dateranges), "Mo,Tu 23:00-03:00");
+#     });
+#     /*QUnit.test("Build Mo,Su 23:00-03:00 continuous", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [ new DateRange(new WideInterval().always()) ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 1, 23*60, 3*60));
+#       dateranges[0].getTypical().addInterval(new Interval(6, 0, 23*60, 3*60));
+
+#       assert.equal(builder.build(dateranges), "Mo,Su 23:00-03:00");
+#     });*/
+#     QUnit.test("Build Mo,Su 23:00-03:00 following", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [ new DateRange(new WideInterval().always()) ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 23*60, 24*60));
+#       dateranges[0].getTypical().addInterval(new Interval(1, 1, 0, 3*60));
+#       dateranges[0].getTypical().addInterval(new Interval(6, 6, 23*60, 24*60));
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 0, 3*60));
+
+#       assert.equal(builder.build(dateranges), "Mo,Su 23:00-03:00");
+#     });
+#     QUnit.test("Build Mo 08:00-10:00 merging", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [ new DateRange(new WideInterval().always()) ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 8*60, 9*60));
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 9*60, 10*60));
+
+#       assert.equal(builder.build(dateranges), "Mo 08:00-10:00");
+#     });
+#     QUnit.test("Build Mo 08:00-24:00; Tu 00:00-09:00", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [ new DateRange(new WideInterval().always()) ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 1, 8*60, 9*60));
+
+#       assert.equal(builder.build(dateranges), "Mo 08:00-24:00; Tu 00:00-09:00");
+#     });
+#     QUnit.test("Build 08:00-18:00", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [ new DateRange(new WideInterval().always()) ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 8*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(1, 1, 8*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(2, 2, 8*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(3, 3, 8*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(4, 4, 8*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(5, 5, 8*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(6, 6, 8*60, 18*60));
+
+#       assert.equal(builder.build(dateranges), "08:00-18:00");
+#     });
+#     QUnit.test("Build 24/7 continuous", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [ new DateRange(new WideInterval().always()) ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 6, 0, 24*60));
+
+#       assert.equal(builder.build(dateranges), "24/7");
+#     });
+#     QUnit.test("Build 24/7 following", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [ new DateRange(new WideInterval().always()) ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 0, 24*60));
+#       dateranges[0].getTypical().addInterval(new Interval(1, 1, 0, 24*60));
+#       dateranges[0].getTypical().addInterval(new Interval(2, 2, 0, 24*60));
+#       dateranges[0].getTypical().addInterval(new Interval(3, 3, 0, 24*60));
+#       dateranges[0].getTypical().addInterval(new Interval(4, 4, 0, 24*60));
+#       dateranges[0].getTypical().addInterval(new Interval(5, 5, 0, 24*60));
+#       dateranges[0].getTypical().addInterval(new Interval(6, 6, 0, 24*60));
+
+#       assert.equal(builder.build(dateranges), "24/7");
+#     });
+#     QUnit.test("Build 24/7; Jun 08:00-18:00", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [ new DateRange(new WideInterval().always()), new DateRange(new WideInterval().month(6)) ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 6, 0, 24*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 0, 8*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(1, 1, 8*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(2, 2, 8*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(3, 3, 8*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(4, 4, 8*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(5, 5, 8*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(6, 6, 8*60, 18*60));
+
+#       assert.equal(builder.build(dateranges), "24/7; Jun 08:00-18:00");
+#     });
+#     QUnit.test("Build 24/7; Jun 08:00-18:00; Jun We off", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [ new DateRange(new WideInterval().always()), new DateRange(new WideInterval().month(6)) ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 6, 0, 24*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 0, 8*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(1, 1, 8*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(3, 3, 8*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(4, 4, 8*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(5, 5, 8*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(6, 6, 8*60, 18*60));
+
+#       assert.equal(builder.build(dateranges), "24/7; Jun 08:00-18:00; Jun We off");
+#     });
+#     QUnit.test("Build 08:00-18:00; We off", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [ new DateRange(new WideInterval().always()) ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 8*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(1, 1, 8*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(3, 3, 8*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(4, 4, 8*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(5, 5, 8*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(6, 6, 8*60, 18*60));
+
+#       assert.equal(builder.build(dateranges), "08:00-18:00; We off");
+#     });
+#     QUnit.test("Build 24/7; Jun Mo-We 08:00-18:00; Jun Th-Su off", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [ new DateRange(new WideInterval().always()), new DateRange(new WideInterval().month(6)) ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 6, 0, 24*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 0, 8*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(1, 1, 8*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(2, 2, 8*60, 18*60));
+
+#       assert.equal(builder.build(dateranges), "24/7; Jun Mo-We 08:00-18:00; Jun Th-Su off");
+#     });
+#     QUnit.test("Build 24/7; Jun Mo-We 08:00-18:00", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [ new DateRange(new WideInterval().always()), new DateRange(new WideInterval().month(6)) ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 6, 0, 24*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 0, 8*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(1, 1, 8*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(2, 2, 8*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(3, 6, 0, 24*60));
+
+#       assert.equal(builder.build(dateranges), "24/7; Jun Mo-We 08:00-18:00");
+#     });
+#     QUnit.test("Build 24/7; Jun-Aug Mo-We 08:00-18:00; Jun-Aug Th-Su off", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [ new DateRange(new WideInterval().always()), new DateRange(new WideInterval().month(6, 8)) ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 6, 0, 24*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 0, 8*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(1, 1, 8*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(2, 2, 8*60, 18*60));
+
+#       assert.equal(builder.build(dateranges), "24/7; Jun-Aug Mo-We 08:00-18:00; Jun-Aug Th-Su off");
+#     });
+#     QUnit.test("Build 24/7; Jun Mo 08:00-18:00; Jun Tu-Su off; PH off", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(new WideInterval().always()),
+#         new DateRange(new WideInterval().month(6)),
+#         new DateRange(new WideInterval().holiday("PH"))
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 6, 0, 24*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 0, 8*60, 18*60));
+
+#       assert.equal(builder.build(dateranges), "24/7; Jun Mo 08:00-18:00; Jun Tu-Su off; PH off");
+#     });
+#     QUnit.test("Build 24/7; Jun Mo 08:00-18:00; Jun Tu-Su off; PH off; SH Tu 09:00-17:00; SH Mo,We-Su off", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(new WideInterval().always()),
+#         new DateRange(new WideInterval().month(6)),
+#         new DateRange(new WideInterval().holiday("PH")),
+#         new DateRange(new WideInterval().holiday("SH"))
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 6, 0, 24*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 0, 8*60, 18*60));
+#       dateranges[3].getTypical().addInterval(new Interval(1, 1, 9*60, 17*60));
+
+#       assert.equal(builder.build(dateranges), "24/7; Jun Mo 08:00-18:00; Jun Tu-Su off; PH off; SH We-Mo off; SH Tu 09:00-17:00");
+#     });
+#     QUnit.test("Build Mo 08:00-18:00 grouping", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(new WideInterval().always()),
+#         new DateRange(new WideInterval().month(6)),
+#         new DateRange(new WideInterval().holiday("SH"))
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 8*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 0, 8*60, 18*60));
+#       dateranges[2].getTypical().addInterval(new Interval(0, 0, 8*60, 18*60));
+
+#       assert.equal(builder.build(dateranges), "Mo 08:00-18:00");
+#     });
+#     QUnit.test("Build 24/7; week 01-15 We 05:00-07:00; PH off", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(new WideInterval().always()),
+#         new DateRange(new WideInterval().week(1, 15)),
+#         new DateRange(new WideInterval().holiday("PH"))
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 6, 0, 24*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 1, 0, 24*60));
+#       dateranges[1].getTypical().addInterval(new Interval(2, 2, 5*60, 7*60));
+#       dateranges[1].getTypical().addInterval(new Interval(3, 6, 0, 24*60));
+
+#       assert.equal(builder.build(dateranges), "24/7; week 01-15 We 05:00-07:00; PH off");
+#     });
+#     QUnit.test("Build 24/7; week 01-15 Fr-We 05:00-07:00; PH off", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(new WideInterval().always()),
+#         new DateRange(new WideInterval().week(1, 15)),
+#         new DateRange(new WideInterval().holiday("PH"))
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 6, 0, 24*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 0, 5*60, 7*60));
+#       dateranges[1].getTypical().addInterval(new Interval(1, 1, 5*60, 7*60));
+#       dateranges[1].getTypical().addInterval(new Interval(2, 2, 5*60, 7*60));
+#       dateranges[1].getTypical().addInterval(new Interval(3, 3, 0, 24*60));
+#       dateranges[1].getTypical().addInterval(new Interval(4, 4, 5*60, 7*60));
+#       dateranges[1].getTypical().addInterval(new Interval(5, 5, 5*60, 7*60));
+#       dateranges[1].getTypical().addInterval(new Interval(6, 6, 5*60, 7*60));
+
+#       assert.equal(builder.build(dateranges), "24/7; week 01-15 Fr-We 05:00-07:00; PH off");
+#     });
+#     QUnit.test("Build 05:00-07:00; Th,Fr 00:00-24:00", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(new WideInterval().always())
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 5*60, 7*60));
+#       dateranges[0].getTypical().addInterval(new Interval(1, 1, 5*60, 7*60));
+#       dateranges[0].getTypical().addInterval(new Interval(2, 2, 5*60, 7*60));
+#       dateranges[0].getTypical().addInterval(new Interval(3, 3, 0, 24*60));
+#       dateranges[0].getTypical().addInterval(new Interval(4, 4, 0, 24*60));
+#       dateranges[0].getTypical().addInterval(new Interval(5, 5, 5*60, 7*60));
+#       dateranges[0].getTypical().addInterval(new Interval(6, 6, 5*60, 7*60));
+
+#       assert.equal(builder.build(dateranges), "05:00-07:00; Th,Fr 00:00-24:00");
+#     });
+#     QUnit.test("Build Mo-Fr 01:00-02:00; We off; Jun We 02:00-03:00", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(new WideInterval().always()),
+#         new DateRange(new WideInterval().month(6))
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 1*60, 2*60));
+#       dateranges[0].getTypical().addInterval(new Interval(1, 1, 1*60, 2*60));
+#       dateranges[0].getTypical().addInterval(new Interval(3, 3, 1*60, 2*60));
+#       dateranges[0].getTypical().addInterval(new Interval(4, 4, 1*60, 2*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 0, 1*60, 2*60));
+#       dateranges[1].getTypical().addInterval(new Interval(1, 1, 1*60, 2*60));
+#       dateranges[1].getTypical().addInterval(new Interval(2, 2, 2*60, 3*60));
+#       dateranges[1].getTypical().addInterval(new Interval(3, 3, 1*60, 2*60));
+#       dateranges[1].getTypical().addInterval(new Interval(4, 4, 1*60, 2*60));
+
+#       assert.equal(builder.build(dateranges), "Mo-Fr 01:00-02:00; We off; Jun We 02:00-03:00");
+#     });
+#     QUnit.test("Build 01:00-02:00; Jun Th 02:00-03:00", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(new WideInterval().always()),
+#         new DateRange(new WideInterval().month(6))
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 1*60, 2*60));
+#       dateranges[0].getTypical().addInterval(new Interval(1, 1, 1*60, 2*60));
+#       dateranges[0].getTypical().addInterval(new Interval(2, 2, 1*60, 2*60));
+#       dateranges[0].getTypical().addInterval(new Interval(3, 3, 1*60, 2*60));
+#       dateranges[0].getTypical().addInterval(new Interval(4, 4, 1*60, 2*60));
+#       dateranges[0].getTypical().addInterval(new Interval(5, 5, 1*60, 2*60));
+#       dateranges[0].getTypical().addInterval(new Interval(6, 6, 1*60, 2*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 0, 1*60, 2*60));
+#       dateranges[1].getTypical().addInterval(new Interval(1, 1, 1*60, 2*60));
+#       dateranges[1].getTypical().addInterval(new Interval(2, 2, 1*60, 2*60));
+#       dateranges[1].getTypical().addInterval(new Interval(3, 3, 2*60, 3*60));
+#       dateranges[1].getTypical().addInterval(new Interval(4, 4, 1*60, 2*60));
+#       dateranges[1].getTypical().addInterval(new Interval(5, 5, 1*60, 2*60));
+#       dateranges[1].getTypical().addInterval(new Interval(6, 6, 1*60, 2*60));
+
+#       assert.equal(builder.build(dateranges), "01:00-02:00; Jun Th 02:00-03:00");
+#     });
+#     QUnit.test("Build 24/7; week 01 Su 01:00-08:00", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(new WideInterval().always()),
+#         new DateRange(new WideInterval().week(1))
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 6, 0*60, 24*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 5, 0*60, 24*60));
+#       dateranges[1].getTypical().addInterval(new Interval(6, 6, 1*60, 8*60));
+
+#       assert.equal(builder.build(dateranges), "24/7; week 01 Su 01:00-08:00");
+#     });
+#     QUnit.test("Build 24/7; week 01 Su 01:00-08:00", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(new WideInterval().always()),
+#         new DateRange(new WideInterval().week(1))
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 6, 0*60, 24*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 5, 0*60, 24*60));
+#       dateranges[1].getTypical().addInterval(new Interval(6, 6, 1*60, 8*60));
+
+#       assert.equal(builder.build(dateranges), "24/7; week 01 Su 01:00-08:00");
+#     });
+#     QUnit.test("Build Tu,Su 23:00-01:00", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(new WideInterval().always())
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(1, 2, 23*60, 1*60));
+#       dateranges[0].getTypical().addInterval(new Interval(6, 6, 23*60, 24*60));
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 0*60, 1*60));
+
+#       assert.equal(builder.build(dateranges), "Tu,Su 23:00-01:00");
+#     });
+#     QUnit.test("Build Tu,Su 23:00-01:00; week 01 Tu,We off", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(new WideInterval().always()),
+#         new DateRange(new WideInterval().week(1))
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(1, 2, 23*60, 1*60));
+#       dateranges[0].getTypical().addInterval(new Interval(6, 6, 23*60, 24*60));
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 0*60, 1*60));
+#       dateranges[1].getTypical().addInterval(new Interval(6, 6, 23*60, 24*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 0, 0*60, 1*60));
+
+#       assert.equal(builder.build(dateranges), "Tu,Su 23:00-01:00; week 01 Tu,We off");
+#     });
+#     QUnit.test("Build 08:00-18:00; Aug off", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(new WideInterval().always()),
+#         new DateRange(new WideInterval().month(8))
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 8*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(1, 1, 8*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(2, 2, 8*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(3, 3, 8*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(4, 4, 8*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(5, 5, 8*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(6, 6, 8*60, 18*60));
+
+#       assert.equal(builder.build(dateranges), "08:00-18:00; Aug off");
+#     });
+#     QUnit.test("Build Mo 10:00; PH 11:00", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(new WideInterval().always()),
+#         new DateRange(new WideInterval().holiday("PH"))
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 10*60, 10*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 0, 11*60, 11*60));
+
+#       assert.equal(builder.build(dateranges), "Mo 10:00; PH 11:00");
+#     });
+#     QUnit.test("Build Mo-Fr 00:00-24:00; Aug-Sep Sa 00:00-24:00", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(new WideInterval().always()),
+#         new DateRange(new WideInterval().month(8,9))
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 4, 0*60, 24*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 5, 0*60, 24*60));
+
+#       assert.equal(builder.build(dateranges), "Mo-Fr 00:00-24:00; Aug-Sep Sa 00:00-24:00");
+#     });
+#     QUnit.test("Build May-Jun,Sep 14:00-18:00 (month factoring)", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(new WideInterval().month(5,6)),
+#         new DateRange(new WideInterval().month(9))
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 14*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(1, 1, 14*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(2, 2, 14*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(3, 3, 14*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(4, 4, 14*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(5, 5, 14*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(6, 6, 14*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 0, 14*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(1, 1, 14*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(2, 2, 14*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(3, 3, 14*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(4, 4, 14*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(5, 5, 14*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(6, 6, 14*60, 18*60));
+
+#       assert.equal(builder.build(dateranges), "May-Jun,Sep 14:00-18:00");
+#     });
+#     QUnit.test("Build Jan 01-May 01,May 15-Oct 12 Mo,Fr 08:00-18:00 (day factoring)", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(new WideInterval().day(1,1,1,5)),
+#         new DateRange(new WideInterval().day(15,5,12,10))
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 8*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(4, 4, 8*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 0, 8*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(4, 4, 8*60, 18*60));
+
+#       assert.equal(builder.build(dateranges), "Jan 01-May 01,May 15-Oct 12 Mo,Fr 08:00-18:00");
+#     });
+#     QUnit.test("Build Mo-We 03:00-05:00; Jan 01-10,Feb 01-10 Tu off (off day factoring)", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(),
+#         new DateRange(new WideInterval().day(1,1,10,1)),
+#         new DateRange(new WideInterval().day(1,2,10,2))
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 3*60, 5*60));
+#       dateranges[0].getTypical().addInterval(new Interval(1, 1, 3*60, 5*60));
+#       dateranges[0].getTypical().addInterval(new Interval(2, 2, 3*60, 5*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 0, 3*60, 5*60));
+#       dateranges[1].getTypical().addInterval(new Interval(2, 2, 3*60, 5*60));
+#       dateranges[2].getTypical().addInterval(new Interval(0, 0, 3*60, 5*60));
+#       dateranges[2].getTypical().addInterval(new Interval(2, 2, 3*60, 5*60));
+
+#       assert.equal(builder.build(dateranges), "Mo-We 03:00-05:00; Jan 01-10,Feb 01-10 Tu off");
+#     });
+#     QUnit.test("Build Tu,Su 10:00-12:00; Jun Tu,Su off; Jun We,Sa 10:00-12:00 (off day factoring)", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(),
+#         new DateRange(new WideInterval().month(6))
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(1, 1, 10*60, 12*60));
+#       dateranges[0].getTypical().addInterval(new Interval(6, 6, 10*60, 12*60));
+#       dateranges[1].getTypical().addInterval(new Interval(2, 2, 10*60, 12*60));
+#       dateranges[1].getTypical().addInterval(new Interval(5, 5, 10*60, 12*60));
+
+#       assert.equal(builder.build(dateranges), "Tu,Su 10:00-12:00; Jun Tu,Su off; Jun We,Sa 10:00-12:00");
+#     });
+#     QUnit.test("Build week 01-09 Mo 03:00-06:00 (week factoring)", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(new WideInterval().week(1,2)),
+#         new DateRange(new WideInterval().week(3,9))
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 3*60, 6*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 0, 3*60, 6*60));
+
+#       assert.equal(builder.build(dateranges), "week 01-09 Mo 03:00-06:00");
+#     });
+#     QUnit.test("Build week 01-03,10-15 Mo 03:00-06:00 (week factoring)", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(new WideInterval().week(1,3)),
+#         new DateRange(new WideInterval().week(10,15))
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 3*60, 6*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 0, 3*60, 6*60));
+
+#       assert.equal(builder.build(dateranges), "week 01-09 Mo 03:00-06:00");
+#     });
+#     QUnit.test("Build May-Jun,Sep Mo,Tu 14:00-18:00 (month factoring)", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(new WideInterval().month(5,6)),
+#         new DateRange(new WideInterval().month(9))
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 14*60, 18*60));
+#       dateranges[0].getTypical().addInterval(new Interval(1, 1, 14*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 0, 14*60, 18*60));
+#       dateranges[1].getTypical().addInterval(new Interval(1, 1, 14*60, 18*60));
+
+#       assert.equal(builder.build(dateranges), "May-Jun,Sep Mo,Tu 14:00-18:00");
+#     });
+#     QUnit.test("Build Mo-Fr 12:00-14:00; PH,Sa,Su 12:00-16:00 (PH as weekday)", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(),
+#         new DateRange(new WideInterval().holiday("PH"))
+#       ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 12*60, 14*60));
+#       dateranges[0].getTypical().addInterval(new Interval(1, 1, 12*60, 14*60));
+#       dateranges[0].getTypical().addInterval(new Interval(2, 2, 12*60, 14*60));
+#       dateranges[0].getTypical().addInterval(new Interval(3, 3, 12*60, 14*60));
+#       dateranges[0].getTypical().addInterval(new Interval(4, 4, 12*60, 14*60));
+#       dateranges[0].getTypical().addInterval(new Interval(5, 5, 12*60, 16*60));
+#       dateranges[0].getTypical().addInterval(new Interval(6, 6, 12*60, 16*60));
+#       dateranges[1].getTypical().addInterval(new Interval(0, 0, 12*60, 16*60));
 
 
+#       assert.equal(builder.build(dateranges), "Mo-Fr 12:00-14:00; PH,Sa,Su 12:00-16:00");
+#     });
+#     QUnit.test("Build PH,Mo-Sa 12:00-14:00 (PH as weekday defined first)", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [
+#         new DateRange(new WideInterval().holiday("PH")),
+#         new DateRange()
+#       ];
 
+#       dateranges[1].getTypical().addInterval(new Interval(0, 0, 12*60, 14*60));
+#       dateranges[1].getTypical().addInterval(new Interval(1, 1, 12*60, 14*60));
+#       dateranges[1].getTypical().addInterval(new Interval(2, 2, 12*60, 14*60));
+#       dateranges[1].getTypical().addInterval(new Interval(3, 3, 12*60, 14*60));
+#       dateranges[1].getTypical().addInterval(new Interval(4, 4, 12*60, 14*60));
+#       dateranges[1].getTypical().addInterval(new Interval(5, 5, 12*60, 14*60));
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 12*60, 14*60));
+
+
+#       assert.equal(builder.build(dateranges), "PH,Mo-Sa 12:00-14:00");
+#     });
+#     QUnit.test("Build Su-Tu 12:00-14:00 (continuous week-end)", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [ new DateRange() ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(0, 0, 12*60, 14*60));
+#       dateranges[0].getTypical().addInterval(new Interval(1, 1, 12*60, 14*60));
+#       dateranges[0].getTypical().addInterval(new Interval(6, 6, 12*60, 14*60));
+
+
+#       assert.equal(builder.build(dateranges), "Su-Tu 12:00-14:00");
+#     });
+#     QUnit.test("Build Tu 00:00-24:00", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [ new DateRange() ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(1, 1, 0*60, 24*60));
+
+#       assert.equal(builder.build(dateranges), "Tu 00:00-24:00");
+#     });
+#     QUnit.test("Build Tu,Th,Fr 08:00-12:00", function(assert) {
+#       var builder = new OpeningHoursBuilder();
+#       var dateranges = [ new DateRange(new WideInterval().always()) ];
+
+#       dateranges[0].getTypical().addInterval(new Interval(1, 1, 8*60, 12*60));
+#       dateranges[0].getTypical().addInterval(new Interval(3, 3, 8*60, 12*60));
+#       dateranges[0].getTypical().addInterval(new Interval(4, 4, 8*60, 12*60));
+
+#       assert.equal(builder.build(dateranges), "Tu-Fr 08:00-12:00; We off");
+#     });
