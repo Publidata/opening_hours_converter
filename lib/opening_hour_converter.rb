@@ -127,7 +127,7 @@ class WideInterval
       raise(ArgumentError, "start_day and start_month are required")
     end
     @start = { day: start_day, month: start_month }
-    unless end_day.nil? && end_month.nil? && (end_day != start_day || end_month != start_month)
+    if (!end_day.nil? && !end_month.nil? && (end_day != start_day || end_month != start_month))
       @end = { day: end_day, month: end_month }
     end
     @type = "day"
@@ -299,12 +299,12 @@ class WideInterval
     when "month"
       result = (o.type == "day" &&
         o.start[:month] == @start[:month] &&
-        o.starts_month? &&
+        (o.starts_month? &&
         (!o.end.nil? && @end.nil? && o.end[:month] == @start[:month] && o.ends_month?) ||
-        (!o.end.nil? && !@end.nil? && o.end[:month] == @end[:month] && o.ends_month?)) ||
+        (!o.end.nil? && !@end.nil? && o.end[:month] == @end[:month] && o.ends_month?))) ||
         (o.type == "month" &&
-        (o.start[:month] == @start[:month] &&
-        (o.end.nil? && @end.nil?) ||
+        o.start[:month] == @start[:month] &&
+        ((o.end.nil? && @end.nil?) ||
         (!o.end.nil? && !@end.nil? && o.end[:month] == @end[:month])))
     end
     result
@@ -481,58 +481,69 @@ class Week
 
   def get_intervals_diff(week)
     self_minutes_array = get_as_minute_array
-    other_minutes_array = get_as_minute_array
+    other_minutes_array = week.get_as_minute_array
 
     intervals = { open: [], closed: [] }
     day_start = -1
     min_start = -1
 
 
-    for d in 0...DAYS_MAX do
+    for d in 0..DAYS_MAX
       diff_day = false
       m = 0
       intervals_length = intervals[:open].length
       while m <= MINUTES_MAX
+        # Copy entire day
         if diff_day
+          # first minute of monday
           if d == 0 && m == 0
             if self_minutes_array[d][m]
               day_start = d
               min_start = m
             end
+          # last minute of sunday
           elsif d == DAYS_MAX && m == MINUTES_MAX
             if day_start >= 0 && self_minutes_array[d][m]
               intervals[:open] << Interval.new(day_start, min_start, d, m)
             end
+          #  other days and minutes
           else
+            # new interval
             if self_minutes_array[d][m] && day_start < 0
               day_start = d
               min_start = m
-
+            # end interval
             elsif !self_minutes_array[d][m] && day_start >= 0
               if m == 0
-                intervals.open << Interval.new(day_start, min_start, d - 1, MINUTES_MAX)
+                intervals[:open] << Interval.new(day_start, min_start, d - 1, MINUTES_MAX)
               else
-                intervals.open << Interval.new(day_start, min_start, d, m - 1)
+                intervals[:open] << Interval.new(day_start, min_start, d, m - 1)
               end
               day_start = -1
               min_start = -1
             end
           end
           m += 1
+        # check diff
         else
           diff_day = self_minutes_array[d][m] ? !other_minutes_array[d][m] : other_minutes_array[d][m]
-
           if diff_day
             m = 0
           else
             m += 1
           end
         end
-        if !diff_day && day_start > -1
-          binding.pry
-          intervals[:open] << Interval.new(day_start, min_start, d-1, MINUTES_MAX)
-          day_start = -1
-          min_start = -1
+      end
+      if !diff_day && day_start > -1
+        intervals[:open] << Interval.new(day_start, min_start, d-1, MINUTES_MAX)
+        day_start = -1
+        min_start = -1
+      end
+      if diff_day && day_start == -1 && intervals_length == intervals[:open].length
+        if intervals[:closed].length > 0 && intervals[:closed][intervals[:closed].length - 1].day_end == d - 1
+          intervals[:closed][intervals[:closed].length - 1] = Interval.new(intervals[:closed][intervals[:closed].length - 1].day_start, 0, d, MINUTES_MAX)
+        else
+          intervals[:closed] << Interval.new(d, 0, d, MINUTES_MAX)
         end
       end
     end
@@ -596,7 +607,7 @@ end
 class DateRange
   attr_accessor :wide_interval, :typical
 
-  def initialize(w)
+  def initialize(w=nil)
     @wide_interval = nil
     @typical = nil
     update_range(w)
@@ -685,7 +696,7 @@ class OpeningHoursDate
   def get_weekdays
 
     result = ""
-    wd = @weekdays.concat(@weekdays_over).sort
+    wd = @weekdays.concat(@weekdays_over).sort.uniq
 
     if wd.length > 0 && wd.include?(6) && wd.include?(0) && (wd.include?(5) || wd.include?(1))
       start_we = 6
@@ -772,21 +783,21 @@ class OpeningHoursDate
 
   def add_overwritten_weekday(weekday)
     unless @weekdays_over.include?(weekday) && @weekdays_over.include?(weekday)
-      @weekdays_over << wd
+      @weekdays_over << weekday
       @weekdays_over.sort!
     end
   end
 
   def same_kind_as?(date)
-    @wide_type == d.wide_type && d.same_weekdays(@weekdays)
+    @wide_type == date.wide_type && date.same_weekdays?(@weekdays)
   end
 
-  def same_weekdays(weekdays)
+  def same_weekdays?(weekdays)
     weekdays.equals(@weekdays)
   end
 
   def equals(o)
-    o.instance_of?(OpeningHoursDate) && @wide_type == o.wide_type && @wide == o.wide && o.same_weekdays(@weekdays)
+    o.instance_of?(OpeningHoursDate) && @wide_type == o.wide_type && @wide == o.wide && o.same_weekdays?(@weekdays)
   end
 end
 
@@ -801,8 +812,7 @@ class OpeningHoursRule
 
   def get
     result = ""
-
-    if @date.length > 1 || @date.first.wide != ""
+    if @date.length > 1 || @date[0]&.wide != ""
       @date.each_with_index do |d, i|
         if (i > 0)
           result += ","
@@ -875,8 +885,8 @@ class OpeningHoursRule
     if @date.length == 0 || @date.first.wide_type != "always" && @date.first.same_kind_as?(date)
       @date << date
     else
-      if @date.length != 1 || @date.first.wide_type != "always" || !@date.first.same_weekdays(date.weekdays)
-        raise "This date can't be added to this rule"
+      if @date.length != 1 || @date.first.wide_type != "always" || !@date.first.same_weekdays?(date.weekdays)
+        raise ArgumentError, "This date can't be added to this rule"
       end
     end
   end
@@ -885,7 +895,7 @@ class OpeningHoursRule
     if (@time.length == 0 || @time[0].get != "off") && !@time.include?(time)
       @time << time
     else
-      raise "This time can't be added to this rule"
+      raise ArgumentError, "This time can't be added to this rule"
     end
   end
 end
@@ -990,6 +1000,8 @@ class OpeningHoursBuilder
       end
     end
 
+    puts rules.inspect
+
     result = ""
     rules.each_with_index do |rule, rule_index|
       if rule_index > 0
@@ -1093,9 +1105,9 @@ class OpeningHoursBuilder
     monday0 = time_intervals[0]
     sunday24 = time_intervals[1]
     days = time_intervals[2]
-
-    intervals.closed.each do |interval|
-      for i in interval.start_day...interval.end_day do
+    # binding.pry
+    intervals[:closed].each do |interval|
+      for i in interval.day_start..interval.day_end do
         days[i].add_time(OpeningHoursTime.new)
       end
     end
@@ -1106,6 +1118,9 @@ class OpeningHoursBuilder
     result = []
 
     days.each_with_index do |day, index|
+      if index == 2
+        # binding.pry
+      end
       if day.is_off? && day.time.length == 1
         days_status[index] = -8
         merged = false
@@ -1148,7 +1163,7 @@ class OpeningHoursBuilder
         elsif same_day_count > 2
           for j in (index + 1)...last_same_day do
             if days_status[j] == 0
-              days_status[j] = -i - 1
+              days_status[j] = -index - 1
               if days[j].time.length > 0
                 day.add_overwritten_weekday(j)
               end
@@ -1206,11 +1221,11 @@ class OpeningHoursBuilder
         if interval.day_start == DAYS_MAX && interval.day_end == DAYS_MAX && interval.end == MINUTES_MAX
           sunday24 = interval.start
         end
-        if interval.day_start == 0 && interval.day_end == 0 && interval.end == 0
+        if interval.day_start == 0 && interval.day_end == 0 && interval.start == 0
           monday0 = interval.end
         end
         begin
-
+          # binding.pry
           if interval.day_start == interval.day_end
             days[interval.day_start].add_time(OpeningHoursTime.new(interval.start, interval.end))
           elsif interval.day_end - interval.day_start == 1
@@ -1221,9 +1236,8 @@ class OpeningHoursBuilder
               days[interval.day_end].add_time(OpeningHoursTime.new(0, interval.end))
             end
           else
-            for j in interval.start...interval.end do
+            for j in interval.day_start..interval.day_end do
               if j == interval.day_start
-
                 days[j].add_time(OpeningHoursTime.new(interval.start, MINUTES_MAX))
               elsif j == interval.day_end
                 days[j].add_time(OpeningHoursTime.new(0, interval.end))

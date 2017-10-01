@@ -169,7 +169,7 @@ RSpec.describe Week, 'intervals' do
     expect(d1.same_as?(d)).to be false
   end
 
-  it "gets interval diff" do
+  it "gets interval diff simple" do
     w = Week.new
     w1 = Week.new
 
@@ -185,8 +185,175 @@ RSpec.describe Week, 'intervals' do
     w1.add_interval(it4)
 
     result = w1.get_intervals_diff(w)
-    puts result.inspect
+    # puts result.inspect
     expect(result[:open].length).to eql(1)
     expect(result[:closed].length).to eql(0)
+    result2 = w.get_intervals_diff(w1)
+    expect(result[:open].length).to eql(1)
+    expect(result[:closed].length).to eql(0)
+
+    expect(result[:open][0].day_start).to eql(4)
+    expect(result[:open][0].day_end).to eql(4)
+    expect(result[:open][0].start).to eql(8*60)
+    expect(result[:open][0].end).to eql(18*60)
+  end
+
+  it "gets intervals diff day off" do
+    w = Week.new
+    w1 = Week.new
+
+    it1 = Interval.new(0, 0, 6, 24*60)
+    w.add_interval(it1)
+
+    it2 = Interval.new(0, 0, 3, 24*60)
+    it3 = Interval.new(5, 0, 6, 24*60)
+    w1.add_interval(it2)
+    w1.add_interval(it3)
+
+    result = w1.get_intervals_diff(w)
+    # puts result.inspect
+    expect(result[:open].length).to eql(0)
+    expect(result[:closed].length).to eql(1)
+
+    expect(result[:closed][0].day_start).to eql(4)
+    expect(result[:closed][0].day_end).to eql(4)
+    expect(result[:closed][0].start).to eql(0)
+    expect(result[:closed][0].end).to eql(24*60)
+  end
+
+  it "gets intervals diff quasi closed" do
+    w = Week.new
+    w1 = Week.new
+
+    it1 = Interval.new(0, 0, 6, 24*60)
+    w.add_interval(it1)
+
+    it2 = Interval.new(3, 18*60, 3, 23*60)
+
+    w1.add_interval(it2)
+
+    result = w1.get_intervals_diff(w)
+    # puts result.inspect
+    expect(result[:open].length).to eql(1)
+    expect(result[:closed].length).to eql(2)
+
+    expect(result[:open][0].day_start).to eql(3)
+    expect(result[:open][0].day_end).to eql(3)
+    expect(result[:open][0].start).to eql(18*60)
+    expect(result[:open][0].end).to eql(23*60)
+
+    expect(result[:closed][0].day_start).to eql(0)
+    expect(result[:closed][0].day_end).to eql(2)
+    expect(result[:closed][0].start).to eql(0)
+    expect(result[:closed][0].end).to eql(24*60)
+
+    expect(result[:closed][1].day_start).to eql(4)
+    expect(result[:closed][1].day_end).to eql(6)
+    expect(result[:closed][1].start).to eql(0)
+    expect(result[:closed][1].end).to eql(24*60)
+  end
+
+  it "gets intervals diff 24/24" do
+    w = Week.new
+    w1 = Week.new
+
+    it1 = Interval.new(0, 0, 4, 24*60)
+    w.add_interval(it1)
+
+    it2 = Interval.new(0, 0, 5, 24*60)
+    w1.add_interval(it2)
+
+    result = w1.get_intervals_diff(w)
+    # puts result.inspect
+    expect(result[:open].length).to eql(1)
+    expect(result[:closed].length).to eql(0)
+
+    expect(result[:open][0].day_start).to eql(5)
+    expect(result[:open][0].day_end).to eql(5)
+    expect(result[:open][0].start).to eql(0)
+    expect(result[:open][0].end).to eql(24*60)
+  end
+
+  it "gets intervals diff many changes" do
+    w = Week.new
+    w1 = Week.new
+
+    it1 = Interval.new(0, 10*60, 0, 12*60)
+    it2 = Interval.new(0, 13*60, 0, 16*60)
+    it3 = Interval.new(1, 10*60, 1, 12*60)
+    it4 = Interval.new(1, 13*60, 1, 16*60)
+    it5 = Interval.new(2, 10*60, 2, 12*60)
+    it6 = Interval.new(2, 13*60, 2, 16*60)
+    it7 = Interval.new(3, 10*60, 3, 12*60)
+    it8 = Interval.new(3, 13*60, 3, 16*60)
+    it9 = Interval.new(4, 8*60, 4, 12*60)
+    it10 = Interval.new(4, 13*60, 4, 18*60)
+    w.add_interval(it1)
+    w.add_interval(it2)
+    w.add_interval(it3)
+    w.add_interval(it4)
+    w.add_interval(it5)
+    w.add_interval(it6)
+    w.add_interval(it7)
+    w.add_interval(it8)
+    w.add_interval(it9)
+    w.add_interval(it10)
+
+    it11 = Interval.new(0, 10*60, 0, 16*60)
+    it12 = Interval.new(1, 10*60, 1, 12*60)
+    it13 = Interval.new(1, 13*60, 1, 16*60)
+    it14 = Interval.new(3, 8*60, 3, 10*60)
+    it15 = Interval.new(3, 12*60, 3, 13*60)
+    it16 = Interval.new(4, 10*60, 4, 16*60)
+    it17 = Interval.new(5, 10*60, 5, 12*60)
+    it18 = Interval.new(5, 13*60, 5, 16*60)
+    w1.add_interval(it11)
+    w1.add_interval(it12)
+    w1.add_interval(it13)
+    w1.add_interval(it14)
+    w1.add_interval(it15)
+    w1.add_interval(it16)
+    w1.add_interval(it17)
+    w1.add_interval(it18)
+
+    result = w1.get_intervals_diff(w)
+    # puts result.inspect
+    expect(result[:open].length).to eql(6)
+    expect(result[:closed].length).to eql(1)
+
+    expect(result[:open][0].day_start).to eql(0)
+    expect(result[:open][0].day_end).to eql(0)
+    expect(result[:open][0].start).to eql(10*60)
+    expect(result[:open][0].end).to eql(16*60)
+
+    expect(result[:open][1].day_start).to eql(3)
+    expect(result[:open][1].day_end).to eql(3)
+    expect(result[:open][1].start).to eql(8*60)
+    expect(result[:open][1].end).to eql(10*60)
+
+    expect(result[:open][2].day_start).to eql(3)
+    expect(result[:open][2].day_end).to eql(3)
+    expect(result[:open][2].start).to eql(12*60)
+    expect(result[:open][2].end).to eql(13*60)
+
+    expect(result[:open][3].day_start).to eql(4)
+    expect(result[:open][3].day_end).to eql(4)
+    expect(result[:open][3].start).to eql(10*60)
+    expect(result[:open][3].end).to eql(16*60)
+
+    expect(result[:open][4].day_start).to eql(5)
+    expect(result[:open][4].day_end).to eql(5)
+    expect(result[:open][4].start).to eql(10*60)
+    expect(result[:open][4].end).to eql(12*60)
+
+    expect(result[:open][5].day_start).to eql(5)
+    expect(result[:open][5].day_end).to eql(5)
+    expect(result[:open][5].start).to eql(13*60)
+    expect(result[:open][5].end).to eql(16*60)
+
+    expect(result[:closed][0].day_start).to eql(2)
+    expect(result[:closed][0].day_end).to eql(2)
+    expect(result[:closed][0].start).to eql(0)
+    expect(result[:closed][0].end).to eql(24*60)
   end
 end
