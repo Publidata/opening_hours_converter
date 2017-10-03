@@ -578,8 +578,8 @@ class Week
               if interval.day_end > day
                 add_interval(Interval.new(day + 1, 0, interval.day_end, interval.end))
               end
-              remove_interval(i)
             end
+            remove_interval(i)
           end
         end
       end
@@ -1577,27 +1577,25 @@ class OpeningHoursParser
         end
       end
     end
-
     return result
   end
 
   def remove_interval(typical, weekdays, times)
     if weekdays[:from] <= weekdays[:to]
       for wd in weekdays[:from]..weekdays[:to]
-        remove_interval_wd(typical, times, wd)
+        typical.remove_intervals_during_day(wd)
       end
     else
       for wd in weekdays[:from]..6
-        remove_interval_wd(typical, times, wd)
+        typical.remove_intervals_during_day(wd)
       end
       for wd in 0..weekdays[:from]
-        remove_interval_wd(typical, times, wd)
+        typical.remove_intervals_during_day(wd)
       end
     end
   end
 
   def remove_interval_wd(typical, times, wd)
-    binding.pry
     if times[:to] >= times[:from]
       typical.remove_interval(Interval.new(wd, times[:from], wd, times[:to]))
     else

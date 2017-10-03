@@ -32,8 +32,6 @@ RSpec.describe OpeningHoursParser, '#parse' do
   it "24/7; Jun: 08:00-18:00; Jun: We off" do
     expect(OpeningHoursBuilder.new.build(OpeningHoursParser.new.parse('24/7; Jun: 08:00-18:00; Jun: We off'))).to eql('24/7; Jun 08:00-18:00; Jun We off')
   end
-
-
 end
 
 
