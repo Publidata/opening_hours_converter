@@ -312,11 +312,10 @@ class WideInterval
 end
 
 class Day
-  attr_accessor :intervals, :next_interval
+  attr_accessor :intervals
 
   def initialize
     @intervals = []
-    @next_interval = 0
   end
 
   def get_as_minute_array
@@ -377,9 +376,8 @@ class Day
   end
 
   def add_interval(interval)
-    @intervals[@next_interval] = interval
-    @next_interval += 1
-    return @next_interval - 1
+    @intervals << interval
+    return @intervals.length - 1
   end
 
   def edit_interval(id, interval)
@@ -411,11 +409,10 @@ end
 
 
 class Week
-  attr_accessor :intervals, :next_interval
+  attr_accessor :intervals
 
   def initialize
     @intervals = []
-    @next_interval = 0
   end
 
   def get_as_minute_array
@@ -551,9 +548,8 @@ class Week
   end
 
   def add_interval(interval)
-    @intervals[@next_interval] = interval
-    @next_interval += 1
-    return @next_interval - 1
+    @intervals << interval
+    return @intervals.length - 1
   end
 
   def edit_interval(id, interval)
@@ -1391,7 +1387,7 @@ class OpeningHoursParser
 
           if wide_range_selector.length > 1
             week_selector = wide_range_selector[1].strip
-            if week_selector.length = 0
+            if week_selector.length == 0
               week_selector = nil
             end
           else
