@@ -1,4 +1,4 @@
-require 'opening_hour_converter'
+require 'opening_hours_converter/wide_interval'
 
 RSpec.describe WideInterval, "#day" do
   it "initialize" do

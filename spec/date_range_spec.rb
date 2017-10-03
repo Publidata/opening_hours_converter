@@ -1,4 +1,4 @@
-require 'opening_hour_converter'
+require 'opening_hours_converter/date_range'
 
 RSpec.describe DateRange, '#initialize' do
   it "initialize" do

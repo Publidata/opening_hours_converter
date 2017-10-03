@@ -1,4 +1,4 @@
-require 'opening_hour_converter'
+require 'opening_hours_converter/opening_hours_builder'
 
 RSpec.describe OpeningHoursBuilder, '#build' do
   it "void" do

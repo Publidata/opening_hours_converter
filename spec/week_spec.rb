@@ -1,4 +1,4 @@
-require 'opening_hour_converter'
+require 'opening_hours_converter/week'
 
 RSpec.describe Week, '#initialize' do
   it "initialize" do

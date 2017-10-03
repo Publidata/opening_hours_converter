@@ -1,4 +1,4 @@
-require 'opening_hour_converter'
+require 'opening_hours_converter/interval'
 
 RSpec.describe Interval, "#initialize" do
   it "initialize" do

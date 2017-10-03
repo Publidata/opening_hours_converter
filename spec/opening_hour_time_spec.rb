@@ -1,4 +1,4 @@
-require 'opening_hour_converter'
+require 'opening_hours_converter/opening_hours_time'
 
 RSpec.describe OpeningHoursTime, '#initialize' do
   it "initialize" do

@@ -1,5 +1,4 @@
-
-require 'opening_hour_converter'
+require 'opening_hours_converter/opening_hours_parser'
 
 RSpec.describe OpeningHoursParser, '#parse' do
   it "void" do
