@@ -1,368 +1,368 @@
-require 'opening_hours_converter/constant'
-require 'opening_hours_converter/opening_hours_rule'
-require 'opening_hours_converter/opening_hours_date'
-require 'opening_hours_converter/opening_hours_time'
+require 'opening_hours_converter/constants'
 
-class OpeningHoursBuilder
-  def build(date_ranges)
-    rules = []
+module OpeningHoursConverter
+  class OpeningHoursBuilder
+    include Constants
+    def build(date_ranges)
+      rules = []
 
-    oh_rules = nil
-    oh_rule_added = nil
-    range_general = nil
-    range_general_for = nil
+      oh_rules = nil
+      oh_rule_added = nil
+      range_general = nil
+      range_general_for = nil
 
-    date_ranges.each_with_index do |date_range, date_range_index|
-      if !date_range.nil?
-        range_general = nil
-        range_general_for = nil
-        range_general_id = date_range_index - 1
-        while range_general_id >= 0 && range_general.nil?
-          if !date_range.nil?
-            general_for = date_ranges[range_general_id].is_general_for?(date_range)
-            if date_ranges[range_general_id].has_same_typical?(date_range) && (date_ranges[range_general_id].wide_interval.equals(date_range.wide_interval) || general_for)
-              range_general = range_general_id
-            elsif general_for && date_ranges[range_general_id].defines_typical_week? && date_range.defines_typical_week?
-              range_general_for = range_general_id
+      date_ranges.each_with_index do |date_range, date_range_index|
+        if !date_range.nil?
+          range_general = nil
+          range_general_for = nil
+          range_general_id = date_range_index - 1
+          while range_general_id >= 0 && range_general.nil?
+            if !date_range.nil?
+              general_for = date_ranges[range_general_id].is_general_for?(date_range)
+              if date_ranges[range_general_id].has_same_typical?(date_range) && (date_ranges[range_general_id].wide_interval.equals(date_range.wide_interval) || general_for)
+                range_general = range_general_id
+              elsif general_for && date_ranges[range_general_id].defines_typical_week? && date_range.defines_typical_week?
+                range_general_for = range_general_id
+              end
             end
+            range_general_id -= 1
           end
-          range_general_id -= 1
-        end
 
-        if date_range_index == 0 || range_general.nil?
-          if date_range.defines_typical_week?
-            if !range_general_for.nil?
-              oh_rules = build_week_diff(date_range, date_ranges[range_general_for])
-            else
-              oh_rules = build_week(date_range)
-            end
-          else
-            oh_rules = build_day(date_range)
-          end
-        end
-
-        oh_rule_index = 0
-
-        while oh_rule_index < oh_rules.length
-          oh_rule = oh_rules[oh_rule_index]
-          oh_rule_added = false
-          rule_index = 0
-
-          while !oh_rule_added && rule_index < rules.length
-            if rules[rule_index].same_time?(oh_rule)
-              begin
-                for date_id in 0...oh_rule.date.length
-                  rules[rule_index].add_date(oh_rule.date[date_id])
-                end
-                oh_rule_added = true
-              rescue Exception => e
-                puts e
-                # if(
-                #   ohrule.getDate()[0].getWideType() == "holiday"
-                #   && ohrule.getDate()[0].getWideValue() == "PH"
-                #   && rules[ruleId].getDate()[0].getWideType() == "always"
-                # ) {
-                #   rules[ruleId].addPhWeekday();
-                #   ohruleAdded = true;
-                # }
-                # else if(
-                #   rules[ruleId].getDate()[0].getWideType() == "holiday"
-                #   && rules[ruleId].getDate()[0].getWideValue() == "PH"
-                #   && ohrule.getDate()[0].getWideType() == "always"
-                # ) {
-                #   ohrule.addPhWeekday();
-                #   rules[ruleId] = ohrule;
-                #   ohruleAdded = true;
-                # }
-                # else {
-                #   ruleId++;
-                # }
-                rule_index += 1
+          if date_range_index == 0 || range_general.nil?
+            if date_range.defines_typical_week?
+              if !range_general_for.nil?
+                oh_rules = build_week_diff(date_range, date_ranges[range_general_for])
+              else
+                oh_rules = build_week(date_range)
               end
             else
-              rule_index+=1
-            end
-
-          end
-
-          if !oh_rule_added
-            rules << oh_rule
-          end
-
-          if oh_rule_index == oh_rules.length - 1 && oh_rule.has_overwritten_weekday?
-            oh_rule_over = OpeningHoursRule.new
-
-            oh_rule.date.each do |date|
-              oh_rule_over.add_date(OpeningHoursDate.new(date.wide, date.wide_type, date.weekdays_over))
-            end
-            oh_rule_over.add_time(OpeningHoursTime.new)
-            oh_rules << oh_rule_over
-            oh_rule_index += 1
-          else
-            oh_rule_index += 1
-          end
-        end
-      end
-    end
-
-
-    result = ""
-    rules.each_with_index do |rule, rule_index|
-      if rule_index > 0
-        result += "; "
-      end
-      result += rule.get
-    end
-
-    return result
-  end
-
-  def build_day(date_range)
-    intervals = date_range.typical.get_intervals(true)
-
-    rule = OpeningHoursRule.new
-    date = OpeningHoursDate.new(date_range.wide_interval.get_time_selector, date_range.wide_interval.type, [-1])
-    rule.add_date(date)
-
-    intervals.each do |interval|
-      if !interval.nil?
-        rule.add_time(OpeningHoursTime.new(interval.start, interval.end))
-      end
-    end
-
-    return [ rule ]
-  end
-
-  def build_week(date_range)
-    result = []
-    intervals = date_range.typical.get_intervals(true)
-    time_intervals = create_time_intervals(date_range.wide_interval.get_time_selector, date_range.wide_interval.type, intervals)
-
-    monday0 = time_intervals[0]
-    sunday24 = time_intervals[1]
-    days = time_intervals[2]
-
-    days = night_monday_sunday(days, monday0, sunday24)
-
-
-    days_status = Array.new(OSM_DAYS.length, 0)
-
-    days.each_with_index do |day, index|
-      if day.is_off? && days_status[index] == 0
-        days_status[index] = 8
-      elsif day.is_off? && days_status[index] < 0 && days_status[index] > -8
-        days_status[index] = -8
-        merged = false
-        md_off = 0
-        while !merged && md_off < index
-          if days[md_off].is_off?
-            days[md_off].add_weekday(index)
-            merged = true
-          else
-            md_off += 1
-          end
-          if !merged
-            result << days[index]
-          end
-        end
-      elsif days_status[index] <= 0 && days_status[index] > -8
-        days_status[index] = index + 1
-        last_same_day = index
-        same_day_count = 1
-
-        for j in (index+1)...days.length do
-          if day.same_time?(days[j])
-            days_status[j] = index + 1
-            day.add_weekday(j)
-            last_same_day = j
-            same_day_count += 1
-          end
-        end
-        if same_day_count == 1
-          result << day
-        elsif same_day_count == 2
-          day.add_weekday(last_same_day)
-          result << day
-        elsif same_day_count > 2
-          for j in (index+1)...last_same_day do
-            if days_status[j] == 0
-              days_status[j] = -index -1
-              day.add_overwritten_weekday(j)
+              oh_rules = build_day(date_range)
             end
           end
-          day.add_weekday(last_same_day)
-          result << day
-        end
-      end
-    end
-    result = merge_days(result)
 
-    return result
-  end
+          oh_rule_index = 0
 
-  def build_week_diff(date_range, general_date_range)
-    intervals = date_range.typical.get_intervals_diff(general_date_range.typical)
+          while oh_rule_index < oh_rules.length
+            oh_rule = oh_rules[oh_rule_index]
+            oh_rule_added = false
+            rule_index = 0
 
-    time_intervals = create_time_intervals(
-      date_range.wide_interval.get_time_selector,
-      date_range.wide_interval.type,
-      intervals[:open])
-    monday0 = time_intervals[0]
-    sunday24 = time_intervals[1]
-    days = time_intervals[2]
-    intervals[:closed].each do |interval|
-      for i in interval.day_start..interval.day_end do
-        days[i].add_time(OpeningHoursTime.new)
-      end
-    end
+            while !oh_rule_added && rule_index < rules.length
+              if rules[rule_index].same_time?(oh_rule)
+                begin
+                  for date_id in 0...oh_rule.date.length
+                    rules[rule_index].add_date(oh_rule.date[date_id])
+                  end
+                  oh_rule_added = true
+                rescue Exception => e
+                  puts e
+                  # if(
+                  #   ohrule.getDate()[0].getWideType() == "holiday"
+                  #   && ohrule.getDate()[0].getWideValue() == "PH"
+                  #   && rules[ruleId].getDate()[0].getWideType() == "always"
+                  # ) {
+                  #   rules[ruleId].addPhOpeningHoursConverter::Weekday();
+                  #   ohruleAdded = true;
+                  # }
+                  # else if(
+                  #   rules[ruleId].getDate()[0].getWideType() == "holiday"
+                  #   && rules[ruleId].getDate()[0].getWideValue() == "PH"
+                  #   && ohrule.getDate()[0].getWideType() == "always"
+                  # ) {
+                  #   ohrule.addPhOpeningHoursConverter::Weekday();
+                  #   rules[ruleId] = ohrule;
+                  #   ohruleAdded = true;
+                  # }
+                  # else {
+                  #   ruleId++;
+                  # }
+                  rule_index += 1
+                end
+              else
+                rule_index+=1
+              end
 
-    days = night_monday_sunday(days, monday0, sunday24)
+            end
 
-    days_status = Array.new(OSM_DAYS.length, 0)
-    result = []
+            if !oh_rule_added
+              rules << oh_rule
+            end
 
-    days.each_with_index do |day, index|
-      if day.is_off? && day.time.length == 1
-        days_status[index] = -8
-        merged = false
-        md_off = 0
+            if oh_rule_index == oh_rules.length - 1 && oh_rule.has_overwritten_weekday?
+              oh_rule_over = OpeningHoursConverter::OpeningHoursRule.new
 
-        while !merged && md_off < index
-          if days[md_off].is_off? && days[md_off].time.length == 1
-            days[md_off].add_weekday(index)
-            merged = true
-          else
-            md_off += 1
+              oh_rule.date.each do |date|
+                oh_rule_over.add_date(OpeningHoursConverter::OpeningHoursDate.new(date.wide, date.wide_type, date.weekdays_over))
+              end
+              oh_rule_over.add_time(OpeningHoursConverter::OpeningHoursTime.new)
+              oh_rules << oh_rule_over
+              oh_rule_index += 1
+            else
+              oh_rule_index += 1
+            end
           end
         end
+      end
 
-        if !merged
-          result << day
+
+      result = ""
+      rules.each_with_index do |rule, rule_index|
+        if rule_index > 0
+          result += "; "
         end
-      elsif day.is_off? && day.time.length == 0
-        days_status[index] = 8
-      elsif days_status[index] <= 0 && days_status[index] > -8
-        days_status[index] = index + 1
-        same_day_count = 1
-        last_same_day = 1
-        result << day
+        result += rule.get
+      end
 
-        for j in (index + 1)...days.length do
-          if day.same_time?(days[j])
-            days_status[j] = index + 1
-            day.add_weekday(j)
-            last_same_day = j
-            same_day_count += 1
+      return result
+    end
+
+    def build_day(date_range)
+      intervals = date_range.typical.get_intervals(true)
+
+      rule = OpeningHoursConverter::OpeningHoursRule.new
+      date = OpeningHoursConverter::OpeningHoursDate.new(date_range.wide_interval.get_time_selector, date_range.wide_interval.type, [-1])
+      rule.add_date(date)
+
+      intervals.each do |interval|
+        if !interval.nil?
+          rule.add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, interval.end))
+        end
+      end
+
+      return [ rule ]
+    end
+
+    def build_week(date_range)
+      result = []
+      intervals = date_range.typical.get_intervals(true)
+      time_intervals = create_time_intervals(date_range.wide_interval.get_time_selector, date_range.wide_interval.type, intervals)
+
+      monday0 = time_intervals[0]
+      sunday24 = time_intervals[1]
+      days = time_intervals[2]
+
+      days = night_monday_sunday(days, monday0, sunday24)
+
+
+      days_status = Array.new(OSM_DAYS.length, 0)
+
+      days.each_with_index do |day, index|
+        if day.is_off? && days_status[index] == 0
+          days_status[index] = 8
+        elsif day.is_off? && days_status[index] < 0 && days_status[index] > -8
+          days_status[index] = -8
+          merged = false
+          md_off = 0
+          while !merged && md_off < index
+            if days[md_off].is_off?
+              days[md_off].add_weekday(index)
+              merged = true
+            else
+              md_off += 1
+            end
+            if !merged
+              result << days[index]
+            end
           end
-        end
+        elsif days_status[index] <= 0 && days_status[index] > -8
+          days_status[index] = index + 1
+          last_same_day = index
+          same_day_count = 1
 
-        if same_day_count == 1
-          result << day
-        elsif same_day_count == 2
-          day.add_weekday(last_same_day)
-          result << day
-        elsif same_day_count > 2
-          for j in (index + 1)...last_same_day do
-            if days_status[j] == 0
-              days_status[j] = -index - 1
-              if days[j].time.length > 0
+          for j in (index+1)...days.length do
+            if day.same_time?(days[j])
+              days_status[j] = index + 1
+              day.add_weekday(j)
+              last_same_day = j
+              same_day_count += 1
+            end
+          end
+          if same_day_count == 1
+            result << day
+          elsif same_day_count == 2
+            day.add_weekday(last_same_day)
+            result << day
+          elsif same_day_count > 2
+            for j in (index+1)...last_same_day do
+              if days_status[j] == 0
+                days_status[j] = -index -1
                 day.add_overwritten_weekday(j)
               end
             end
+            day.add_weekday(last_same_day)
+            result << day
           end
-          day.add_weekday(last_same_day)
-          result << day
         end
-
       end
-    end
-    result = merge_days(result)
-    return result
-  end
+      result = merge_days(result)
 
-  def merge_days(rules)
-    return rules if rules.length == 0
-    result = []
-    result << rules[0]
-    dm = 0
-
-    for d in 1...rules.length do
-      date_merged = false
-      dm = 0
-      while !date_merged && dm < d
-        if rules[dm].same_time?(rules[d])
-          wds = rules[d].date[0].weekdays
-          wds.each do |wd|
-            rules[dm].add_weekday(wd)
-          end
-          date_merged = true
-        end
-        dm += 1
-      end
-      if !date_merged
-        result << rules[d]
-      end
+      return result
     end
 
-    return result
-  end
+    def build_week_diff(date_range, general_date_range)
+      intervals = date_range.typical.get_intervals_diff(general_date_range.typical)
 
-  def create_time_intervals(time_selector, type, intervals)
-    monday0 = -1
-    sunday24 = -1
-
-    days = []
-    for i in 0...7 do
-      days << OpeningHoursRule.new
-      days[i].add_date(OpeningHoursDate.new(time_selector, type, [ i ]))
-    end
-
-    intervals.each do |interval|
-      if !interval.nil?
-        if interval.day_start == DAYS_MAX && interval.day_end == DAYS_MAX && interval.end == MINUTES_MAX
-          sunday24 = interval.start
+      time_intervals = create_time_intervals(
+        date_range.wide_interval.get_time_selector,
+        date_range.wide_interval.type,
+        intervals[:open])
+      monday0 = time_intervals[0]
+      sunday24 = time_intervals[1]
+      days = time_intervals[2]
+      intervals[:closed].each do |interval|
+        for i in interval.day_start..interval.day_end do
+          days[i].add_time(OpeningHoursConverter::OpeningHoursTime.new)
         end
-        if interval.day_start == 0 && interval.day_end == 0 && interval.start == 0
-          monday0 = interval.end
-        end
-        begin
-          if interval.day_start == interval.day_end
-            days[interval.day_start].add_time(OpeningHoursTime.new(interval.start, interval.end))
-          elsif interval.day_end - interval.day_start == 1
-            if interval.start > interval.end
-              days[interval.day_start].add_time(OpeningHoursTime.new(interval.start, interval.end))
+      end
+
+      days = night_monday_sunday(days, monday0, sunday24)
+
+      days_status = Array.new(OSM_DAYS.length, 0)
+      result = []
+
+      days.each_with_index do |day, index|
+        if day.is_off? && day.time.length == 1
+          days_status[index] = -8
+          merged = false
+          md_off = 0
+
+          while !merged && md_off < index
+            if days[md_off].is_off? && days[md_off].time.length == 1
+              days[md_off].add_weekday(index)
+              merged = true
             else
-              days[interval.day_start].add_time(OpeningHoursTime.new(interval.start, MINUTES_MAX))
-              days[interval.day_end].add_time(OpeningHoursTime.new(0, interval.end))
+              md_off += 1
             end
-          else
-            for j in interval.day_start..interval.day_end do
-              if j == interval.day_start
-                days[j].add_time(OpeningHoursTime.new(interval.start, MINUTES_MAX))
-              elsif j == interval.day_end
-                days[j].add_time(OpeningHoursTime.new(0, interval.end))
-              else
-                days[j].add_time(OpeningHoursTime.new(0, MINUTES_MAX))
+          end
+
+          if !merged
+            result << day
+          end
+        elsif day.is_off? && day.time.length == 0
+          days_status[index] = 8
+        elsif days_status[index] <= 0 && days_status[index] > -8
+          days_status[index] = index + 1
+          same_day_count = 1
+          last_same_day = 1
+          result << day
+
+          for j in (index + 1)...days.length do
+            if day.same_time?(days[j])
+              days_status[j] = index + 1
+              day.add_weekday(j)
+              last_same_day = j
+              same_day_count += 1
+            end
+          end
+
+          if same_day_count == 1
+            result << day
+          elsif same_day_count == 2
+            day.add_weekday(last_same_day)
+            result << day
+          elsif same_day_count > 2
+            for j in (index + 1)...last_same_day do
+              if days_status[j] == 0
+                days_status[j] = -index - 1
+                if days[j].time.length > 0
+                  day.add_overwritten_weekday(j)
+                end
               end
             end
+            day.add_weekday(last_same_day)
+            result << day
           end
-        rescue Exception => e
-          puts e
+
         end
       end
+      result = merge_days(result)
+      return result
     end
 
-    return [ monday0, sunday24, days ]
-  end
+    def merge_days(rules)
+      return rules if rules.length == 0
+      result = []
+      result << rules[0]
+      dm = 0
 
-  def night_monday_sunday(days, monday0, sunday24)
-    if monday0 >= 0 && sunday24 >= 0 && monday0 < sunday24
-      days[0].time.sort! { |a, b| a.start <=> b.start }
-      days[6].time.sort! { |a, b| a.start <=> b.start }
+      for d in 1...rules.length do
+        date_merged = false
+        dm = 0
+        while !date_merged && dm < d
+          if rules[dm].same_time?(rules[d])
+            wds = rules[d].date[0].weekdays
+            wds.each do |wd|
+              rules[dm].add_weekday(wd)
+            end
+            date_merged = true
+          end
+          dm += 1
+        end
+        if !date_merged
+          result << rules[d]
+        end
+      end
 
-      days[6].time[days[6].time.length - 1] = OpeningHoursTime.new(sunday24, monday0)
-      days[0].time.shift
+      return result
     end
-    return days
+
+    def create_time_intervals(time_selector, type, intervals)
+      monday0 = -1
+      sunday24 = -1
+
+      days = []
+      for i in 0...7 do
+        days << OpeningHoursConverter::OpeningHoursRule.new
+        days[i].add_date(OpeningHoursConverter::OpeningHoursDate.new(time_selector, type, [ i ]))
+      end
+
+      intervals.each do |interval|
+        if !interval.nil?
+          if interval.day_start == DAYS_MAX && interval.day_end == DAYS_MAX && interval.end == MINUTES_MAX
+            sunday24 = interval.start
+          end
+          if interval.day_start == 0 && interval.day_end == 0 && interval.start == 0
+            monday0 = interval.end
+          end
+          begin
+            if interval.day_start == interval.day_end
+              days[interval.day_start].add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, interval.end))
+            elsif interval.day_end - interval.day_start == 1
+              if interval.start > interval.end
+                days[interval.day_start].add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, interval.end))
+              else
+                days[interval.day_start].add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, MINUTES_MAX))
+                days[interval.day_end].add_time(OpeningHoursConverter::OpeningHoursTime.new(0, interval.end))
+              end
+            else
+              for j in interval.day_start..interval.day_end do
+                if j == interval.day_start
+                  days[j].add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, MINUTES_MAX))
+                elsif j == interval.day_end
+                  days[j].add_time(OpeningHoursConverter::OpeningHoursTime.new(0, interval.end))
+                else
+                  days[j].add_time(OpeningHoursConverter::OpeningHoursTime.new(0, MINUTES_MAX))
+                end
+              end
+            end
+          rescue Exception => e
+            puts e
+          end
+        end
+      end
+
+      return [ monday0, sunday24, days ]
+    end
+
+    def night_monday_sunday(days, monday0, sunday24)
+      if monday0 >= 0 && sunday24 >= 0 && monday0 < sunday24
+        days[0].time.sort! { |a, b| a.start <=> b.start }
+        days[6].time.sort! { |a, b| a.start <=> b.start }
+
+        days[6].time[days[6].time.length - 1] = OpeningHoursConverter::OpeningHoursTime.new(sunday24, monday0)
+        days[0].time.shift
+      end
+      return days
+    end
   end
 end

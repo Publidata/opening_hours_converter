@@ -1,19 +1,19 @@
 require 'opening_hours_converter/day'
 
-RSpec.describe Day, '#initialize' do
+RSpec.describe OpeningHoursConverter::Day, '#initialize' do
   it "initialize" do
-    expect { Day.new }.to_not raise_error
+    expect { OpeningHoursConverter::Day.new }.to_not raise_error
   end
 end
-RSpec.describe Day, '#get_as_minute_array' do
+RSpec.describe OpeningHoursConverter::Day, '#get_as_minute_array' do
   it "has the right length" do
-    d = Day.new
+    d = OpeningHoursConverter::Day.new
     minutes = d.get_as_minute_array
     expect(minutes.length).to eql(24*60+1)
   end
   it "has the right values" do
-    d = Day.new
-    d.add_interval(Interval.new(0, 60, 0, 120))
+    d = OpeningHoursConverter::Day.new
+    d.add_interval(OpeningHoursConverter::Interval.new(0, 60, 0, 120))
     minutes = d.get_as_minute_array
     for m in 0..(24*60)
       if m >= 60 && m <= 120
@@ -25,12 +25,12 @@ RSpec.describe Day, '#get_as_minute_array' do
   end
 end
 
-RSpec.describe Day, 'intervals' do
+RSpec.describe OpeningHoursConverter::Day, 'intervals' do
   it "raw" do
-    d = Day.new
-    it1 = Interval.new(0, 60, 0, 120)
-    it2 = Interval.new(0, 360, 0, 420)
-    it3 = Interval.new(0, 660, 0, 720)
+    d = OpeningHoursConverter::Day.new
+    it1 = OpeningHoursConverter::Interval.new(0, 60, 0, 120)
+    it2 = OpeningHoursConverter::Interval.new(0, 360, 0, 420)
+    it3 = OpeningHoursConverter::Interval.new(0, 660, 0, 720)
 
     itId1 = d.add_interval(it1)
     itId2 = d.add_interval(it2)
@@ -49,10 +49,10 @@ RSpec.describe Day, 'intervals' do
   end
 
   it "cleaned" do
-    d = Day.new
-    it1 = Interval.new(0, 60, 0, 120)
-    it2 = Interval.new(0, 120, 0, 300)
-    it3 = Interval.new(0, 660, 0, 720)
+    d = OpeningHoursConverter::Day.new
+    it1 = OpeningHoursConverter::Interval.new(0, 60, 0, 120)
+    it2 = OpeningHoursConverter::Interval.new(0, 120, 0, 300)
+    it3 = OpeningHoursConverter::Interval.new(0, 660, 0, 720)
 
     itId1 = d.add_interval(it1)
     itId2 = d.add_interval(it2)
@@ -88,10 +88,10 @@ RSpec.describe Day, 'intervals' do
   end
 
   it "edit" do
-    d = Day.new
-    it1 = Interval.new(0, 60, 0, 120)
-    it2 = Interval.new(0, 240, 0, 300)
-    it3 = Interval.new(0, 660, 0, 720)
+    d = OpeningHoursConverter::Day.new
+    it1 = OpeningHoursConverter::Interval.new(0, 60, 0, 120)
+    it2 = OpeningHoursConverter::Interval.new(0, 240, 0, 300)
+    it3 = OpeningHoursConverter::Interval.new(0, 660, 0, 720)
 
     itId1 = d.add_interval(it1)
     itId2 = d.add_interval(it2)
@@ -104,14 +104,14 @@ RSpec.describe Day, 'intervals' do
   end
 
   it "copy" do
-    d1 = Day.new
-    it1 = Interval.new(0, 60, 0, 120)
-    it2 = Interval.new(0, 240, 0, 300)
+    d1 = OpeningHoursConverter::Day.new
+    it1 = OpeningHoursConverter::Interval.new(0, 60, 0, 120)
+    it2 = OpeningHoursConverter::Interval.new(0, 240, 0, 300)
 
     itId1 = d1.add_interval(it1)
     itId2 = d1.add_interval(it2)
 
-    d2 = Day.new
+    d2 = OpeningHoursConverter::Day.new
     d2.copy_intervals(d1.get_intervals)
     intervals = d2.get_intervals
     expect(intervals.length).to eql(2)
@@ -127,10 +127,10 @@ RSpec.describe Day, 'intervals' do
   end
 
   it "clear" do
-    d = Day.new
-    it1 = Interval.new(0, 60, 0, 120)
-    it2 = Interval.new(0, 120, 0, 300)
-    it3 = Interval.new(0, 660, 0, 720)
+    d = OpeningHoursConverter::Day.new
+    it1 = OpeningHoursConverter::Interval.new(0, 60, 0, 120)
+    it2 = OpeningHoursConverter::Interval.new(0, 120, 0, 300)
+    it3 = OpeningHoursConverter::Interval.new(0, 660, 0, 720)
 
     itId1 = d.add_interval(it1)
     itId2 = d.add_interval(it2)
@@ -144,11 +144,11 @@ RSpec.describe Day, 'intervals' do
   end
 
   it "same as" do
-    d = Day.new
-    d1 = Day.new
-    it1 = Interval.new(0, 60, 0, 120)
-    it2 = Interval.new(0, 120, 0, 300)
-    it3 = Interval.new(0, 660, 0, 720)
+    d = OpeningHoursConverter::Day.new
+    d1 = OpeningHoursConverter::Day.new
+    it1 = OpeningHoursConverter::Interval.new(0, 60, 0, 120)
+    it2 = OpeningHoursConverter::Interval.new(0, 120, 0, 300)
+    it3 = OpeningHoursConverter::Interval.new(0, 660, 0, 720)
 
     d.add_interval(it1)
     d1.add_interval(it1)
