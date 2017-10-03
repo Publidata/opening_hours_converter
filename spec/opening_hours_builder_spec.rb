@@ -297,11 +297,44 @@ RSpec.describe OpeningHoursBuilder, '#build' do
 
     expect(OpeningHoursBuilder.new.build(dr)).to eql("Tu,Su 10:00-12:00; Jun Tu,Su off; Jun We,Sa 10:00-12:00")
   end
-  it "week 01-09 Mo 03:00-06:00 (week factoring)", pending do
-    dr = [ DateRange.new(WideInterval.new.week(1, 2)), DateRange.new(WideInterval.new.week(3, 9)) ]
-    dr[0].typical.add_interval(Interval.new(0, 3*60, 0, 6*60))
-    dr[1].typical.add_interval(Interval.new(0, 3*60, 0, 6*60))
+  # it "week 01-09 Mo 03:00-06:00 (week factoring)", pending do
+  #   dr = [ DateRange.new(WideInterval.new.week(1, 2)), DateRange.new(WideInterval.new.week(3, 9)) ]
+  #   dr[0].typical.add_interval(Interval.new(0, 3*60, 0, 6*60))
+  #   dr[1].typical.add_interval(Interval.new(0, 3*60, 0, 6*60))
 
-    expect(OpeningHoursBuilder.new.build(dr)).to eql("week 01-09 Mo 03:00-06:00")
+  #   expect(OpeningHoursBuilder.new.build(dr)).to eql("week 01-09 Mo 03:00-06:00")
+  # end
+  it "May-Jun,Sep Mo,Tu 14:00-18:00 (month factoring)" do
+    dr = [ DateRange.new(WideInterval.new.month(5, 6)), DateRange.new(WideInterval.new.month(9)) ]
+    dr[0].typical.add_interval(Interval.new(0, 14*60, 0, 18*60))
+    dr[0].typical.add_interval(Interval.new(1, 14*60, 1, 18*60))
+    dr[1].typical.add_interval(Interval.new(0, 14*60, 0, 18*60))
+    dr[1].typical.add_interval(Interval.new(1, 14*60, 1, 18*60))
+
+    expect(OpeningHoursBuilder.new.build(dr)).to eql("May-Jun,Sep Mo,Tu 14:00-18:00")
+  end
+  it "12:00-14:00; We-Sa off (continuous week end)" do
+    dr = [ DateRange.new ]
+    dr[0].typical.add_interval(Interval.new(0, 12*60, 0, 14*60))
+    dr[0].typical.add_interval(Interval.new(1, 12*60, 1, 14*60))
+    dr[0].typical.add_interval(Interval.new(6, 12*60, 6, 14*60))
+
+    expect(OpeningHoursBuilder.new.build(dr)).to eql("12:00-14:00; We-Sa off")
+  end
+  it "Tu 00:00-24:00" do
+    dr = [ DateRange.new ]
+    dr[0].typical.add_interval(Interval.new(1, 0, 1, 24*60))
+
+    expect(OpeningHoursBuilder.new.build(dr)).to eql("Tu 00:00-24:00")
+  end
+  it "Tu-Fr 08:00-12:00; We off" do
+    dr = [ DateRange.new ]
+    dr[0].typical.add_interval(Interval.new(1, 8*60, 1, 12*60))
+    dr[0].typical.add_interval(Interval.new(3, 8*60, 3, 12*60))
+    dr[0].typical.add_interval(Interval.new(4, 8*60, 4, 12*60))
+
+    expect(OpeningHoursBuilder.new.build(dr)).to eql("Tu-Fr 08:00-12:00; We off")
   end
 end
+
+
