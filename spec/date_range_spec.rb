@@ -3,7 +3,7 @@ require 'opening_hours_converter/date_range'
 RSpec.describe OpeningHoursConverter::DateRange, '#initialize' do
   it "initialize" do
     expect { OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.always) }.to_not raise_error
-    expect { OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(15, 16)) }.to_not raise_error
+    expect { OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(15, 16)) }.to_not raise_error
   end
 end
 RSpec.describe OpeningHoursConverter::DateRange, '#defines_typical' do
@@ -23,12 +23,6 @@ RSpec.describe OpeningHoursConverter::DateRange, '#defines_typical' do
     dr = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(28))
     expect(dr.defines_typical_day?).to be false
     expect(dr.defines_typical_week?).to be true
-    dr2 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(28, 28))
-    expect(dr2.defines_typical_day?).to be false
-    expect(dr2.defines_typical_week?).to be true
-    dr2 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(28, 52))
-    expect(dr2.defines_typical_day?).to be false
-    expect(dr2.defines_typical_week?).to be true
     dr2 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(2))
     expect(dr2.defines_typical_day?).to be false
     expect(dr2.defines_typical_week?).to be true

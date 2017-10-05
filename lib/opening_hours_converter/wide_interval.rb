@@ -1,4 +1,5 @@
 require 'opening_hours_converter/constants'
+require 'pry-nav'
 
 module OpeningHoursConverter
   class WideInterval
@@ -16,23 +17,35 @@ module OpeningHoursConverter
 
       case @type
       when "day"
-        result = "#{OSM_MONTHS[@start[:month]-1]} #{@start[:day] < 10 ? "0" : ""}#{@start[:day]}"
+        result = "#{@start[:year]} #{OSM_MONTHS[@start[:month]-1]} #{@start[:day] < 10 ? "0" : ""}#{@start[:day]}"
         if !@end.nil?
-          if @start[:month] == @end[:month]
-            result += "-#{@end[:day] < 10 ? "0" : ""}#{@end[:day]}"
+          if @start[:year] == @end[:year]
+            if @start[:month] == @end[:month]
+              result += "-#{@end[:day] < 10 ? "0" : ""}#{@end[:day]}"
+            else
+              result += "-#{OSM_MONTHS[@end[:month]-1]} #{@end[:day] < 10 ? "0" : ""}#{@end[:day]}"
+            end
           else
-            result += "-#{OSM_MONTHS[@end[:month]-1]} #{@end[:day] < 10 ? "0" : ""}#{@end[:day]}"
+            if @start[:month] == @end[:month]
+              result += "-#{@end[:year]} #{@end[:day] < 10 ? "0" : ""}#{@end[:day]}"
+            else
+              result += "-#{@end[:year]} #{OSM_MONTHS[@end[:month]-1]} #{@end[:day] < 10 ? "0" : ""}#{@end[:day]}"
+            end
           end
         end
-      when "week"
-        result = "week #{@start[:week] < 10 ? "0" : ""}#{@start[:week]}"
-        if !@end.nil?
-          result += "-#{@end[:week] < 10 ? "0" : ""}#{@end[:week]}"
-        end
       when "month"
-        result = "#{OSM_MONTHS[@start[:month]-1]}"
+        result = "#{@start[:year]} #{OSM_MONTHS[@start[:month]-1]}"
         if !@end.nil?
-          result += "-#{OSM_MONTHS[@end[:month]-1]}"
+          if @start[:year] == @end[:year]
+            result += "-#{OSM_MONTHS[@end[:month]-1]}"
+          else
+            result += "-#{@end[:year]} #{OSM_MONTHS[@end[:month]-1]}"
+          end
+        end
+      when "year"
+        result = "#{@start[:year]}"
+        if !@end.nil?
+          result += "-#{@end[:year]}"
         end
       when "always"
         result = ""
@@ -55,12 +68,6 @@ module OpeningHoursConverter
         else
           result = "le #{@start[:day]} #{IRL_MONTHS[@start[:month] - 1]}"
         end
-      when "week"
-        if !@end.nil?
-          result = "toutes les semaines de la semaine #{@start[:week]} à la semaine #{@end[:week]}"
-        else
-          result = "la semaine #{@start[:week]}"
-        end
       when "month"
         if !@end.nil?
           result = "toutes les semaines de #{IRL_MONTHS[@start[:month] - 1]} à #{IRL_MONTHS[@endd[:month] - 1]}"
@@ -73,39 +80,39 @@ module OpeningHoursConverter
       return result
     end
 
-    def day(start_day, start_month, end_day=nil, end_month=nil)
-      if start_day.nil? || start_month.nil?
-        raise(ArgumentError, "start_day and start_month are required")
+    def day(start_day, start_month, start_year, end_day=nil, end_month=nil, end_year=nil)
+      if start_day.nil? || start_month.nil? || start_year.nil?
+        raise(ArgumentError, "start_day, start_month and start_year are required")
       end
-      @start = { day: start_day, month: start_month }
-      if (!end_day.nil? && !end_month.nil? && (end_day != start_day || end_month != start_month))
-        @end = { day: end_day, month: end_month }
+      @start = { day: start_day, month: start_month, year: start_year }
+      if (!end_day.nil? && !end_month.nil? && !end_year.nil? && (end_day != start_day || end_month != start_month || end_year != start_year))
+        @end = { day: end_day, month: end_month, year: end_year }
       end
       @type = "day"
       self
     end
 
-    def week(start_week, end_week=nil)
-      if start_week.nil?
-        raise(ArgumentError, "start_week is required")
+    def month(start_month, start_year, end_month=nil, end_year=nil)
+      if start_month.nil?
+        raise(ArgumentError, "start_month and start_year are required")
       end
-      @start = { week: start_week }
-      unless end_week.nil? || end_week == start_week
-        @end = { week: end_week }
+      @start = { month: start_month, year: start_year }
+      if !end_month.nil? && !end_year.nil? && (end_month != start_month || end_year != start_year)
+        @end = { month: end_month, year: end_year }
       end
-      @type = "week"
+      @type = "month"
       self
     end
 
-    def month(start_month, end_month=nil)
-      if start_month.nil?
-        raise(ArgumentError, "start_month is required")
+    def year(start_year, end_year=nil)
+      if start_year.nil?
+        raise(ArgumentError, "start_year is required")
       end
-      @start = { month: start_month }
-      unless end_month.nil? || end_month == start_month
-        @end = { month: end_month }
+      @start = { year: start_year }
+      unless end_year.nil? || end_year == start_year
+        @end = { year: end_year }
       end
-      @type = "month"
+      @type = "year"
       self
     end
 
@@ -128,91 +135,58 @@ module OpeningHoursConverter
     end
 
     def starts_month?
-      @type == "month" || @type == "always" || (@type == "day" && @start[:day] == 1)
+      @type == "month" || @type == "always" || @type == "year" || (@type == "day" && @start[:day] == 1)
     end
 
     def ends_month?
-      @type == "month" || @type == "always" || (@type == "day" && !@end.nil? && @end[:day] == MONTH_END_DAY[@end[:month] - 1])
+      @type == "month" || @type == "always" || @type == "year" || (@type == "day" && !@end.nil? && @end[:day] == MONTH_END_DAY[@end[:month] - 1])
+    end
+
+    def is_full_year?
+      if @type == "year" && @end.nil?
+        true
+      elsif @type == "month"
+        @start[:month] == 1 && !@end.nil? && @start[:year] == @end[:year] && !@end[:month].nil? && @end[:month] == 12
+      elsif @type == "day"
+        @start[:day] == 1 && @start[:month] == 1 && !@end.nil? && @start[:year] == @end[:year] &&
+        !@end[:month].nil? && @end[:month] == 12 && !@end[:day].nil? && @end[:day] == MONTH_END_DAY[@end[:month] - 1]
+      else
+        false
+      end
+    end
+
+    def starts_year?
+      @type == "year" || @type == "always" || (@type == "day" && @start[:day] == 1 && @start[:month] == 1) || (@type == "month" && @start[:month] == 1)
+    end
+
+    def ends_year?
+      @type == "year" || @type == "always" || (@type == "day" && !@end.nil? && @end[:month] == 12 && @end[:day] == MONTH_END_DAY[@end[:month] - 1])
     end
 
     def contains?(o)
+      return false if o.type == "always"
       result = false
       if self.equals(o)
         result = false
       elsif @type == "always"
         result = true
-      elsif @type ==  "day"
-        if o.type == "day"
-          if o.start[:month] > @start[:month] || (o.start[:month] == @start[:month] && o.start[:day] >= @start[:day])
-
-            if !o.end.nil?
-              if !@end.nil? && (o.end[:month] < @end[:month] || (o.end[:month] == @end[:month] && o.end[:day] <= @end[:day]))
-                result = true
-              end
-            else
-              if !@end.nil? && (o.start[:month] < @end[:month] || (o.start[:month] == @end[:month] && o.start[:day] <= @end[:day]))
-                result = true
-              end
-            end
-
-          end
-        elsif o.type == "month"
-          if o.start[:month] > @start[:month] || (o.start[:month] == @start[:month] && @start[:day] == 1)
-            if !o.end.nil? && !@end.nil? && (o.end[:month] < @end[:month] || (o.end[:month] == @end[:month] && @end[:day] == MONTH_END_DAY[@end.month-1]))
+      else
+        self_to_day = to_day
+        o_to_day = o.to_day
+        if o_to_day.start[:year] > self_to_day.start[:year] ||
+          (o_to_day.start[:year] == self_to_day.start[:year] && (o_to_day.start[:month] > self_to_day.start[:month] ||
+          (o_to_day.start[:month] == self_to_day.start[:month] && o_to_day.start[:day] >= self_to_day.start[:day])))
+          if !o_to_day.end.nil?
+            if !self_to_day.end.nil? && (o_to_day.end[:year] < self_to_day.end[:year] ||
+              (o_to_day.end[:year] == self_to_day.end[:year] && o_to_day.end[:month] <= self_to_day.end[:month]) && (o_to_day.end[:month] < self_to_day.end[:month] ||
+              (o_to_day.end[:month] == self_to_day.end[:month] && o_to_day.end[:day] <= self_to_day.end[:day])))
               result = true
-            elsif o.end.nil? && (!@end.nil? && o.start[:month] < @end[:month])
-              result = true
-            end
-          end
-        end
-      elsif @type == "week"
-        if o.type == "week"
-          if o.start[:week] >= @start[:week]
-            if !o.end.nil? && !@end.nil? && o.end[:week] <= @end[:week]
-              result = true
-            elsif o.end.nil? && ((!@end.nil? && o.start[:week] <= @end[:week]) || o.start[:week] == @start[:week])
-              result = true
-            end
-          end
-        end
-      elsif @type == "month"
-        if o.type == "month"
-          if o.start[:month] >= @start[:month]
-            if !o.end.nil? && !@end.nil? && o.end[:month] <= @end[:month]
-              result = true
-            elsif o.end.nil? && ((!@end.nil? && o.start[:month] <= @end[:month]) || o.start[:month] == @start[:month])
-              result = true
-            end
-          end
-        elsif o.type == "day"
-          if !o.end.nil?
-            if @end.nil?
-              if o.start[:month] == @start[:month] &&
-                o.end[:month] == @start[:month] &&
-                ((o.start[:day] >= 1 && o.end[:day] < MONTH_END_DAY[o.start[:month]-1]) ||
-                (o.start[:day] > 1 && o.end[:day] <= MONTH_END_DAY[o.start[:month]-1]))
-                result = true
-              end
-            else
-              if o.start[:month] >= @start[:month] && o.end[:month] <= @end[:month]
-                if ((o.start[:month] > @start[:month] && o.end[:month] < @end[:month]) ||
-                  (o.start[:month] == @start[:month] && o.end[:month] < @end[:month] && o.start.day > 1) ||
-                  (o.start[:month] > @start[:month] && o.end[:month] == @end[:month] && o.end[:day] < MONTH_END_DAY[o.end[:month]-1]) ||
-                  (o.start[:day] >= 1 && o.end[:day] < MONTH_END_DAY[o.end[:month]-1]) ||
-                  (o.start[:day] > 1 && o.end[:day] <= MONTH_END_DAY[o.end[:month]-1]))
-                  result = true
-                end
-              end
             end
           else
-            if @end.nil?
-              if @start[:month] == o.start[:month]
-                result = true
-              end
-            else
-              if o.start[:month] >= @start[:month] && o.start[:month] <= @end[:month]
-                result = true
-              end
+            if !self_to_day.end.nil? && (o_to_day.start[:year] < self_to_day.end[:year] ||
+              (o_to_day.start[:year] == self_to_day.end[:year] && o_to_day.start[:month] <= self_to_day.end[:month]) && (o_to_day.start[:month] < self_to_day.end[:month] ||
+              (o_to_day.start[:month] == self_to_day.end[:month] && o_to_day.start[:day] <= self_to_day.end[:day])))
+              result = true
             end
           end
         end
@@ -223,42 +197,38 @@ module OpeningHoursConverter
     def equals(o)
       return false unless o.instance_of?(OpeningHoursConverter::WideInterval)
       return @type == "always" if o.type == "always"
-
-      result = false
+      return false if @type == "always"
+      self_to_day = to_day
+      o_to_day = o.to_day
+      return (self_to_day.start[:year] == o_to_day.start[:year] &&
+        self_to_day.start[:month] == o_to_day.start[:month] &&
+        self_to_day.start[:day] == o_to_day.start[:day]) &&
+        ((self_to_day.end.nil? && o_to_day.end.nil?) || ((!self_to_day.end.nil? && !o_to_day.end.nil?) &&
+          (self_to_day.end[:year] == o_to_day.end[:year] &&
+            self_to_day.end[:month] == o_to_day.end[:month] &&
+            self_to_day.end[:day] == o_to_day.end[:day])))
+    end
+    def to_day
       case @type
-      when "always"
-        result = o.start.nil?
       when "day"
-        result = ((o.type == "day" &&
-          o.start[:month] == @start[:month] &&
-          o.start[:day] == @start[:day] &&
-          ((o.end.nil? && @end.nil?) ||
-          (!o.end.nil? && !@end.nil? &&
-            o.end[:month] == @end[:month] &&
-            o.end[:day] == @end[:day]))) ||
-          (o.type == "month" &&
-          o.start[:month] == @start[:month] &&
-          (o.is_full_month? && is_full_month?) ||
-          (!o.end.nil? && !@end.nil? &&
-            o.end[:month] == @end[:month] &&
-            o.ends_month? && ends_month?)))
-      when "week"
-        result = (o.type == "week" &&
-          o.start[:week] == @start[:week] &&
-          (o.end == @end ||
-            (!o.end.nil? && !@end.nil? && o.end[:week] == @end[:week])))
+        if @end.nil?
+          OpeningHoursConverter::WideInterval.new.day(@start[:day], @start[:month], @start[:year])
+        else
+          OpeningHoursConverter::WideInterval.new.day(@start[:day], @start[:month], @start[:year], @end[:day], @end[:month], @end[:year])
+        end
       when "month"
-        result = (o.type == "day" &&
-          o.start[:month] == @start[:month] &&
-          (o.starts_month? &&
-          (!o.end.nil? && @end.nil? && o.end[:month] == @start[:month] && o.ends_month?) ||
-          (!o.end.nil? && !@end.nil? && o.end[:month] == @end[:month] && o.ends_month?))) ||
-          (o.type == "month" &&
-          o.start[:month] == @start[:month] &&
-          ((o.end.nil? && @end.nil?) ||
-          (!o.end.nil? && !@end.nil? && o.end[:month] == @end[:month])))
+        if @end.nil?
+          OpeningHoursConverter::WideInterval.new.day(1, @start[:month], @start[:year], MONTH_END_DAY[@start[:month] - 1], @start[:month], @start[:year])
+        else
+          OpeningHoursConverter::WideInterval.new.day(1, @start[:month], @start[:year], MONTH_END_DAY[@end[:month] - 1], @end[:month], @end[:year])
+        end
+      when "year"
+        if @end.nil?
+          OpeningHoursConverter::WideInterval.new.day(1, 1, @start[:year], 31, 12, @start[:year])
+        else
+          OpeningHoursConverter::WideInterval.new.day(1, 1, @start[:year], 31, 12, @end[:year])
+        end
       end
-      result
     end
   end
 end

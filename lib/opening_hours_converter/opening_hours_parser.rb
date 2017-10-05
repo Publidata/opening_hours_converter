@@ -228,15 +228,15 @@ module OpeningHoursConverter
               date_ranges << date_range
             end
           end
-        elsif weeks.length > 0
-          weeks.each do |week|
-            if !week[:to].nil?
-              date_range = OpeningHoursConverter::WideInterval.new.week(week[:from], week[:to])
-            else
-              date_range = OpeningHoursConverter::WideInterval.new.week(week[:from])
-            end
-            date_ranges << date_range
-          end
+        # elsif weeks.length > 0
+        #   weeks.each do |week|
+        #     if !week[:to].nil?
+        #       date_range = OpeningHoursConverter::WideInterval.new.week(week[:from], week[:to])
+        #     else
+        #       date_range = OpeningHoursConverter::WideInterval.new.week(week[:from])
+        #     end
+        #     date_ranges << date_range
+        #   end
         else
           date_ranges << OpeningHoursConverter::WideInterval.new.always
         end
