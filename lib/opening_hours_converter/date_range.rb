@@ -27,11 +27,7 @@ module OpeningHoursConverter
           else
             @typical = OpeningHoursConverter::Week.new
           end
-        when "week"
-          @typical = OpeningHoursConverter::Week.new
-        when "month"
-          @typical = OpeningHoursConverter::Week.new
-        when "always"
+        when "week", "month", "year", "always"
           @typical = OpeningHoursConverter::Week.new
         end
       end

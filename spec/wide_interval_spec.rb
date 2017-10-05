@@ -30,9 +30,10 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#day" do
   it "initialize" do
     expect { wi = OpeningHoursConverter::WideInterval.new.day(1, 1, 1, 2, 2, 2) }.not_to raise_error
     expect { wi2 = OpeningHoursConverter::WideInterval.new.day(1, 1, 1) }.not_to raise_error
+    expect { wi5 = OpeningHoursConverter::WideInterval.new.day(1, 1) }.not_to raise_error
+    expect { wi5 = OpeningHoursConverter::WideInterval.new.day(1, 1, nil, 2, 2) }.not_to raise_error
     expect { wi3 = OpeningHoursConverter::WideInterval.new.day() }.to raise_error ArgumentError
     expect { wi4 = OpeningHoursConverter::WideInterval.new.day(1) }.to raise_error ArgumentError
-    expect { wi5 = OpeningHoursConverter::WideInterval.new.day(1, 1) }.to raise_error ArgumentError
   end
 
   it "type is day" do
@@ -198,7 +199,8 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#month" do
   it "initialize" do
     expect { wi = OpeningHoursConverter::WideInterval.new.month(1,2017, 3,2017) }.not_to raise_error
     expect { wi2 = OpeningHoursConverter::WideInterval.new.month(1,2017) }.not_to raise_error
-    expect { wi2 = OpeningHoursConverter::WideInterval.new.month(1) }.to raise_error ArgumentError
+    expect { wi2 = OpeningHoursConverter::WideInterval.new.month(1) }.not_to raise_error
+    expect { wi2 = OpeningHoursConverter::WideInterval.new.month(1,nil,2) }.not_to raise_error
     expect { wi3 = OpeningHoursConverter::WideInterval.new.month }.to raise_error ArgumentError
   end
 

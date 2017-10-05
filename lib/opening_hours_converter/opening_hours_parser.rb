@@ -14,6 +14,7 @@ module OpeningHoursConverter
       @RGX_WEEKDAY = /^(((Mo|Tu|We|Th|Fr|Sa|Su)(\-(Mo|Tu|We|Th|Fr|Sa|Su))?)|(PH|SH|easter))(,(((Mo|Tu|We|Th|Fr|Sa|Su)(\-(Mo|Tu|We|Th|Fr|Sa|Su))?)|(PH|SH|easter)))*$/
       @RGX_HOLIDAY = /^(PH|SH|easter)$/
       @RGX_WD = /^(Mo|Tu|We|Th|Fr|Sa|Su)(\-(Mo|Tu|We|Th|Fr|Sa|Su))?$/
+      @RGX_YEAR = /^(\d{4})(\-(\d{4}))?$/
     end
 
     def parse(oh)
@@ -42,6 +43,10 @@ module OpeningHoursConverter
       single_week = nil
       week_from = nil
       week_to = nil
+
+      single_year = nil
+      year_from = nil
+      year_to = nil
 
       date_ranges = nil
       date_range = nil
@@ -109,6 +114,24 @@ module OpeningHoursConverter
             else
               raise ArgumentError, "Invalid weekday interval : #{wd}"
             end
+          end
+          current_token -= 1
+        end
+
+        years = []
+        if current_token >= 0 && is_year?(tokens[current_token])
+          year_selector = tokens[current_token]
+          year_selector = year_selector.split(',')
+          year_selector.each do |y|
+            single_year = y.gsub(/\:$/, '').split('-')
+            year_from = single_year[0]
+            if single_year.length > 1
+              year_to = single_year[1]
+            else
+              year_to = year_from
+            end
+
+            years << {from: year_from, to: year_to}
           end
           current_token -= 1
         end
@@ -182,31 +205,19 @@ module OpeningHoursConverter
                   raise ArgumentError, "Unsupported month selector #{ms}"
                 end
               end
-            elsif !week_selector.nil?
-              week_selector = week_selector.split(',')
-              week_selector.each do |ws|
-                single_week = ws.split('-')
-                week_from = single_week[0].to_i
-                if single_week.length > 1
-                  week_to = single_week[1].to_i
-                else
-                  week_to = nil
-                end
-                weeks << {from: week_from, to: week_to}
-              end
-            else
-              raise ArgumentError, "Invalid date selector"
             end
           end
         end
+
         if current_token == tokens.length - 1
           raise ArgumentError, "Unreadable string"
         end
-        # puts "months : #{months}"
-        # puts "weeks : #{weeks}"
-        # puts "weekdays : #{weekdays}"
-        # puts "times : #{times}"
-        # puts "rule_modifier : #{rule_modifier}"
+        puts "months : #{months}"
+        puts "weeks : #{weeks}"
+        puts "weekdays : #{weekdays}"
+        puts "times : #{times}"
+        puts "years : #{years}"
+        puts "rule_modifier : #{rule_modifier}"
 
         date_ranges = []
 
@@ -214,19 +225,28 @@ module OpeningHoursConverter
           months.each do |month|
             if !month[:from_day].nil?
               if !month[:to_day].nil?
-                date_range = OpeningHoursConverter::WideInterval.new.day(month[:from_day][:day], month[:from_day][:month], month[:to_day][:day], month[:to_day][:month])
+                date_range = OpeningHoursConverter::WideInterval.new.day(month[:from_day][:day], month[:from_day][:month], nil, month[:to_day][:day], month[:to_day][:month], nil)
               else
                 date_range = OpeningHoursConverter::WideInterval.new.day(month[:from_day][:day], month[:from_day][:month])
               end
               date_ranges << date_range
             else
               if !month[:to].nil?
-                date_range = OpeningHoursConverter::WideInterval.new.month(month[:from], month[:to])
+                date_range = OpeningHoursConverter::WideInterval.new.month(month[:from], nil, month[:to])
               else
                 date_range = OpeningHoursConverter::WideInterval.new.month(month[:from])
               end
               date_ranges << date_range
             end
+          end
+        elsif years.length > 0
+          years.each do |year|
+            if !year[:to].nil?
+              date_range = OpeningHoursConverter::WideInterval.new.year(year[:from], year[:to])
+            else
+              date_range = OpeningHoursConverter::WideInterval.new.year(year[:from])
+            end
+            date_ranges << date_range
           end
         # elsif weeks.length > 0
         #   weeks.each do |week|
@@ -403,6 +423,9 @@ module OpeningHoursConverter
     end
     def is_weekday?(token)
       !(@RGX_WEEKDAY =~ token).nil?
+    end
+    def is_year?(token)
+      !(@RGX_YEAR =~ token).nil?
     end
   end
 end

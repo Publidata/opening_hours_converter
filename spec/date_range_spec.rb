@@ -11,18 +11,15 @@ RSpec.describe OpeningHoursConverter::DateRange, '#defines_typical' do
     dr = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11))
     expect(dr.defines_typical_day?).to be true
     expect(dr.defines_typical_week?).to be false
-    dr2 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, 29, 12))
+    dr2 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, nil, 29, 12))
     expect(dr2.defines_typical_day?).to be false
     expect(dr2.defines_typical_week?).to be true
-    dr3 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, 28, 11))
+    dr3 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, nil, 28, 11))
     expect(dr3.defines_typical_day?).to be true
     expect(dr3.defines_typical_week?).to be false
   end
 
   it "defines_typical_week" do
-    dr = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(28))
-    expect(dr.defines_typical_day?).to be false
-    expect(dr.defines_typical_week?).to be true
     dr2 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(2))
     expect(dr2.defines_typical_day?).to be false
     expect(dr2.defines_typical_week?).to be true
@@ -44,107 +41,95 @@ RSpec.describe OpeningHoursConverter::DateRange, '#update_range' do
     end1 = dr.wide_interval.end
     expect(end1.nil?).to be true
 
-    dr.update_range(OpeningHoursConverter::WideInterval.new.week(5, 10))
+    dr.update_range(OpeningHoursConverter::WideInterval.new.month(5, nil, 10))
     st2 = dr.wide_interval.start
-    expect(st2[:week]).to eql(5)
+    expect(st2[:month]).to eql(5)
     expect(st2[:day].nil?).to be true
-    expect(st2[:month].nil?).to be true
     end2 = dr.wide_interval.end
-    expect(end2[:week]).to eql(10)
+    expect(end2[:month]).to eql(10)
   end
 end
 
 RSpec.describe OpeningHoursConverter::DateRange, '#is_general_for?' do
-  it "one day is general for nothing" do
-    dr = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11))
+  before(:all) do
+    @dr_november_28 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11))
+    @dr_november_28_to_29 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, nil, 29, 11))
+    @dr_november_27_to_29 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(27, 11, nil, 29, 11))
+    @dr_november_27_to_december_29 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(27, 11, nil, 29, 12))
+    @dr_november = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(11))
+    @dr_always = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.always)
 
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, 29, 11)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(27, 11, 29, 11)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(11)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(11)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.always))).to be false
+    @dr_2017 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.year(2017))
+
+    @dr_october_15_to_november_15 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(15, 10, nil, 15, 11))
+    @dr_october_20_to_november_10 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(20, 10, nil, 10, 11))
+    @dr_october_10_to_november_15 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(10, 10, nil, 15, 11))
+    @dr_october_15_to_november_20 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(15, 10, nil, 20, 11))
+
+    @dr_october_15 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(15, 10))
+    @dr_october_20 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(15, 10))
+    @dr_november_15 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(15, 11))
+    @dr_november_10 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(10, 11))
+
+    @dr_september = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(9))
+    @dr_october = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(10))
+    @dr_november = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(11))
+    @dr_september_to_november = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(9,nil,11))
+    @dr_august_to_october = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(8,nil,10))
+    @dr_october_to_december = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(10,nil,12))
+    @dr_september_to_october = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(9,nil,10))
   end
-  it "one week is general for nothing" do
-    dr = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(28))
 
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, 29, 11)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(27, 11, 29, 11)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(11)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(11)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.always))).to be false
+  it "one day is general for nothing" do
+    expect(@dr_november_28.is_general_for?(@dr_november_28)).to be false
+    expect(@dr_november_28.is_general_for?(@dr_november_28_to_29)).to be false
+    expect(@dr_november_28.is_general_for?(@dr_november_27_to_29)).to be false
+    expect(@dr_november_28.is_general_for?(@dr_november)).to be false
+    expect(@dr_november_28.is_general_for?(@dr_always)).to be false
+    # TODO test with years
   end
   it "one month is general for some days" do
-    dr = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(11))
-
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, 29, 11)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(27, 11, 29, 12)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(11)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(11)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.always))).to be false
+    expect(@dr_november.is_general_for?(@dr_november_28)).to be false
+    expect(@dr_november.is_general_for?(@dr_november_28_to_29)).to be true
+    expect(@dr_november.is_general_for?(@dr_november_27_to_december_29)).to be false
+    expect(@dr_november.is_general_for?(@dr_november)).to be false
+    expect(@dr_november.is_general_for?(@dr_always)).to be false
+    # TODO test with years
   end
 
   it "several days are general for some days" do
-    dr = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, 3, 12))
-
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, 3, 12)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, 29, 11)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, 30, 11)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, 2, 12)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(29, 11, 3, 12)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(27, 11, 29, 11)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(11)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(11)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.always))).to be false
-  end
-
-  it "several weeks are general for some days" do
-    dr = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(28, 52))
-
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, 3, 12)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, 29, 11)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, 30, 11)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(27, 11, 29, 11)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(29)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(28, 52)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(28, 51)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(29, 52)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(27, 30)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(11)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.always))).to be false
+    expect(@dr_october_15_to_november_15.is_general_for?(@dr_october_15_to_november_15)).to be false
+    expect(@dr_october_15_to_november_15.is_general_for?(@dr_october_20_to_november_10)).to be true
+    expect(@dr_october_15_to_november_15.is_general_for?(@dr_october_15)).to be false
+    expect(@dr_october_15_to_november_15.is_general_for?(@dr_october_20)).to be false
+    expect(@dr_october_15_to_november_15.is_general_for?(@dr_november_15)).to be false
+    expect(@dr_october_15_to_november_15.is_general_for?(@dr_november_10)).to be false
+    expect(@dr_october_15_to_november_15.is_general_for?(@dr_october_10_to_november_15)).to be false
+    expect(@dr_october_15_to_november_15.is_general_for?(@dr_october_15_to_november_20)).to be false
+    expect(@dr_october_15_to_november_15.is_general_for?(@dr_november)).to be false
+    expect(@dr_october_15_to_november_15.is_general_for?(@dr_always)).to be false
   end
 
   it "several months are general for some days and some months" do
-    dr = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(9, 11))
-
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, 3, 12)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, 29, 11)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, 30, 12)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 1, 2, 11)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(27, 11, 29, 11)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(29)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(28, 52)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(27, 30)))).to be false
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(11)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(10, 11)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.always))).to be false
+    expect(@dr_september_to_november.is_general_for?(@dr_september_to_november)).to be false
+    expect(@dr_september_to_november.is_general_for?(@dr_september)).to be true
+    expect(@dr_september_to_november.is_general_for?(@dr_october)).to be true
+    expect(@dr_september_to_november.is_general_for?(@dr_september_to_october)).to be true
+    expect(@dr_september_to_november.is_general_for?(@dr_october_15_to_november_15)).to be true
+    expect(@dr_september_to_november.is_general_for?(@dr_november_10)).to be false
+    expect(@dr_september_to_november.is_general_for?(@dr_november_27_to_december_29)).to be false
+    expect(@dr_september_to_november.is_general_for?(@dr_august_to_october)).to be false
+    expect(@dr_september_to_november.is_general_for?(@dr_october_to_december)).to be false
+    expect(@dr_september_to_november.is_general_for?(@dr_2017)).to be false
+    expect(@dr_september_to_november.is_general_for?(@dr_always)).to be false
   end
 
   it "always contains everything" do
-    dr = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.always)
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, 3, 12)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, 29, 11)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 11, 30, 12)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(28, 1, 2, 11)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(27, 11, 29, 11)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(29)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(28, 52)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.week(27, 30)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(11)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(10, 11)))).to be true
-    expect(dr.is_general_for?(OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.always))).to be false
+    expect(@dr_always.is_general_for?(@dr_october_15_to_november_15)).to be true
+    expect(@dr_always.is_general_for?(@dr_november)).to be true
+    expect(@dr_always.is_general_for?(@dr_october_to_december)).to be true
+    expect(@dr_always.is_general_for?(@dr_2017)).to be true
+    expect(@dr_always.is_general_for?(@dr_always)).to be false
   end
 end
 RSpec.describe OpeningHoursConverter::DateRange, '#has_same_typical?' do
