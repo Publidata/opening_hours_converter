@@ -15,6 +15,8 @@ module OpeningHoursConverter
       @RGX_HOLIDAY = /^(PH|SH|easter)$/
       @RGX_WD = /^(Mo|Tu|We|Th|Fr|Sa|Su)(\-(Mo|Tu|We|Th|Fr|Sa|Su))?$/
       @RGX_YEAR = /^(\d{4})(\-(\d{4}))?$/
+      @RGX_YEAR_MONTH_DAY = /^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([012]?[0-9]|3[01])(\-((\d{4}) )?((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) )?([012]?[0-9]|3[01]))?\:?$/
+      @RGX_YEAR_MONTH = /^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\-((\d{4}) )?((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)))?\:?$/
     end
 
     def parse(oh)
@@ -31,18 +33,15 @@ module OpeningHoursConverter
       weekdays = nil
       weeks = nil
       months = nil
-
-      single_time = nil
-      from = nil
-      to = nil
+      years = nil
 
       single_month = nil
       month_from = nil
       month_to = nil
 
-      single_week = nil
-      week_from = nil
-      week_to = nil
+      single_year = nil
+      year_from = nil
+      year_to = nil
 
       single_year = nil
       year_from = nil
@@ -66,29 +65,10 @@ module OpeningHoursConverter
           current_token -= 1
         end
 
-
-        # get time selector
-        from = nil
-        to = nil
         times = []
         if current_token >= 0 && is_time?(tokens[current_token])
           time_selector = tokens[current_token]
-
-          if time_selector == "24/7"
-            times << {from: 0, to: 24*60}
-          else
-            time_selector = time_selector.split(',')
-            time_selector.each do |ts|
-              single_time = ts.split('-')
-              from = as_minutes(single_time[0])
-              if single_time.length > 1
-                to = as_minutes(single_time[1])
-              else
-                to = from
-              end
-              times << {from: from, to: to}
-            end
-          end
+          times = get_times(time_selector)
           current_token -= 1
         end
 
@@ -98,112 +78,53 @@ module OpeningHoursConverter
           weekdays << {from: 0, to: 6}
         elsif current_token >= 0 && is_weekday?(tokens[current_token])
           weekday_selector = tokens[current_token]
-          weekday_selector = weekday_selector.split(',')
-          weekday_selector.each do |wd|
-            if !(@RGX_HOLIDAY =~ wd).nil?
-            elsif !(@RGX_WD =~ wd).nil?
-              single_weekday = wd.split('-')
-              wd_from = OSM_DAYS.find_index(single_weekday[0])
-              if single_weekday.length > 1
-                wd_to = OSM_DAYS.find_index(single_weekday[1])
-              else
-                wd_to = wd_from
-              end
-
-              weekdays << {from: wd_from, to: wd_to}
-            else
-              raise ArgumentError, "Invalid weekday interval : #{wd}"
-            end
-          end
+          weekdays = get_weekdays(weekday_selector)
           current_token -= 1
         end
 
-        years = []
-        if current_token >= 0 && is_year?(tokens[current_token])
-          year_selector = tokens[current_token]
-          year_selector = year_selector.split(',')
-          year_selector.each do |y|
-            single_year = y.gsub(/\:$/, '').split('-')
-            year_from = single_year[0]
-            if single_year.length > 1
-              year_to = single_year[1]
-            else
-              year_to = year_from
-            end
+        # years = []
+        # if current_token >= 0 && is_year?(tokens[current_token])
+        #   year_selector = tokens[current_token]
+        #   year_selector = year_selector.split(',')
+        #   year_selector.each do |y|
+        #     single_year = y.gsub(/\:$/, '').split('-')
+        #     year_from = single_year[0]
+        #     if single_year.length > 1
+        #       year_to = single_year[1]
+        #     else
+        #       year_to = year_from
+        #     end
 
-            years << {from: year_from, to: year_to}
-          end
-          current_token -= 1
-        end
+        #     years << {from: year_from, to: year_to}
+        #   end
+        #   current_token -= 1
+        # end
 
-        weeks = []
         months = []
+        years = []
         if current_token >= 0
+
           wide_range_selector = tokens[0]
           for i in 1..current_token
             wide_range_selector += " #{tokens[i]}"
           end
           if wide_range_selector.length > 0
-            wide_range_selector = wide_range_selector.gsub(/\:$/, '').split('week')
-            month_selector = wide_range_selector[0].strip
-            if month_selector.length == 0
-              month_selector = nil
-            end
+            wide_range_selector = wide_range_selector.strip
+            wide_range_selector = wide_range_selector.split(',')
+            wide_range_selector.each do |wrs|
+              if !(@RGX_YEAR_MONTH_DAY =~ wrs).nil?
+                years << get_year_month_day(wrs)
+              elsif !(@RGX_YEAR_MONTH =~ wrs).nil?
+                years << get_year_month(wrs)
+              elsif !(@RGX_MONTHDAY =~ wrs).nil?
+                months << get_month_day(wrs)
+              elsif !(@RGX_MONTH =~ wrs).nil?
+                months << get_month(wrs)
+              elsif !(@RGX_YEAR =~ wrs).nil?
 
-            if wide_range_selector.length > 1
-              week_selector = wide_range_selector[1].strip
-              if week_selector.length == 0
-                week_selector = nil
-              end
-            else
-              week_selector = nil
-            end
-
-            if (!month_selector.nil? && !week_selector.nil?)
-              raise ArgumentError, "unsupported simultaneous month and week selector"
-            elsif !month_selector.nil?
-              month_selector = month_selector.split(',')
-
-              month_selector.each do |ms|
-                if ms == "SH"
-                elsif !(@RGX_MONTH =~ ms).nil?
-                  single_month = ms.split('-')
-                  month_from = OSM_MONTHS.find_index(single_month[0]) + 1
-                  if month_from < 1
-                    raise ArgumentError, "Invalid month : #{single_month[0]}"
-                  end
-
-                  if single_month.length > 1
-                    month_to = OSM_MONTHS.find_index(single_month[1]) + 1
-                    if month_to < 1
-                      raise ArgumentError, "Invalid month : #{single_month[1]}"
-                    end
-                  else
-                    month_to = month_from
-                  end
-                  months << {from: month_from, to: month_to}
-                elsif !(@RGX_MONTHDAY =~ ms).nil?
-                  single_month = ms.gsub(/\:$/, '').split('-')
-
-                  month_from = single_month[0].split(' ')
-                  month_from = { day: month_from[1].to_i, month: OSM_MONTHS.find_index(month_from[0]) + 1 }
-                  if month_from[:month] < 1
-                    raise ArgumentError, "Invalid month : #{month_from.inspect}"
-                  end
-
-                  if single_month.length > 1
-                    month_to = single_month[1].split(' ')
-                    month_to = { day: month_to[1].to_i, month: OSM_MONTHS.find_index(month_to[0]) + 1 }
-                    if month_to[:month] < 1
-                      raise ArgumentError, "Invalid month : #{month_to.inspect}"
-                    end
-                  else
-                    month_to = nil
-                  end
-                  months << {from_day: month_from, to_day: month_to}
-                else
-                  raise ArgumentError, "Unsupported month selector #{ms}"
-                end
+                years << {from: year_from, to: year_to}
+              else
+                raise ArgumentError, "Unsupported selector #{wrs}"
               end
             end
           end
@@ -213,7 +134,6 @@ module OpeningHoursConverter
           raise ArgumentError, "Unreadable string"
         end
         puts "months : #{months}"
-        puts "weeks : #{weeks}"
         puts "weekdays : #{weekdays}"
         puts "times : #{times}"
         puts "years : #{years}"
@@ -241,22 +161,28 @@ module OpeningHoursConverter
           end
         elsif years.length > 0
           years.each do |year|
+            # binding.pry
             if !year[:to].nil?
-              date_range = OpeningHoursConverter::WideInterval.new.year(year[:from], year[:to])
+              if !year[:from_day].nil?
+                date_range = OpeningHoursConverter::WideInterval.new.day(year[:from_day][:day], year[:from_day][:month], year[:from_day][:year],
+                  year[:to_day][:day], year[:to_day][:month], year[:to_day][:year])
+              elsif !year[:from_month].nil?
+                date_range = OpeningHoursConverter::WideInterval.new.month(year[:from_month][:month], year[:from_month][:year],
+                  year[:to_month][:month], year[:to_month][:year])
+              else
+                date_range = OpeningHoursConverter::WideInterval.new.year(year[:from], year[:to])
+              end
             else
-              date_range = OpeningHoursConverter::WideInterval.new.year(year[:from])
+              if !year[:from_month].nil?
+                date_range = OpeningHoursConverter::WideInterval.new.month(year[:from_month][:month], year[:from_month][:year])
+              elsif !year[:from_day].nil?
+                date_range = OpeningHoursConverter::WideInterval.new.day(year[:from_day][:day], year[:from_day][:month], year[:from_day][:year])
+              else
+                date_range = OpeningHoursConverter::WideInterval.new.year(year[:from])
+              end
             end
             date_ranges << date_range
           end
-        # elsif weeks.length > 0
-        #   weeks.each do |week|
-        #     if !week[:to].nil?
-        #       date_range = OpeningHoursConverter::WideInterval.new.week(week[:from], week[:to])
-        #     else
-        #       date_range = OpeningHoursConverter::WideInterval.new.week(week[:from])
-        #     end
-        #     date_ranges << date_range
-        #   end
         else
           date_ranges << OpeningHoursConverter::WideInterval.new.always
         end
@@ -336,6 +262,168 @@ module OpeningHoursConverter
         end
       end
       return result
+    end
+
+    def get_year(wrs)
+      single_year = wrs.gsub(/\:$/, '').split('-')
+      year_from = single_year[0].to_i
+      if year_from < 1
+        raise ArgumentError, "Invalid year : #{single_year[0]}"
+      end
+
+      if single_year.length > 1
+        year_to = single_year[1].to_i
+        if year_to < 1
+          raise ArgumentError, "Invalid year : #{single_year[1]}"
+        end
+      else
+        year_to = nil
+      end
+      { from: year_from, to: year_to }
+    end
+
+    def get_month(wrs)
+      single_month = wrs.gsub(/\:$/, '').split('-')
+      month_from = OSM_MONTHS.find_index(single_month[0]) + 1
+      if month_from < 1
+        raise ArgumentError, "Invalid month : #{single_month[0]}"
+      end
+
+      if single_month.length > 1
+        month_to = OSM_MONTHS.find_index(single_month[1]) + 1
+        if month_to < 1
+          raise ArgumentError, "Invalid month : #{single_month[1]}"
+        end
+      else
+        month_to = month_from
+      end
+      { from: month_from, to: month_to}
+    end
+
+    def get_month_day(wrs)
+      single_month = wrs.gsub(/\:$/, '').split('-')
+
+      month_from = single_month[0].split(' ')
+      month_from = { day: month_from[1].to_i, month: OSM_MONTHS.find_index(month_from[0]) + 1 }
+      if month_from[:month] < 1
+        raise ArgumentError, "Invalid month : #{month_from.inspect}"
+      end
+
+      if single_month.length > 1
+        month_to = single_month[1].split(' ')
+        month_to = { day: month_to[1].to_i, month: OSM_MONTHS.find_index(month_to[0]) + 1 }
+        if month_to[:month] < 1
+          raise ArgumentError, "Invalid month : #{month_to.inspect}"
+        end
+      else
+        month_to = nil
+      end
+      { from_day: month_from, to_day: month_to }
+    end
+
+    def get_year_month(wrs)
+      single_year_month = wrs.gsub(/\:$/, '').split('-')
+      year_month_from = single_year_month[0].split(' ')
+      year_month_from = { month: OSM_MONTHS.find_index(year_month_from[1]) + 1, year: year_month_from[0].to_i }
+      if year_month_from.length < 1
+        raise ArgumentError, "Invalid year_month : #{year_month_from.inspect}"
+      end
+      if single_year_month.length > 1
+        year_month_to = single_year_month[1].split(' ')
+        if year_month_to.length == 2
+          year_month_to = { month: OSM_MONTHS.find_index(year_month_to[1]) + 1, year: year_month_to[0].to_i }
+        elsif year_month_to.length == 1
+          year_month_to = { month: OSM_MONTHS.find_index(year_month_to[1]) + 1, year: year_month_from[:year] }
+        end
+        if year_month_to.length < 1
+          raise ArgumentError, "Invalid year_month : #{year_month_to.inspect}"
+        end
+      else
+        year_month_to = nil
+      end
+      { from_month: year_month_from, to_month: year_month_to }
+    end
+
+    def get_year_month_day(wrs)
+      single_year_month_day = wrs.gsub(/\:$/, '').split('-')
+      year_month_day_from = single_year_month_day[0].split(' ')
+      year_month_day_from = { day: year_month_day_from[2].to_i,
+        month: OSM_MONTHS.find_index(year_month_day_from[1]) + 1,
+        year: year_month_day_from[0].to_i }
+      if year_month_day_from.length < 1
+        raise ArgumentError, "Invalid year_month_day : #{year_month_day_from.inspect}"
+      end
+      if single_year_month_day.length > 1
+        year_month_day_to = single_year_month_day[1].split(' ')
+        if year_month_day_to.length == 3
+          year_month_day_to = { day: year_month_day_to[2].to_i,
+            month: OSM_MONTHS.find_index(year_month_day_to[1]) + 1,
+            year: year_month_day_to[0].to_i }
+        elsif year_month_day_to.length == 2
+          year_month_day_to = { day: year_month_day_to[1].to_i,
+            month: OSM_MONTHS.find_index(year_month_day_to[0]) + 1,
+            year: year_month_day_from[:year] }
+        elsif year_month_day_to.length == 1
+          year_month_day_to = { day: year_month_day_to[0].to_i,
+            month: year_month_day_from[:month],
+            year: year_month_day_from[:year] }
+        end
+        if year_month_day_to.length < 1
+          raise ArgumentError, "Invalid year_month_day : #{year_month_day_to.inspect}"
+        end
+      else
+        year_month_day_to = nil
+      end
+
+      { from_day: year_month_day_from, to_day: year_month_day_to }
+    end
+
+    def get_times(time_selector)
+      times = []
+      from = nil
+      to = nil
+      if time_selector == "24/7"
+        times << {from: 0, to: 24*60}
+      else
+        time_selector = time_selector.split(',')
+        time_selector.each do |ts|
+          single_time = ts.split('-')
+          from = as_minutes(single_time[0])
+          if single_time.length > 1
+            to = as_minutes(single_time[1])
+          else
+            to = from
+          end
+          times << {from: from, to: to}
+        end
+      end
+      times
+    end
+
+    def get_weekdays(weekday_selector)
+      weekdays = []
+      wd_from = nil
+      wd_to = nil
+
+      weekday_selector = weekday_selector.split(',')
+      weekday_selector.each do |wd|
+        if !(@RGX_HOLIDAY =~ wd).nil?
+        elsif !(@RGX_WD =~ wd).nil?
+          single_weekday = wd.split('-')
+          wd_from = OSM_DAYS.find_index(single_weekday[0])
+          if single_weekday.length > 1
+            wd_to = OSM_DAYS.find_index(single_weekday[1])
+          else
+            wd_to = wd_from
+          end
+
+          weekdays << {from: wd_from, to: wd_to}
+        else
+          raise ArgumentError, "Invalid weekday interval : #{wd}"
+        end
+      end
+
+      weekdays
     end
 
     def remove_interval(typical, weekdays, times)

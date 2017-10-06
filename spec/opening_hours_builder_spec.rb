@@ -316,7 +316,7 @@ RSpec.describe OpeningHoursConverter::OpeningHoursBuilder, '#build' do
 
   #   expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("week 01-09 Mo 03:00-06:00")
   # end
-  it "May-Jun,Sep Mo,Tu 14:00-18:00 (month factoring)" do
+  it "2017 May-Jun,Sep Mo,Tu 14:00-18:00 (month factoring)" do
     dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(5, 2017, 6, 2017)), OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(9, 2017)) ]
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 14*60, 0, 18*60))
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 14*60, 1, 18*60))
