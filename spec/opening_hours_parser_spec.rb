@@ -1,4 +1,5 @@
-require 'opening_hours_converter/opening_hours_parser'
+require 'opening_hours_converter'
+# require 'opening_hours_converter/opening_hours_parser'
 
 RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   it "void" do
@@ -36,9 +37,6 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   end
   it "24/7; Jun: 08:00-18:00" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('24/7; Jun: 08:00-18:00'))).to eql('24/7; Jun 08:00-18:00')
-  end
-  it "2000 24/7; Jun: 08:00-18:00" do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2000 24/7; Jun: 08:00-18:00'))).to eql('2000 24/7; Jun 08:00-18:00')
   end
   it "24/7; 2000 Jun: 08:00-18:00" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('24/7; 2000 Jun: 08:00-18:00'))).to eql('24/7; 2000 Jun 08:00-18:00')

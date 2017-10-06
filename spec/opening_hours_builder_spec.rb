@@ -1,4 +1,4 @@
-require 'opening_hours_converter/opening_hours_builder'
+require 'opening_hours_converter'
 
 RSpec.describe OpeningHoursConverter::OpeningHoursBuilder, '#build' do
   it "void" do
@@ -241,7 +241,7 @@ RSpec.describe OpeningHoursConverter::OpeningHoursBuilder, '#build' do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("08:00-18:00; Aug off")
   end
   it "2017 08:00-18:00; Aug off" do
-    dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.year(2017)), OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(8)) ]
+    dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.year(2017)), OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(8, 2017)) ]
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 8*60, 0, 18*60))
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 8*60, 1, 18*60))
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(2, 8*60, 2, 18*60))
@@ -250,7 +250,7 @@ RSpec.describe OpeningHoursConverter::OpeningHoursBuilder, '#build' do
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(5, 8*60, 5, 18*60))
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(6, 8*60, 6, 18*60))
 
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("2017 08:00-18:00; Aug off")
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("2017 08:00-18:00; 2017 Aug off")
   end
   it "Mo-Fr 00:00-24:00; Aug-Sep Sa 00:00-24:00" do
     dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.always), OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(8,nil,9)) ]

@@ -35,18 +35,6 @@ module OpeningHoursConverter
       months = nil
       years = nil
 
-      single_month = nil
-      month_from = nil
-      month_to = nil
-
-      single_year = nil
-      year_from = nil
-      year_to = nil
-
-      single_year = nil
-      year_from = nil
-      year_to = nil
-
       date_ranges = nil
       date_range = nil
       dr_obj = nil
@@ -121,8 +109,7 @@ module OpeningHoursConverter
               elsif !(@RGX_MONTH =~ wrs).nil?
                 months << get_month(wrs)
               elsif !(@RGX_YEAR =~ wrs).nil?
-
-                years << {from: year_from, to: year_to}
+                years << get_year(wrs)
               else
                 raise ArgumentError, "Unsupported selector #{wrs}"
               end
@@ -133,21 +120,21 @@ module OpeningHoursConverter
         if current_token == tokens.length - 1
           raise ArgumentError, "Unreadable string"
         end
-        puts "months : #{months}"
-        puts "weekdays : #{weekdays}"
-        puts "times : #{times}"
-        puts "years : #{years}"
-        puts "rule_modifier : #{rule_modifier}"
+        # puts "months : #{months}"
+        # puts "weekdays : #{weekdays}"
+        # puts "times : #{times}"
+        # puts "years : #{years}"
+        # puts "rule_modifier : #{rule_modifier}"
 
         date_ranges = []
-
         if months.length > 0
           months.each do |month|
             if !month[:from_day].nil?
               if !month[:to_day].nil?
-                date_range = OpeningHoursConverter::WideInterval.new.day(month[:from_day][:day], month[:from_day][:month], nil, month[:to_day][:day], month[:to_day][:month], nil)
+                date_range = OpeningHoursConverter::WideInterval.new.day(month[:from_day][:day], month[:from_day][:month], month[:from_day][:year],
+                  month[:to_day][:day], month[:to_day][:month], month[:to_day][:year])
               else
-                date_range = OpeningHoursConverter::WideInterval.new.day(month[:from_day][:day], month[:from_day][:month])
+                date_range = OpeningHoursConverter::WideInterval.new.day(month[:from_day][:day], month[:from_day][:month], month[:from_day][:year])
               end
               date_ranges << date_range
             else
@@ -161,22 +148,23 @@ module OpeningHoursConverter
           end
         elsif years.length > 0
           years.each do |year|
-            # binding.pry
-            if !year[:to].nil?
-              if !year[:from_day].nil?
+            if !year[:from_day].nil?
+              if !year[:to_day].nil?
                 date_range = OpeningHoursConverter::WideInterval.new.day(year[:from_day][:day], year[:from_day][:month], year[:from_day][:year],
                   year[:to_day][:day], year[:to_day][:month], year[:to_day][:year])
-              elsif !year[:from_month].nil?
+              else
+                date_range = OpeningHoursConverter::WideInterval.new.day(year[:from_day][:day], year[:from_day][:month], year[:from_day][:year])
+              end
+            elsif !year[:from_month].nil?
+              if !year[:to_month].nil?
                 date_range = OpeningHoursConverter::WideInterval.new.month(year[:from_month][:month], year[:from_month][:year],
                   year[:to_month][:month], year[:to_month][:year])
               else
-                date_range = OpeningHoursConverter::WideInterval.new.year(year[:from], year[:to])
-              end
-            else
-              if !year[:from_month].nil?
                 date_range = OpeningHoursConverter::WideInterval.new.month(year[:from_month][:month], year[:from_month][:year])
-              elsif !year[:from_day].nil?
-                date_range = OpeningHoursConverter::WideInterval.new.day(year[:from_day][:day], year[:from_day][:month], year[:from_day][:year])
+              end
+            elsif !year[:from].nil?
+              if !year[:to].nil?
+                date_range = OpeningHoursConverter::WideInterval.new.year(year[:from], year[:to])
               else
                 date_range = OpeningHoursConverter::WideInterval.new.year(year[:from])
               end
@@ -261,6 +249,7 @@ module OpeningHoursConverter
           end
         end
       end
+
       return result
     end
 
