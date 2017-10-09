@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'opening_hours_converter'
-  s.version = '0.0.1'
+  s.version = '0.0.2'
   s.summary = "Datetime range to openinghours, openinghours to datetime range"
   s.description = "Datetime range to openinghours, openinghours to datetime range"
   s.authors = ["Ziserman Martin"]

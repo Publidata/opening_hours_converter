@@ -249,7 +249,7 @@ module OpeningHoursConverter
           end
         end
       end
-
+      puts result.inspect
       return result
     end
 
@@ -322,7 +322,7 @@ module OpeningHoursConverter
         if year_month_to.length == 2
           year_month_to = { month: OSM_MONTHS.find_index(year_month_to[1]) + 1, year: year_month_to[0].to_i }
         elsif year_month_to.length == 1
-          year_month_to = { month: OSM_MONTHS.find_index(year_month_to[1]) + 1, year: year_month_from[:year] }
+          year_month_to = { month: OSM_MONTHS.find_index(year_month_to[0]) + 1, year: year_month_from[:year] }
         end
         if year_month_to.length < 1
           raise ArgumentError, "Invalid year_month : #{year_month_to.inspect}"
@@ -424,7 +424,7 @@ module OpeningHoursConverter
         for wd in weekdays[:from]..6
           typical.remove_intervals_during_day(wd)
         end
-        for wd in 0..weekdays[:from]
+        for wd in 0..weekdays[:to]
           typical.remove_intervals_during_day(wd)
         end
       end

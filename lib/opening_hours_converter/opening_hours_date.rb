@@ -17,7 +17,6 @@ module OpeningHoursConverter
     end
 
     def get_weekdays
-
       result = ""
       wd = @weekdays.concat(@weekdays_over).sort.uniq
 

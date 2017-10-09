@@ -25,15 +25,6 @@ RSpec.describe OpeningHoursConverter::OpeningHoursRule, '#get' do
     ohr.add_time(OpeningHoursConverter::OpeningHoursTime.new(3*60, 4*60))
     expect(ohr.get).to eql("Mar,Jul-Oct Fr-We 00:00-01:00,03:00-04:00")
   end
-  it "several date, null time" do
-    ohr = OpeningHoursConverter::OpeningHoursRule.new
-
-    ohr.add_date(OpeningHoursConverter::OpeningHoursDate.new("Mar", "month", [0,1,2,4,5,6]))
-    ohr.add_date(OpeningHoursConverter::OpeningHoursDate.new("Jul-Oct", "month", [0,1,2,4,5,6]))
-
-    ohr.add_time(OpeningHoursConverter::OpeningHoursTime.new)
-    expect(ohr.get).to eql("Mar,Jul-Oct Fr-We off")
-  end
   it "several date, nil time" do
     ohr = OpeningHoursConverter::OpeningHoursRule.new
 

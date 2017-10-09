@@ -1,4 +1,4 @@
-require 'opening_hours_converter/date_range'
+require 'opening_hours_converter'
 
 RSpec.describe OpeningHoursConverter::DateRange, '#initialize' do
   it "initialize" do
@@ -60,6 +60,12 @@ RSpec.describe OpeningHoursConverter::DateRange, '#is_general_for?' do
     @dr_always = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.always)
 
     @dr_2017 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.year(2017))
+    @dr_2017_october_15 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(15, 10, 2017))
+    @dr_2018_october_15 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(15, 10, 2018))
+    @dr_2017_october_15_to_2017_november_15 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(15, 10, 2017, 15, 11, 2017))
+    @dr_2017_october_15_to_2018_november_15 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(15, 10, 2017, 15, 11, 2018))
+    @dr_2017_september = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(9, 2017))
+    @dr_2018_september = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(9, 2018))
 
     @dr_october_15_to_november_15 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(15, 10, nil, 15, 11))
     @dr_october_20_to_november_10 = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(20, 10, nil, 10, 11))
@@ -94,6 +100,14 @@ RSpec.describe OpeningHoursConverter::DateRange, '#is_general_for?' do
     expect(@dr_november.is_general_for?(@dr_november_27_to_december_29)).to be false
     expect(@dr_november.is_general_for?(@dr_november)).to be false
     expect(@dr_november.is_general_for?(@dr_always)).to be false
+    # TODO test with years
+  end
+  it "one year is general for days and month" do
+    expect(@dr_2017.is_general_for?(@dr_2017_october_15_to_2017_november_15)).to be true
+    expect(@dr_2017.is_general_for?(@dr_2018_october_15)).to be false
+    expect(@dr_2017.is_general_for?(@dr_2017_october_15_to_2018_november_15)).to be false
+    expect(@dr_2017.is_general_for?(@dr_2017_september)).to be true
+    expect(@dr_2017.is_general_for?(@dr_2018_september)).to be false
     # TODO test with years
   end
 
