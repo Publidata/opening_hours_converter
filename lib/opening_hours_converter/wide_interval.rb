@@ -43,65 +43,6 @@ module OpeningHoursConverter
       result
     end
 
-    def get_year_selector
-      result = ""
-
-      case @type
-      when "day", "month"
-        result = "#{@start[:year]}"
-        if !@end.nil?
-          result += @start[:year] == @end[:year] ? "" : "-#{@end[:year]}"
-        end
-      when "year"
-        result = "#{@start[:year]}"
-        if !@end.nil?
-          result += "-#{@end[:year]}"
-        end
-      when "always"
-        result = ""
-      else
-        result = ""
-      end
-      result
-    end
-
-    def get_month_selector
-      result = ""
-
-      case @type
-      when "day"
-        result = OSM_MONTHS[@start[:month]-1]
-        if !@end.nil?
-          result += @start[:month] == @end[:month] ? "" : "-#{OSM_MONTHS[@end[:month]-1]}"
-        end
-      when "month"
-        result = OSM_MONTHS[@start[:month]-1]
-        if !@end.nil?
-          result += "-#{OSM_MONTHS[@end[:month]-1]}"
-        end
-      when "year", "always"
-        result = ""
-      else
-        result = ""
-      end
-      result
-    end
-
-    def get_day_selector
-      result = ""
-
-      case @type
-      when "day"
-        result = "#{@start[:day] < 10 ? "0" : ""}#{@start[:day]}"
-        if !@end.nil?
-          result += @start[:day] == @end[:day] ? "" : "-#{@end[:day] < 10 ? "0" : ""}#{@end[:day]}"
-        end
-      when "month", "year", "always"
-        result = ""
-      end
-      result
-    end
-
     def get_time_for_humans
       result = ""
 

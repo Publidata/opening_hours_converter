@@ -238,7 +238,7 @@ RSpec.describe OpeningHoursConverter::OpeningHoursBuilder, '#build' do
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 0, 4, 24*60))
     dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(0, 0, 5, 24*60))
 
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Mo-Fr 00:00-24:00; Aug,Sep Sa 00:00-24:00")
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Mo-Fr 00:00-24:00; Aug-Sep Sa 00:00-24:00")
   end
   it "May-Jun,Sep 14:00-18:00 (month factoring)" do
     dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(5,nil,6)), OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(9)) ]
@@ -258,10 +258,11 @@ RSpec.describe OpeningHoursConverter::OpeningHoursBuilder, '#build' do
     dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(6, 14*60, 6, 18*60))
 
 
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("May,Jun,Sep 14:00-18:00")
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("May-Jun,Sep 14:00-18:00")
   end
   it "Jan 01-May 01,May 15-Oct 12 Mo,Fr 08:00-18:00 (day factoring)" do
-    dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(1,1,nil,1,5)), OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(15,5,nil,12,10)) ]
+    dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(1,1,nil,1,5)),
+      OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(15,5,nil,12,10)) ]
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 8*60, 0, 18*60))
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(4, 8*60, 4, 18*60))
     dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(0, 8*60, 0, 18*60))
@@ -269,90 +270,90 @@ RSpec.describe OpeningHoursConverter::OpeningHoursBuilder, '#build' do
 
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Jan 01-May 01,May 15-Oct 12 Mo,Fr 08:00-18:00")
   end
-  # it "Mo-We 03:00-05:00; Jan 01-10,Feb 01-10 Tu off (off day factoring)" do
-  #   dr = [ OpeningHoursConverter::DateRange.new, OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(1,1,nil,10,1)), OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(1,2,nil,10,2)) ]
-  #   dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 3*60, 0, 5*60))
-  #   dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 3*60, 1, 5*60))
-  #   dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(2, 3*60, 2, 5*60))
-  #   dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(0, 3*60, 0, 5*60))
-  #   dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(2, 3*60, 2, 5*60))
-  #   dr[2].typical.add_interval(OpeningHoursConverter::Interval.new(0, 3*60, 0, 5*60))
-  #   dr[2].typical.add_interval(OpeningHoursConverter::Interval.new(2, 3*60, 2, 5*60))
+  it "Mo-We 03:00-05:00; Jan 01-10,Feb 01-10 Tu off (off day factoring)" do
+    dr = [ OpeningHoursConverter::DateRange.new, OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(1,1,nil,10,1)), OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(1,2,nil,10,2)) ]
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 3*60, 0, 5*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 3*60, 1, 5*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(2, 3*60, 2, 5*60))
+    dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(0, 3*60, 0, 5*60))
+    dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(2, 3*60, 2, 5*60))
+    dr[2].typical.add_interval(OpeningHoursConverter::Interval.new(0, 3*60, 0, 5*60))
+    dr[2].typical.add_interval(OpeningHoursConverter::Interval.new(2, 3*60, 2, 5*60))
 
-  #   expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Mo-We 03:00-05:00; Jan 01-10,Feb 01-10 Tu off")
-  # end
-  # it "Tu,Su 10:00-12:00; Jun Tu,Su off; Jun We,Sa 10:00-12:00 (off day factoring)" do
-  #   dr = [ OpeningHoursConverter::DateRange.new, OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(6)) ]
-  #   dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 10*60, 1, 12*60))
-  #   dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(6, 10*60, 6, 12*60))
-  #   dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(2, 10*60, 2, 12*60))
-  #   dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(5, 10*60, 5, 12*60))
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Mo-We 03:00-05:00; Jan 01-10,Feb 01-10 Tu off")
+  end
+  it "Tu,Su 10:00-12:00; Jun Tu,Su off; Jun We,Sa 10:00-12:00 (off day factoring)" do
+    dr = [ OpeningHoursConverter::DateRange.new, OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(6)) ]
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 10*60, 1, 12*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(6, 10*60, 6, 12*60))
+    dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(2, 10*60, 2, 12*60))
+    dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(5, 10*60, 5, 12*60))
 
-  #   expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Tu,Su 10:00-12:00; Jun Tu,Su off; Jun We,Sa 10:00-12:00")
-  # end
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Tu,Su 10:00-12:00; Jun Tu,Su off; Jun We,Sa 10:00-12:00")
+  end
 
 
-  # # ######################################
-  # it "2017 May-Jun,Sep Mo,Tu 14:00-18:00 (month factoring)" do
-  #   dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(5, 2017, 6, 2017)), OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(9, 2017)) ]
-  #   dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 14*60, 0, 18*60))
-  #   dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 14*60, 1, 18*60))
-  #   dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(0, 14*60, 0, 18*60))
-  #   dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(1, 14*60, 1, 18*60))
-
-  #   expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("2017 May,Jun,Sep Mo,Tu 14:00-18:00")
-  # end
-
-  # it "2017 Mo 14:00-18:00 (year general month & day factoring)" do
-  #   dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(6, 2017)), OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.year(2017)) ]
-  #   dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 14*60, 0, 18*60))
-  #   dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(0, 14*60, 0, 18*60))
-
-  #   expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("2017 Mo 14:00-18:00")
-  # end
   # ######################################
-  # it "May-Jun,Sep Mo,Tu 14:00-18:00 (month factoring)" do
-  #   dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(5,nil,6)), OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(9)) ]
-  #   dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 14*60, 0, 18*60))
-  #   dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 14*60, 1, 18*60))
-  #   dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(0, 14*60, 0, 18*60))
-  #   dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(1, 14*60, 1, 18*60))
+  it "2017 May-Jun,Sep Mo,Tu 14:00-18:00 (month factoring)" do
+    dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(5, 2017, 6, 2017)), OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(9, 2017)) ]
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 14*60, 0, 18*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 14*60, 1, 18*60))
+    dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(0, 14*60, 0, 18*60))
+    dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(1, 14*60, 1, 18*60))
 
-  #   expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("May-Jun,Sep Mo,Tu 14:00-18:00")
-  # end
-  # it "May-Sep Mo,Tu 14:00-18:00 (month factoring)" do
-  #   dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(5,nil,8)), OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(9)) ]
-  #   dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 14*60, 0, 18*60))
-  #   dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 14*60, 1, 18*60))
-  #   dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(0, 14*60, 0, 18*60))
-  #   dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(1, 14*60, 1, 18*60))
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("2017 May,Jun,Sep Mo,Tu 14:00-18:00")
+  end
 
-  #   expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("May-Sep Mo,Tu 14:00-18:00")
-  # end
+  it "2017 Mo 14:00-18:00 (year general month & day factoring)" do
+    dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(6, 2017)), OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.year(2017)) ]
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 14*60, 0, 18*60))
+    dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(0, 14*60, 0, 18*60))
+
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("2017 Mo 14:00-18:00")
+  end
+  ######################################
+  it "May-Jun,Sep Mo,Tu 14:00-18:00 (month factoring)" do
+    dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(5,nil,6)), OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(9)) ]
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 14*60, 0, 18*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 14*60, 1, 18*60))
+    dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(0, 14*60, 0, 18*60))
+    dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(1, 14*60, 1, 18*60))
+
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("May-Jun,Sep Mo,Tu 14:00-18:00")
+  end
+  it "May-Sep Mo,Tu 14:00-18:00 (month factoring)" do
+    dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(5,nil,8)), OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(9)) ]
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 14*60, 0, 18*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 14*60, 1, 18*60))
+    dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(0, 14*60, 0, 18*60))
+    dr[1].typical.add_interval(OpeningHoursConverter::Interval.new(1, 14*60, 1, 18*60))
+
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("May-Sep Mo,Tu 14:00-18:00")
+  end
 
 
-  # it "12:00-14:00; We-Sa off (continuous week end)" do
-  #   dr = [ OpeningHoursConverter::DateRange.new ]
-  #   dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 12*60, 0, 14*60))
-  #   dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 12*60, 1, 14*60))
-  #   dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(6, 12*60, 6, 14*60))
+  it "12:00-14:00; We-Sa off (continuous week end)" do
+    dr = [ OpeningHoursConverter::DateRange.new ]
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 12*60, 0, 14*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 12*60, 1, 14*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(6, 12*60, 6, 14*60))
 
-  #   expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("12:00-14:00; We-Sa off")
-  # end
-  # it "Tu 00:00-24:00" do
-  #   dr = [ OpeningHoursConverter::DateRange.new ]
-  #   dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 0, 1, 24*60))
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("12:00-14:00; We-Sa off")
+  end
+  it "Tu 00:00-24:00" do
+    dr = [ OpeningHoursConverter::DateRange.new ]
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 0, 1, 24*60))
 
-  #   expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Tu 00:00-24:00")
-  # end
-  # it "Tu-Fr 08:00-12:00; We off" do
-  #   dr = [ OpeningHoursConverter::DateRange.new ]
-  #   dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 8*60, 1, 12*60))
-  #   dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(3, 8*60, 3, 12*60))
-  #   dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(4, 8*60, 4, 12*60))
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Tu 00:00-24:00")
+  end
+  it "Tu-Fr 08:00-12:00; We off" do
+    dr = [ OpeningHoursConverter::DateRange.new ]
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 8*60, 1, 12*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(3, 8*60, 3, 12*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(4, 8*60, 4, 12*60))
 
-  #   expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Tu-Fr 08:00-12:00; We off")
-  # end
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Tu-Fr 08:00-12:00; We off")
+  end
 end
 
 

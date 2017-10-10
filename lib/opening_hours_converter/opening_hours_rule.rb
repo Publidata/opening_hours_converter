@@ -17,21 +17,12 @@ module OpeningHoursConverter
           result += d.wide
         end
       end
-
-      if @date.length > 0
-        if result.length > 0
-          result += " "
-        end
-        result += @date.first.get_months
-      end
-
-      if @date.length > 0
-        if result.length > 0
-          result += " "
-        end
-        result += @date.first.days
-      end
-
+      # if @date.length > 0
+      #   m = @date[0].get_months
+      #   if m.length > 0
+      #     result += " #{m}"
+      #   end
+      # end
       if @date.length > 0
         wd = @date[0].get_weekdays
         if wd.length > 0
@@ -54,7 +45,43 @@ module OpeningHoursConverter
         result = "24/7"
       end
 
-      result.strip.gsub('  ', ' ')
+
+      result = clean(result)
+      result.strip
+    end
+
+    def clean(result)
+      result = remove_duplicate_year(result)
+      result = remove_bad_spaces(result)
+    end
+
+    def remove_bad_spaces(result)
+      return result if (result =~ /\,\s/).nil?
+      return result.split(', ').join(',')
+    end
+
+    def remove_duplicate_year(result)
+      return result if (result =~ /(\d{4})[^;]+(\1)/).nil? && (result =~ /(\d{4}\-\d{4})[^;]+(\1)/).nil?
+      result_parts = result.split(';')
+      sanitized_parts = []
+      result_parts.each do |rp|
+        # binding.pry
+        # string with year range repeating
+        if !(rp =~ /(\d{4}\-\d{4})[^;]+(\1)/).nil?
+          first_occurence = (rp =~ /(\d{4}\-\d{4})/)
+          years = result[first_occurence...first_occurence + 9]
+
+          sanitized_parts << years + rp[first_occurence + 9, rp.length].split(year).join('')
+
+        # string with year repeating
+        elsif !(rp =~ /(\d{4})[^;]+(\1)/).nil?
+          first_occurence = (rp =~ /(\d{4})/)
+          year = result[first_occurence...first_occurence + 4]
+
+          sanitized_parts << year + rp[first_occurence + 4, rp.length].split(year).join('')
+        end
+      end
+      sanitized_parts.join('')
     end
 
     def same_time?(o)
@@ -88,63 +115,37 @@ module OpeningHoursConverter
       end
     end
 
-    def same_wide?(wide)
-      result = ""
-      if @date.length > 1 || @date[0]&.wide != ""
-        @date.each_with_index do |d, i|
-          if (i > 0)
-            result += ","
-          end
-          result += d.wide
-        end
-      end
-      if @date.length > 1 || @date[0]&.wide != ""
-        @date.each_with_index do |d, i|
-          if (i > 0)
-            result += ","
-          end
-          result += d.days
-        end
-      end
-      puts result
-      wide == result
-    end
-
-    def add_date(date)
-      if date.nil? || !date.instance_of?(OpeningHoursConverter::OpeningHoursYear)
-        raise ArgumentError
-      end
-
-      if @date.length == 0
-        @date << date
-      elsif @date.first.same_weekdays?(date.weekdays) && same_wide?(date.wide)
-        @date.each do |d|
-          date.months.each do |month|
-            d.add_month(month)
-          end
-        end
-      elsif @date.first.same_weekdays?(date.weekdays) && @date.first.same_months?(date.months) && @date.first.wide != date.wide
-        @date << date
-      elsif @date.first.wide_type == "always" && date.wide_type == "always"
-        @date << date
-      else
-        raise ArgumentError, "This date #{@date.inspect} can't be added to this rule #{self.inspect}"
-      end
-    end
-
     # def add_date(date)
-    #   if date.nil? || !date.instance_of?(OpeningHoursConverter::OpeningHoursDate)
+    #   if date.nil? || !date.instance_of?(OpeningHoursConverter::OpeningHoursYear)
     #     raise ArgumentError
     #   end
 
-    #   if @date.length == 0 || @date.first.same_kind_as?(date)
+    #   if @date.length == 0
     #     @date << date
+    #   elsif @date.first.same_kind_as?(date) && @date.same_weekdays(date)
+    #     date.months.each do |month|
+    #       @date.first.add_months(month)
+    #     end
     #   else
-    #     if @date.length != 1 || @date.first.wide_type != "always" || !@date.first.same_weekdays?(date.weekdays)
+    #     if @date.length != 1 || !@date.first.same_weekdays?(date.weekdays)
     #       raise ArgumentError, "This date #{@date.inspect} can't be added to this rule #{self.inspect}"
     #     end
     #   end
     # end
+
+    def add_date(date)
+      if date.nil? || !date.instance_of?(OpeningHoursConverter::OpeningHoursDate)
+        raise ArgumentError
+      end
+
+      if @date.length == 0 || @date.first.wide_type != "always" && @date.first.same_kind_as?(date)
+        @date << date
+      else
+        if @date.length != 1 || @date.first.wide_type != "always" || !@date.first.same_weekdays?(date.weekdays)
+          raise ArgumentError, "This date #{@date.inspect} can't be added to this rule #{self.inspect}"
+        end
+      end
+    end
 
     def add_time(time)
       if (@time.length == 0 || @time[0].get != "off") && !@time.include?(time)

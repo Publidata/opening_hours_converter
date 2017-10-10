@@ -101,8 +101,7 @@ module OpeningHoursConverter
               oh_rule_over = OpeningHoursConverter::OpeningHoursRule.new
 
               oh_rule.date.each do |date|
-                binding.pry
-                oh_rule_over.add_date(OpeningHoursConverter::OpeningHoursYear.new(date.get_year_selector, date.get_month_selector, date.wide_type, date.weekdays_over))
+                oh_rule_over.add_date(OpeningHoursConverter::OpeningHoursDate.new(date.wide, date.wide_type, date.weekdays_over))
               end
               oh_rule_over.add_time(OpeningHoursConverter::OpeningHoursTime.new)
               oh_rules << oh_rule_over
@@ -125,14 +124,14 @@ module OpeningHoursConverter
         result += rule.get
       end
 
-      return result.gsub('  ', ' ').strip
+      return result
     end
 
     def build_day(date_range)
       intervals = date_range.typical.get_intervals(true)
 
       rule = OpeningHoursConverter::OpeningHoursRule.new
-      date = OpeningHoursConverter::OpeningHoursYear.new(date_range.wide_interval.get_year_selector, date_range.wide_interval.get_month_selector, date_range.wide_interval.get_day_selector, date_range.wide_interval.type, [-1])
+      date = OpeningHoursConverter::OpeningHoursDate.new(date_range.wide_interval.get_time_selector, date_range.wide_interval.type, [-1])
       rule.add_date(date)
 
       intervals.each do |interval|
@@ -144,162 +143,11 @@ module OpeningHoursConverter
       return [ rule ]
     end
 
-    def build_month(date_range)
-      # binding.pry
-      result = []
-      intervals = date_range.typical.get_intervals(true)
-      time_intervals = create_month_time_intervals(date_range.wide_interval.get_year_selector,
-        date_range.wide_interval.get_month_selector, date_range.wide_interval.get_day_selector, date_range.wide_interval.type, intervals)
-
-      monday0 = time_intervals[0]
-      sunday24 = time_intervals[1]
-      days = time_intervals[2]
-
-      days = night_monday_sunday(days, monday0, sunday24)
-
-
-      days_status = Array.new(OSM_DAYS.length, 0)
-
-      days.each_with_index do |day, index|
-        if day.is_off? && days_status[index] == 0
-          days_status[index] = 8
-        elsif day.is_off? && days_status[index] < 0 && days_status[index] > -8
-          days_status[index] = -8
-          merged = false
-          md_off = 0
-          while !merged && md_off < index
-            if days[md_off].is_off?
-              days[md_off].add_weekday(index)
-              merged = true
-            else
-              md_off += 1
-            end
-            if !merged
-              result << days[index]
-            end
-          end
-        elsif days_status[index] <= 0 && days_status[index] > -8
-          days_status[index] = index + 1
-          last_same_day = index
-          same_day_count = 1
-
-          for j in (index+1)...days.length do
-            if day.same_time?(days[j])
-              days_status[j] = index + 1
-              day.add_weekday(j)
-              last_same_day = j
-              same_day_count += 1
-            end
-          end
-          if same_day_count == 1
-            result << day
-          elsif same_day_count == 2
-            day.add_weekday(last_same_day)
-            result << day
-          elsif same_day_count > 2
-            for j in (index+1)...last_same_day do
-              if days_status[j] == 0
-                days_status[j] = -index -1
-                day.add_overwritten_weekday(j)
-              end
-            end
-            day.add_weekday(last_same_day)
-            result << day
-          end
-        end
-      end
-      result = merge_days(result)
-
-      return result
-    end
-
-    def build_month_diff(date_range, general_date_range)
-      intervals = date_range.typical.get_intervals_diff(general_date_range.typical)
-
-      time_intervals = create_time_intervals(
-        date_range.wide_interval.get_year_selector,
-        date_range.wide_interval.get_month_selector,
-        date_range.wide_interval.type,
-        intervals[:open])
-      january_1_0 = time_intervals[0]
-      december_31_24 = time_intervals[1]
-      days = time_intervals[2]
-      intervals[:closed].each do |interval|
-        for i in interval.day_start..interval.day_end do
-          days[i].add_time(OpeningHoursConverter::OpeningHoursTime.new)
-        end
-      end
-
-      days = night_monday_sunday(days, monday0, sunday24)
-
-      days_status = Array.new(OSM_DAYS.length, 0)
-      result = []
-
-      days.each_with_index do |day, index|
-        if day.is_off? && day.time.length == 1
-          days_status[index] = -8
-          merged = false
-          md_off = 0
-
-          while !merged && md_off < index
-            if days[md_off].is_off? && days[md_off].time.length == 1
-              days[md_off].add_weekday(index)
-              merged = true
-            else
-              md_off += 1
-            end
-          end
-
-          if !merged
-            result << day
-          end
-        elsif day.is_off? && day.time.length == 0
-          days_status[index] = 8
-        elsif days_status[index] <= 0 && days_status[index] > -8
-          days_status[index] = index + 1
-          same_day_count = 1
-          last_same_day = 1
-          result << day
-
-          for j in (index + 1)...days.length do
-            if day.same_time?(days[j])
-              days_status[j] = index + 1
-              day.add_weekday(j)
-              last_same_day = j
-              same_day_count += 1
-            end
-          end
-
-          if same_day_count == 1
-            result << day
-          elsif same_day_count == 2
-            day.add_weekday(last_same_day)
-            result << day
-          elsif same_day_count > 2
-            for j in (index + 1)...last_same_day do
-              if days_status[j] == 0
-                days_status[j] = -index - 1
-                if days[j].time.length > 0
-                  day.add_overwritten_weekday(j)
-                end
-              end
-            end
-            day.add_weekday(last_same_day)
-            result << day
-          end
-
-        end
-      end
-      result = merge_days(result)
-      return result
-    end
-
     def build_week(date_range)
       # binding.pry
       result = []
       intervals = date_range.typical.get_intervals(true)
-      time_intervals = create_time_intervals(date_range.wide_interval.get_year_selector, date_range.wide_interval.get_month_selector, date_range.wide_interval.get_day_selector,
-        date_range.wide_interval.type, intervals)
+      time_intervals = create_time_intervals(date_range.wide_interval.get_time_selector, date_range.wide_interval.type, intervals)
 
       monday0 = time_intervals[0]
       sunday24 = time_intervals[1]
@@ -367,9 +215,7 @@ module OpeningHoursConverter
       intervals = date_range.typical.get_intervals_diff(general_date_range.typical)
 
       time_intervals = create_time_intervals(
-        date_range.wide_interval.get_year_selector,
-        date_range.wide_interval.get_month_selector,
-        date_range.wide_interval.get_day_selector,
+        date_range.wide_interval.get_time_selector,
         date_range.wide_interval.type,
         intervals[:open])
       monday0 = time_intervals[0]
@@ -524,7 +370,7 @@ module OpeningHoursConverter
       return [ monday0, sunday24, days ]
     end
 
-    def create_time_intervals(year_selector, month_selector, day_selector, type, intervals)
+    def create_time_intervals(time_selector, type, intervals)
       # binding.pry
       monday0 = -1
       sunday24 = -1
@@ -532,7 +378,7 @@ module OpeningHoursConverter
       days = []
       for i in 0...7
         days << OpeningHoursConverter::OpeningHoursRule.new
-        days[i].add_date(OpeningHoursConverter::OpeningHoursYear.new(year_selector, month_selector, day_selector, type, [ i ]))
+        days[i].add_date(OpeningHoursConverter::OpeningHoursDate.new(time_selector, type, [ i ]))
       end
 
       intervals.each do |interval|
