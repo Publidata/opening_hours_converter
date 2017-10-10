@@ -65,9 +65,23 @@ module OpeningHoursConverter
       result_parts = result.split(';')
       sanitized_parts = []
       result_parts.each do |rp|
-        # binding.pry
+
+        # string with year range repeating separated by a comma
+        if !(rp =~ /(\d{4}\-\d{4})\,(\1)/).nil?
+          first_occurence = (rp =~ /(\d{4}\-\d{4})/)
+          years = result[first_occurence...first_occurence + 9]
+
+          sanitized_parts << years + rp[first_occurence + 10, rp.length].split(year).join('')
+
+        # string with year repeating separrated by a comma
+        elsif !(rp =~ /(\d{4})\,(\1)/).nil?
+          first_occurence = (rp =~ /(\d{4})/)
+          year = result[first_occurence...first_occurence + 4]
+
+          sanitized_parts << year + rp[first_occurence + 5, rp.length].split(year).join('')
+
         # string with year range repeating
-        if !(rp =~ /(\d{4}\-\d{4})[^;]+(\1)/).nil?
+        elsif !(rp =~ /(\d{4}\-\d{4})[^;]+(\1)/).nil?
           first_occurence = (rp =~ /(\d{4}\-\d{4})/)
           years = result[first_occurence...first_occurence + 9]
 
