@@ -4,7 +4,7 @@ Gem::Specification.new do |s|
   s.summary = "Datetime range to openinghours, openinghours to datetime range"
   s.description = "Datetime range to openinghours, openinghours to datetime range"
   s.authors = ["Ziserman Martin"]
-  s.email = 'martinziserman@gmail.com'
+  s.email = 'tech@publidata.io'
   s.files = [
     "lib/opening_hours_converter.rb",
     "lib/opening_hours_converter/constants.rb",

@@ -131,7 +131,7 @@ module OpeningHoursConverter
       intervals = date_range.typical.get_intervals(true)
 
       rule = OpeningHoursConverter::OpeningHoursRule.new
-      date = OpeningHoursConverter::OpeningHoursDate.new(date_range.wide_interval.get_time_selector, date_range.wide_interval.type, [-1])
+      date = OpeningHoursConverter::OpeningHoursDate.new(date_range.wide_interval, date_range.wide_interval.type, [-1])
       rule.add_date(date)
 
       intervals.each do |interval|
@@ -147,7 +147,7 @@ module OpeningHoursConverter
       # binding.pry
       result = []
       intervals = date_range.typical.get_intervals(true)
-      time_intervals = create_time_intervals(date_range.wide_interval.get_time_selector, date_range.wide_interval.type, intervals)
+      time_intervals = create_time_intervals(date_range.wide_interval, date_range.wide_interval.type, intervals)
 
       monday0 = time_intervals[0]
       sunday24 = time_intervals[1]
@@ -215,7 +215,7 @@ module OpeningHoursConverter
       intervals = date_range.typical.get_intervals_diff(general_date_range.typical)
 
       time_intervals = create_time_intervals(
-        date_range.wide_interval.get_time_selector,
+        date_range.wide_interval,
         date_range.wide_interval.type,
         intervals[:open])
       monday0 = time_intervals[0]
@@ -318,59 +318,7 @@ module OpeningHoursConverter
       return result
     end
 
-    def create_month_time_intervals(year_selector, month_selector, type, intervals)
-      # binding.pry
-      monday0 = -1
-      sunday24 = -1
-
-      days = []
-      for i in 0...12
-        days[i] = Array.new
-        for j in 0...7
-          days[i] << OpeningHoursConverter::OpeningHoursRule.new
-          days[i][j].add_date(OpeningHoursConverter::OpeningHoursYear.new(year_selector, type, [ j ], [ i ]))
-        end
-      end
-
-      intervals.each do |interval|
-        if !interval.nil?
-          if interval.day_start == DAYS_MAX && interval.day_end == DAYS_MAX && interval.end == MINUTES_MAX
-            sunday24 = interval.start
-          end
-          if interval.day_start == 0 && interval.day_end == 0 && interval.start == 0
-            monday0 = interval.end
-          end
-          begin
-            if interval.day_start == interval.day_end
-              days[interval.day_start].add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, interval.end))
-            elsif interval.day_end - interval.day_start == 1
-              if interval.start > interval.end
-                days[interval.day_start].add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, interval.end))
-              else
-                days[interval.day_start].add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, MINUTES_MAX))
-                days[interval.day_end].add_time(OpeningHoursConverter::OpeningHoursTime.new(0, interval.end))
-              end
-            else
-              for j in interval.day_start..interval.day_end
-                if j == interval.day_start
-                  days[j].add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, MINUTES_MAX))
-                elsif j == interval.day_end
-                  days[j].add_time(OpeningHoursConverter::OpeningHoursTime.new(0, interval.end))
-                else
-                  days[j].add_time(OpeningHoursConverter::OpeningHoursTime.new(0, MINUTES_MAX))
-                end
-              end
-            end
-          rescue Exception => e
-            puts e
-          end
-        end
-      end
-
-      return [ monday0, sunday24, days ]
-    end
-
-    def create_time_intervals(time_selector, type, intervals)
+    def create_time_intervals(wide_interval, type, intervals)
       # binding.pry
       monday0 = -1
       sunday24 = -1
@@ -378,7 +326,7 @@ module OpeningHoursConverter
       days = []
       for i in 0...7
         days << OpeningHoursConverter::OpeningHoursRule.new
-        days[i].add_date(OpeningHoursConverter::OpeningHoursDate.new(time_selector, type, [ i ]))
+        days[i].add_date(OpeningHoursConverter::OpeningHoursDate.new(wide_interval, type, [ i ]))
       end
 
       intervals.each do |interval|

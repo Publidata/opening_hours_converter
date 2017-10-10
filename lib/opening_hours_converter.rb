@@ -1,4 +1,5 @@
 module OpeningHoursConverter
+  require 'date'
   require_relative './opening_hours_converter/date_range'
   require_relative './opening_hours_converter/day'
   require_relative './opening_hours_converter/interval'

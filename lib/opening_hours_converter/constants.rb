@@ -1,3 +1,4 @@
+require 'date'
 module OpeningHoursConverter
   module Constants
     DAYS = {
@@ -18,5 +19,6 @@ module OpeningHoursConverter
     MINUTES_MAX = 1440
     DAYS_MAX = 6
     YEAR_DAYS_MAX = 365
+    YEAR_MAX = DateTime.now.year + 5
   end
 end
