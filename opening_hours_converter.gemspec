@@ -1,10 +1,10 @@
 Gem::Specification.new do |s|
   s.name = 'opening_hours_converter'
-  s.version = '0.0.1'
+  s.version = '0.0.6'
   s.summary = "Datetime range to openinghours, openinghours to datetime range"
   s.description = "Datetime range to openinghours, openinghours to datetime range"
   s.authors = ["Ziserman Martin"]
-  s.email = 'martinziserman@gmail.com'
+  s.email = 'tech@publidata.io'
   s.files = [
     "lib/opening_hours_converter.rb",
     "lib/opening_hours_converter/constants.rb",
@@ -19,6 +19,6 @@ Gem::Specification.new do |s|
     "lib/opening_hours_converter/week.rb",
     "lib/opening_hours_converter/wide_interval.rb"
   ]
-  s.homepage ='http://rubygems.org/gems/opening_hours_converter'
-  s.license = 'MIT'
+  s.homepage ='https://github.com/Publidata/opening_hours_converter'
+  s.license = 'AGPL-3.0'
 end
