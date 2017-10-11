@@ -249,7 +249,6 @@ module OpeningHoursConverter
           end
         end
       end
-      puts result.inspect
       return result
     end
 

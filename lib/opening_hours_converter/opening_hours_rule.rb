@@ -35,8 +35,11 @@ module OpeningHoursConverter
       else
         result += " off"
       end
-      if result.strip == "00:00-24:00"
-        result = "24/7"
+
+      rgx_day = /(Mo|Tu|We|Th|Fr|Sa|Su)/
+
+      if result.strip == "00:00-24:00" || (!(result =~ /00:00-24:00/).nil? && (result =~ rgx_day).nil?)
+        result.gsub!("00:00-24:00", "24/7")
       end
 
 
@@ -367,19 +370,19 @@ module OpeningHoursConverter
           if year == date.wide.start[:year]
             for month in date.wide.start[:month]-1..11
               years[year][month].each_with_index do |day, i|
-                years[year][month][day] = true
+                years[year][month][i] = true
               end
             end
           elsif year == date.wide.end[:year]
             for month in 0..date.wide.end[:month]-1
               years[year][month].each_with_index do |day, i|
-                years[year][month][day] = true
+                years[year][month][i] = true
               end
             end
           else
             for month in 0..11
               years[year][month].each_with_index do |day, i|
-                years[year][month][day] = true
+                years[year][month][i] = true
               end
             end
           end

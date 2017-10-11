@@ -8,8 +8,11 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   it "Mo 08:00-10:00" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('Mo 08:00-10:00'))).to eql('Mo 08:00-10:00')
   end
-  it "Mo 08:00-10:00" do
+  it "2017 Jun-Jul Sa 10:00-12:00; Su 10:30-12:30" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2017 Jun-Jul Sa 10:00-12:00; Su 10:30-12:30'))).to eql('2017 Jun-Jul Sa 10:00-12:00; Su 10:30-12:30')
+  end
+  it "2017 Jun-2020 Jul Sa 10:00-12:00; Su 10:30-12:30" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2017 Jun-2020 Jul Sa 10:00-12:00; Su 10:30-12:30'))).to eql('2017 Jun-2020 Jul Sa 10:00-12:00; Su 10:30-12:30')
   end
   it "2017 Mo 08:00-10:00" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2017 Mo 08:00-10:00'))).to eql('2017 Mo 08:00-10:00')
@@ -23,8 +26,17 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   it "2017 Mo,We 08:00-10:00" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2017 Mo,We 08:00-10:00'))).to eql('2017 Mo,We 08:00-10:00')
   end
+  it "1999-2017 Mo,We 08:00-10:00" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('1999-2017 Mo,We 08:00-10:00'))).to eql('1999-2017 Mo,We 08:00-10:00')
+  end
   it "Mo-We 08:00-10:00" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('Mo-We 08:00-10:00'))).to eql('Mo-We 08:00-10:00')
+  end
+  it "2001 Mo-We 08:00-10:00" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2001 Mo-We 08:00-10:00'))).to eql('2001 Mo-We 08:00-10:00')
+  end
+  it "2001-3876 Mo-We 08:00-10:00" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2001-3876 Mo-We 08:00-10:00'))).to eql('2001-3876 Mo-We 08:00-10:00')
   end
   it "Mo-We 08:00-10:00; Sa,Su 07:00-13:00" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('Mo-We 08:00-10:00; Sa,Su 07:00-13:00'))).to eql('Mo-We 08:00-10:00; Sa,Su 07:00-13:00')
@@ -32,11 +44,23 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   it "Mo 08:00-24:00; Tu 00:00-09:00" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('Mo 08:00-24:00; Tu 00:00-09:00'))).to eql('Mo 08:00-24:00; Tu 00:00-09:00')
   end
+  it "2001 Mo 08:00-24:00; 2001 Tu 00:00-09:00" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2001 Mo 08:00-24:00; 2001 Tu 00:00-09:00'))).to eql('2001 Mo 08:00-24:00; 2001 Tu 00:00-09:00')
+  end
   it "08:00-18:00" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('08:00-18:00'))).to eql('08:00-18:00')
   end
+  it "9876 08:00-18:00" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('9876 08:00-18:00'))).to eql('9876 08:00-18:00')
+  end
   it "24/7 continuous" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('24/7'))).to eql('24/7')
+  end
+  it "2002 24/7 continuous" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2002 24/7'))).to eql('2002 24/7')
+  end
+  it "2002 Jan-2003 Feb 24/7 continuous" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2002 Jan-2003 Feb 24/7'))).to eql('2002 Jan-2003 Feb 24/7')
   end
   it "24/7; Jun: 08:00-18:00" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('24/7; Jun: 08:00-18:00'))).to eql('24/7; Jun 08:00-18:00')
