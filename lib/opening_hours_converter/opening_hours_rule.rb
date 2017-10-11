@@ -13,20 +13,10 @@ module OpeningHoursConverter
     def get
       get_wide_selector if @date.length > 1
       result = ""
-      if @date.length > 1 || @date[0]&.wide != ""
-        @date.each_with_index do |d, i|
-          if (i > 0)
-            result += ","
-          end
-          result += d.wide.get_time_selector
-        end
+      if @date.length > 0
+        result += get_wide_selector
       end
-      # if @date.length > 0
-      #   m = @date[0].get_months
-      #   if m.length > 0
-      #     result += " #{m}"
-      #   end
-      # end
+
       if @date.length > 0
         wd = @date[0].get_weekdays
         if wd.length > 0
@@ -62,9 +52,10 @@ module OpeningHoursConverter
       month_start = -1
       day_start = -1
 
-      result = []
+      result = {}
 
       if !years["always"].nil?
+
         always = years.delete("always")
 
         always.each_with_index do |month_array, month|
@@ -73,21 +64,32 @@ module OpeningHoursConverter
               month_start = month
               day_start = day
             elsif day_bool && month_start >= 0 && month == 11 && day == 30
-              result << {start: { day: day_start, month: month_start }, end: { day: 30, month: 11 }}
+              result["always"] ||= []
+              result["always"] << {start: { day: day_start, month: month_start }, end: { day: 30, month: 11 }}
               month_start = -1
               day_start = -1
             elsif !day_bool && month_start >= 0
+              result["always"] ||= []
               end_res = day == 0 ?
                 month == 0 ?
                   { day: 30, month: 11 } : { day: MONTH_END_DAY[month-1]-1, month: month-1 } :
                 { day: day-1, month: month }
-              result << { start: { day: day_start, month: month_start }, end: end_res }
+              result["always"] << { start: { day: day_start, month: month_start }, end: end_res }
               month_start = -1
               day_start = -1
             end
           end
         end
       end
+
+      # years {
+      #   2017: [
+      #     {start: {}, end: {}}
+      #   ],
+      #   multi_year: [
+      #     {start: {}, {}}
+      #   ]
+      # }
 
       years.each do |year, months|
         months.each_with_index do |month_array, month|
@@ -96,17 +98,47 @@ module OpeningHoursConverter
               year_start = year
               month_start = month
               day_start = day
-            elsif day_bool && year_start >= 0 && month == 11 && day == 30
-              result << {start: {day: day_start, month: month_start, year: year_start}, end: { day: 30, month: 11, year: year }}
+            elsif day_bool && year_start >= 0 && month == 11 && day == 30 && years[year+1].nil?
+              if year_start == year
+                result[year] ||= []
+                result[year] << { start: { day: day_start, month: month_start }, end: { day: 30, month: 11 } }
+              else
+                result["multi_year"] ||= {}
+                result["multi_year"]["#{year_start}-#{year}"] ||= []
+                result["multi_year"]["#{year_start}-#{year}"] << { start: { day: day_start, month: month_start, year: year_start },
+                  end: { day: 30, month: 11, year: year } }
+              end
               year_start = -1
               month_start = -1
               day_start = -1
             elsif !day_bool && year_start >= 0
-              end_res = day == 0 ?
-                month == 0 ?
-                  { day: 30, month: 11, year: year } : { day: MONTH_END_DAY[month-1]-1, month: month-1, year: year } :
-                {day: day-1, month: month, year: year}
-              result << {start: {day: day_start, month: month_start, year: year_start}, end: end_res}
+              end_res = {}
+
+              if day == 0
+                if month == 0
+                  end_res = { day: 30, month: 11 }
+                else
+                  end_res = { day: MONTH_END_DAY[month-1]-1, month: month-1 }
+                end
+              else
+                end_res = { day: day-1, month: month }
+              end
+
+              if year_start == year
+                result[year] ||= []
+                result[year] << { start: { day: day_start, month: month_start }, end: end_res }
+              else
+                result["multi_year"] ||= {}
+                result["multi_year"]["#{year_start}-#{year}"] ||= []
+                end_res[:year] = year
+                result["multi_year"]["#{year_start}-#{year}"] << { start: { day: day_start, month: month_start, year: year_start },
+                  end: end_res }
+              end
+              # end_res = day == 0 ?
+              #   month == 0 ?
+              #     { day: 30, month: 11, year: year } : { day: MONTH_END_DAY[month-1]-1, month: month-1, year: year } :
+              #   { day: day-1, month: month, year: year }
+              # result << {start: {day: day_start, month: month_start, year: year_start}, end: end_res}
               year_start = -1
               month_start = -1
               day_start = -1
@@ -114,54 +146,72 @@ module OpeningHoursConverter
           end
         end
       end
+
+
       result_to_string(result)
-      binding.pry
 
     end
 
     def result_to_string(result)
       str_result = ""
-      result.each do |r|
-        if str_result.length > 0
-          str_result += ","
-        end
-        if !r[:start][:year].nil?
-          if is_full_year?(r)
-            str_result += "#{r[:start][:year]}"
-          elsif is_full_month?(r)
-            str_result += "#{r[:start][:year]} #{OSM_MONTHS[r[:start][:month]]}"
-          elsif starts_month?(r) && ends_month?(r)
-            str_result += "#{r[:start][:year]} #{OSM_MONTHS[r[:start][:month]]}-#{OSM_MONTHS[r[:end][:month]]}"
-          elsif starts_year?(r) && ends_year?(r)
-            str_result += "#{r[:start][:year]}-#{OSM_MONTHS[r[:end][:year]]}"
-          elsif is_same_year?(r) && is_same_month?(r)
-            str_result += "#{r[:start][:year]} #{OSM_MONTHS[r[:start][:month]]} #{r[:start][:day]+1}-#{r[:end][:day]+1}"
-          elsif is_same_year?(r)
-            str_result += "#{r[:start][:year]} #{OSM_MONTHS[r[:start][:month]]} #{r[:start][:day]+1}-#{OSM_MONTHS[r[:end][:month]]} #{r[:end][:day]+1}"
-          else
-            str_result += "#{r[:start][:year]} #{OSM_MONTHS[r[:start][:month]]} #{r[:start][:day]+1}-#{r[:end][:year]} #{OSM_MONTHS[r[:end][:month]]} #{r[:end][:day]+1}"
+      result.each do |selector, intervals|
+        if selector == "always"
+          intervals.each do |interval|
+            if str_result.length > 0
+              str_result += ","
+            end
+            if is_full_year?(interval)
+            elsif is_full_month?(interval)
+              str_result += "#{OSM_MONTHS[interval[:start][:month]]}"
+            elsif starts_month?(interval) && ends_month?(interval)
+              str_result += "#{OSM_MONTHS[interval[:start][:month]]}-#{OSM_MONTHS[interval[:end][:month]]}"
+            elsif is_same_month?(interval)
+              str_result += "#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day]+1 < 10 ? "0#{interval[:start][:day]+1}" : interval[:start][:day]+1}-#{interval[:end][:day]+1 < 10 ? "0#{interval[:end][:day]+1}" : interval[:end][:day]+1}"
+            else
+              str_result += "#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day]+1 < 10 ? "0#{interval[:start][:day]+1}" : interval[:start][:day]+1}-#{OSM_MONTHS[interval[:end][:month]]} #{interval[:end][:day]+1 < 10 ? "0#{interval[:end][:day]+1}" : interval[:end][:day]+1}"
+            end
+          end
+        elsif selector == "multi_year"
+          intervals.each do |years, intervals|
+            intervals.each do |interval|
+              if str_result.length > 0
+                str_result += ","
+              end
+              if starts_year?(interval) && ends_year?(interval)
+                str_result += "#{interval[:start][:year]}-#{interval[:end][:year]}"
+              elsif starts_month?(interval) && ends_month?(interval)
+                str_result += "#{interval[:start][:year]} #{OSM_MONTHS[interval[:start][:month]]}-#{interval[:end][:year]} #{OSM_MONTHS[interval[:end][:month]]}"
+              else
+                str_result += "#{interval[:start][:year]} #{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day]+1 < 10 ? "0#{interval[:start][:day]+1}" : interval[:start][:day]+1}-#{interval[:end][:year]} #{OSM_MONTHS[interval[:end][:month]]} #{interval[:end][:day]+1 < 10 ? "0#{interval[:end][:day]+1}" : interval[:end][:day]+1}"
+              end
+            end
           end
         else
-          if is_full_month?(r)
-            str_result += "#{OSM_MONTHS[r[:start][:month]]}"
-          elsif starts_month?(r) && ends_month?(r)
-            str_result += "#{OSM_MONTHS[r[:start][:month]]}-#{OSM_MONTHS[r[:end][:month]]}"
-          elsif is_same_month?(r)
-            str_result += "#{OSM_MONTHS[r[:start][:month]]} #{r[:start][:day]+1}-#{r[:end][:day]+1}"
-          else
-            str_result += "#{OSM_MONTHS[r[:start][:month]]} #{r[:start][:day]+1}-#{OSM_MONTHS[r[:end][:month]]} #{r[:end][:day]+1}"
+          str_result += "#{selector} "
+          intervals.each do |interval|
+            if is_full_year?(interval)
+            elsif is_full_month?(interval)
+              str_result += "#{str_result.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]}"
+            elsif starts_month?(interval) && ends_month?(interval)
+              str_result += "#{str_result.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]}-#{OSM_MONTHS[interval[:end][:month]]}"
+            elsif is_same_month?(interval)
+              str_result += "#{str_result.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day]+1 < 10 ? "0#{interval[:start][:day]+1}" : interval[:start][:day]+1}-#{interval[:end][:day]+1 < 10 ? "0#{interval[:end][:day]+1}" : interval[:end][:day]+1}"
+            else
+              str_result += "#{str_result.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day]+1 < 10 ? "0#{interval[:start][:day]+1}" : interval[:start][:day]+1}-#{OSM_MONTHS[interval[:end][:month]]} #{interval[:end][:day]+1 < 10 ? "0#{interval[:end][:day]+1}" : interval[:end][:day]+1}"
+            end
           end
         end
       end
-      str_result
+
+      str_result.strip
     end
 
     def is_full_year?(r)
-      is_same_year?(r) && starts_year?(r) && ends_month?(r)
+      starts_year?(r) && ends_year?(r)
     end
 
     def is_full_month?(r)
-      is_same_year?(r) && is_same_month?(r) && starts_month?(r) && ends_month?(r)
+      is_same_month?(r) && starts_month?(r) && ends_month?(r)
     end
 
     def is_same_year?(r)
@@ -191,7 +241,7 @@ module OpeningHoursConverter
     def build_day_array
       years = {}
       @date.each do |date|
-        if !date.wide.start[:year].nil?
+        if !date.wide.start.nil? && !date.wide.start[:year].nil?
           if date.wide.end.nil? || date.wide.end[:year].nil? || date.wide.start[:year] == date.wide.end[:year]
             if !years[date.wide.start[:year]].nil?
               years = process_single_year(date, years)
@@ -201,16 +251,12 @@ module OpeningHoursConverter
             end
           else
             for year in date.wide.start[:year]..date.wide.end[:year]
-              if years[year].nil?
-                years[year] = Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
-              end
+              years[year] ||= Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
             end
             process_multiple_years(date, years)
           end
         else
-          if years["always"].nil?
-            years["always"] = Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
-          end
+          years["always"] ||= Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
           years = process_always(date, years)
         end
       end
@@ -219,7 +265,9 @@ module OpeningHoursConverter
 
     def process_always(date, years, get_iterator=false)
       if !get_iterator
-        if !date.wide.start[:day].nil?
+        if date.wide.start.nil?
+          years["always"] = Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { true } }
+        elsif !date.wide.start[:day].nil?
           if date.wide.end.nil? || (date.wide.end[:month].nil? && date.wide.end[:day].nil?) ||
             (date.wide.start[:month] == date.wide.end[:month] && date.wide.start[:day] == date.wide.end[:day])
             years["always"][date.wide.start[:month]-1][date.wide.start[:day]-1] = true
@@ -258,7 +306,7 @@ module OpeningHoursConverter
           end
         end
       else
-        for year in DateTime.now.year..DateTime.now.year + 5
+        for year in YEAR_MIN..YEAR_MAX
           if years[year].nil?
             years[year] = Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
           end
@@ -363,8 +411,10 @@ module OpeningHoursConverter
               end
             end
           else
-            for day in 0...MONTH_END_DAY[month]
-              years[year][month][day] = true
+            for month in 0..11
+              for day in 0...MONTH_END_DAY[month]
+                years[year][month][day] = true
+              end
             end
           end
         end
@@ -397,7 +447,7 @@ module OpeningHoursConverter
             years[date.wide.start[:year]][date.wide.start[:month]-1][date.wide.start[:day]-1] = true
           else
             for day in date.wide.start[:day]-1..date.wide.end[:day]-1
-              years[date.wide.start[:year]][date.wide.start[:month]-1][date.wide.end[:day]-1] = true
+              years[date.wide.start[:year]][date.wide.start[:month]-1][day] = true
             end
           end
         else
@@ -439,7 +489,6 @@ module OpeningHoursConverter
 
         # string with year range repeating separated by a comma
         if !(rp =~ /(\d{4}\-\d{4})\,(\1)/).nil?
-          # binding.pry
           first_occurence = (rp =~ /(\d{4}\-\d{4})/)
           years = result[first_occurence...first_occurence + 9]
 
@@ -447,7 +496,6 @@ module OpeningHoursConverter
 
         # string with year repeating separrated by a comma
         elsif !(rp =~ /(\d{4})\,(\1)/).nil?
-          # binding.pry
           first_occurence = (rp =~ /(\d{4})/)
           year = result[first_occurence...first_occurence + 4]
 
@@ -455,7 +503,6 @@ module OpeningHoursConverter
 
         # string with year range repeating
         elsif !(rp =~ /(\d{4}\-\d{4})[^;]+(\1)/).nil?
-          # binding.pry
           first_occurence = (rp =~ /(\d{4}\-\d{4})/)
           years = result[first_occurence...first_occurence + 9]
 
@@ -463,7 +510,6 @@ module OpeningHoursConverter
 
         # string with year repeating
         elsif !(rp =~ /(\d{4})[^;]+(\1)/).nil?
-          # binding.pry
           first_occurence = (rp =~ /(\d{4})/)
           year = result[first_occurence...first_occurence + 4]
 
@@ -482,6 +528,22 @@ module OpeningHoursConverter
         end
         return true
       end
+    end
+
+    def same_date?(o)
+      if o.nil? || o.date.length != @date.length
+        return false
+      else
+        @date.each_with_index do |d, i|
+          return false if !d.wide.equals(o.date[i].wide)
+        end
+        return true
+      end
+    end
+
+    def equals(o)
+      return false unless o.instance_of?(OpeningHoursConverter::OpeningHoursRule)
+      (same_time?(o) && same_date?(o))
     end
 
     def is_off?
@@ -504,30 +566,12 @@ module OpeningHoursConverter
       end
     end
 
-    # def add_date(date)
-    #   if date.nil? || !date.instance_of?(OpeningHoursConverter::OpeningHoursYear)
-    #     raise ArgumentError
-    #   end
-
-    #   if @date.length == 0
-    #     @date << date
-    #   elsif @date.first.same_kind_as?(date) && @date.same_weekdays(date)
-    #     date.months.each do |month|
-    #       @date.first.add_months(month)
-    #     end
-    #   else
-    #     if @date.length != 1 || !@date.first.same_weekdays?(date.weekdays)
-    #       raise ArgumentError, "This date #{@date.inspect} can't be added to this rule #{self.inspect}"
-    #     end
-    #   end
-    # end
-
     def add_date(date)
       if date.nil? || !date.instance_of?(OpeningHoursConverter::OpeningHoursDate)
         raise ArgumentError
       end
 
-      if @date.length == 0 || @date.first.wide_type != "always" && @date.first.same_kind_as?(date)
+      if @date.length == 0 || date.same_weekdays?(@date.first.weekdays)
         @date << date
       else
         if @date.length != 1 || @date.first.wide_type != "always" || !@date.first.same_weekdays?(date.weekdays)

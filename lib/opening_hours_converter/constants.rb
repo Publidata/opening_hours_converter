@@ -19,6 +19,7 @@ module OpeningHoursConverter
     MINUTES_MAX = 1440
     DAYS_MAX = 6
     YEAR_DAYS_MAX = 365
+    YEAR_MIN = DateTime.now.year - 1
     YEAR_MAX = DateTime.now.year + 5
   end
 end

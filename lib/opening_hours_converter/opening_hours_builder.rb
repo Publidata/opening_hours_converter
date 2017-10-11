@@ -27,87 +27,57 @@ module OpeningHoursConverter
             end
             range_general_id -= 1
           end
-
+          # binding.pry
           if date_range_index == 0 || range_general.nil?
             if date_range.defines_typical_week?
-              # if !date_range.wide_interval.start[:year].nil?
-              #   binding.pry
-              #   if !range_general_for.nil?
-              #     oh_rules = build_month_diff(date_range, date_ranges[range_general_for])
-              #   else
-              #     oh_rules = build_month(date_range)
-              #   end
-              # else
-                if !range_general_for.nil?
-                  oh_rules = build_week_diff(date_range, date_ranges[range_general_for])
-                else
-                  oh_rules = build_week(date_range)
-                end
-              # end
+              if !range_general_for.nil?
+                oh_rules = build_week_diff(date_range, date_ranges[range_general_for])
+              else
+                oh_rules = build_week(date_range)
+              end
             else
               oh_rules = build_day(date_range)
             end
-          end
 
-          oh_rule_index = 0
+            # oh_rule_index = 0
+            # for oh_rule_index in 0...oh_rules.length
+            oh_rules.map do |oh_rule|
+            # while oh_rule_index < oh_rules.length
 
-          while oh_rule_index < oh_rules.length
-            oh_rule = oh_rules[oh_rule_index]
-            oh_rule_added = false
-            rule_index = 0
+              # oh_rule = oh_rules[oh_rule_index]
+              oh_rule_added = false
+              rule_index = 0
 
-            while !oh_rule_added && rule_index < rules.length
-              if rules[rule_index].same_time?(oh_rule)
-                begin
-                  for date_id in 0...oh_rule.date.length
-                    rules[rule_index].add_date(oh_rule.date[date_id])
+              while !oh_rule_added && rule_index < rules.length
+                if rules[rule_index].same_time?(oh_rule) && !rules[rule_index].equals(oh_rule)
+                  begin
+                    for date_id in 0...oh_rule.date.length
+                      rules[rule_index].add_date(oh_rule.date[date_id])
+                    end
+                    oh_rule_added = true
+                  rescue Exception => e
+                    puts e
+                    rule_index += 1
                   end
-                  oh_rule_added = true
-                rescue Exception => e
-                  puts e
-                  # if(
-                  #   ohrule.getDate()[0].getWideType() == "holiday"
-                  #   && ohrule.getDate()[0].getWideValue() == "PH"
-                  #   && rules[ruleId].getDate()[0].getWideType() == "always"
-                  # ) {
-                  #   rules[ruleId].addPhOpeningHoursConverter::Weekday();
-                  #   ohruleAdded = true;
-                  # }
-                  # else if(
-                  #   rules[ruleId].getDate()[0].getWideType() == "holiday"
-                  #   && rules[ruleId].getDate()[0].getWideValue() == "PH"
-                  #   && ohrule.getDate()[0].getWideType() == "always"
-                  # ) {
-                  #   ohrule.addPhOpeningHoursConverter::Weekday();
-                  #   rules[ruleId] = ohrule;
-                  #   ohruleAdded = true;
-                  # }
-                  # else {
-                  #   ruleId++;
-                  # }
-                  rule_index += 1
+                else
+                  rule_index+=1
                 end
-              else
-                rule_index+=1
+
               end
 
-            end
-
-            if !oh_rule_added
-              rules << oh_rule
-            end
-
-            if oh_rule_index == oh_rules.length - 1 && oh_rule.has_overwritten_weekday?
-              oh_rule_over = OpeningHoursConverter::OpeningHoursRule.new
-
-              oh_rule.date.each do |date|
-                oh_rule_over.add_date(OpeningHoursConverter::OpeningHoursDate.new(date.wide, date.wide_type, date.weekdays_over))
+              if !oh_rule_added
+                rules << oh_rule
               end
-              oh_rule_over.add_time(OpeningHoursConverter::OpeningHoursTime.new)
-              oh_rules << oh_rule_over
-              oh_rule_index += 1
-            else
-              oh_rule_index += 1
+
+              if oh_rule == oh_rules.last && oh_rule.has_overwritten_weekday?
+                oh_rule_over = OpeningHoursConverter::OpeningHoursRule.new
+
+                oh_rule.date.each do |date|
+                  oh_rule_over.add_date(OpeningHoursConverter::OpeningHoursDate.new(date.wide, date.wide_type, date.weekdays_over))
+                end
+                oh_rule_over.add_time(OpeningHoursConverter::OpeningHoursTime.new)
+                oh_rules << oh_rule_over
+              end
             end
           end
         end

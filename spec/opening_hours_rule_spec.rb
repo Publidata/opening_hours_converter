@@ -98,15 +98,6 @@ RSpec.describe OpeningHoursConverter::OpeningHoursRule, '#add_date' do
     or1 = OpeningHoursConverter::OpeningHoursRule.new
     expect { or1.add_date }.to raise_error ArgumentError
   end
-  it "not same wide type" do
-    or1 = OpeningHoursConverter::OpeningHoursRule.new
-
-    od1 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(3), "month", [0,1,2,4,5,6])
-    od2 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.day(21,4), "day", [0,1,2,4,5,6])
-
-    or1.add_date(od1)
-    expect{ or1.add_date(od2) }.to raise_error ArgumentError
-  end
   it "not same weekday" do
     or1 = OpeningHoursConverter::OpeningHoursRule.new
 
@@ -124,16 +115,6 @@ RSpec.describe OpeningHoursConverter::OpeningHoursRule, '#add_date' do
 
     or1.add_date(od1)
     expect{ or1.add_date(od2) }.to raise_error ArgumentError
-  end
-  it "full year" do
-    or1 = OpeningHoursConverter::OpeningHoursRule.new
-
-    od1 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.always, "always", [0,1,2,4,5,6])
-    od2 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(7,nil,10), "month", [0,1,2,4,5,6])
-
-    or1.add_date(od1)
-    or1.add_date(od2)
-    expect(or1.date.length).to eql(1)
   end
 end
 
