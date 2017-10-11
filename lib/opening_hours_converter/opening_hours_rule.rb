@@ -6,7 +6,6 @@ module OpeningHoursConverter
     attr_accessor :date, :time
 
     def initialize
-      @years = {}
       @date = []
       @time = []
     end
@@ -65,6 +64,31 @@ module OpeningHoursConverter
 
       result = []
 
+      if !years["always"].nil?
+        always = years.delete("always")
+
+        always.each_with_index do |month_array, month|
+          month_array.each_with_index do |day_bool, day|
+            if day_bool && month_start < 0
+              month_start = month
+              day_start = day
+            elsif day_bool && month_start >= 0 && month == 11 && day == 30
+              result << {start: { day: day_start, month: month_start }, end: { day: 30, month: 11 }}
+              month_start = -1
+              day_start = -1
+            elsif !day_bool && month_start >= 0
+              end_res = day == 0 ?
+                month == 0 ?
+                  { day: 30, month: 11 } : { day: MONTH_END_DAY[month-1]-1, month: month-1 } :
+                { day: day-1, month: month }
+              result << { start: { day: day_start, month: month_start }, end: end_res }
+              month_start = -1
+              day_start = -1
+            end
+          end
+        end
+      end
+
       years.each do |year, months|
         months.each_with_index do |month_array, month|
           month_array.each_with_index do |day_bool, day|
@@ -72,11 +96,16 @@ module OpeningHoursConverter
               year_start = year
               month_start = month
               day_start = day
+            elsif day_bool && year_start >= 0 && month == 11 && day == 30
+              result << {start: {day: day_start, month: month_start, year: year_start}, end: { day: 30, month: 11, year: year }}
+              year_start = -1
+              month_start = -1
+              day_start = -1
             elsif !day_bool && year_start >= 0
               end_res = day == 0 ?
                 month == 0 ?
-                  { day: 31, month: 11, year: year } : { day: MONTH_END_DAY[month - 1], month: month - 1, year: year } :
-                {day: day, month: month, year: year}
+                  { day: 30, month: 11, year: year } : { day: MONTH_END_DAY[month-1]-1, month: month-1, year: year } :
+                {day: day-1, month: month, year: year}
               result << {start: {day: day_start, month: month_start, year: year_start}, end: end_res}
               year_start = -1
               month_start = -1
@@ -85,8 +114,78 @@ module OpeningHoursConverter
           end
         end
       end
-
+      result_to_string(result)
       binding.pry
+
+    end
+
+    def result_to_string(result)
+      str_result = ""
+      result.each do |r|
+        if str_result.length > 0
+          str_result += ","
+        end
+        if !r[:start][:year].nil?
+          if is_full_year?(r)
+            str_result += "#{r[:start][:year]}"
+          elsif is_full_month?(r)
+            str_result += "#{r[:start][:year]} #{OSM_MONTHS[r[:start][:month]]}"
+          elsif starts_month?(r) && ends_month?(r)
+            str_result += "#{r[:start][:year]} #{OSM_MONTHS[r[:start][:month]]}-#{OSM_MONTHS[r[:end][:month]]}"
+          elsif starts_year?(r) && ends_year?(r)
+            str_result += "#{r[:start][:year]}-#{OSM_MONTHS[r[:end][:year]]}"
+          elsif is_same_year?(r) && is_same_month?(r)
+            str_result += "#{r[:start][:year]} #{OSM_MONTHS[r[:start][:month]]} #{r[:start][:day]+1}-#{r[:end][:day]+1}"
+          elsif is_same_year?(r)
+            str_result += "#{r[:start][:year]} #{OSM_MONTHS[r[:start][:month]]} #{r[:start][:day]+1}-#{OSM_MONTHS[r[:end][:month]]} #{r[:end][:day]+1}"
+          else
+            str_result += "#{r[:start][:year]} #{OSM_MONTHS[r[:start][:month]]} #{r[:start][:day]+1}-#{r[:end][:year]} #{OSM_MONTHS[r[:end][:month]]} #{r[:end][:day]+1}"
+          end
+        else
+          if is_full_month?(r)
+            str_result += "#{OSM_MONTHS[r[:start][:month]]}"
+          elsif starts_month?(r) && ends_month?(r)
+            str_result += "#{OSM_MONTHS[r[:start][:month]]}-#{OSM_MONTHS[r[:end][:month]]}"
+          elsif is_same_month?(r)
+            str_result += "#{OSM_MONTHS[r[:start][:month]]} #{r[:start][:day]+1}-#{r[:end][:day]+1}"
+          else
+            str_result += "#{OSM_MONTHS[r[:start][:month]]} #{r[:start][:day]+1}-#{OSM_MONTHS[r[:end][:month]]} #{r[:end][:day]+1}"
+          end
+        end
+      end
+      str_result
+    end
+
+    def is_full_year?(r)
+      is_same_year?(r) && starts_year?(r) && ends_month?(r)
+    end
+
+    def is_full_month?(r)
+      is_same_year?(r) && is_same_month?(r) && starts_month?(r) && ends_month?(r)
+    end
+
+    def is_same_year?(r)
+      r[:start][:year] == r[:end][:year]
+    end
+
+    def is_same_month?(r)
+      r[:start][:month] == r[:end][:month]
+    end
+
+    def starts_month?(r)
+      r[:start][:day] == 0
+    end
+
+    def ends_month?(r)
+      r[:end][:day] == MONTH_END_DAY[r[:end][:month]] - 1
+    end
+
+    def starts_year?(r)
+      r[:start][:month] == 0 && starts_month?(r)
+    end
+
+    def ends_year?(r)
+      r[:end][:month] == 11 && ends_month?(r)
     end
 
     def build_day_array
@@ -105,55 +204,99 @@ module OpeningHoursConverter
               if years[year].nil?
                 years[year] = Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
               end
-              process_multiple_years(date, years)
             end
+            process_multiple_years(date, years)
           end
         else
+          if years["always"].nil?
+            years["always"] = Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
+          end
           years = process_always(date, years)
         end
       end
       years
     end
 
-    def process_always(date, years)
-      for year in DateTime.now.year..DateTime.now.year + 5
-        if years[year].nil?
-          years[year] = Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
-        end
+    def process_always(date, years, get_iterator=false)
+      if !get_iterator
         if !date.wide.start[:day].nil?
           if date.wide.end.nil? || (date.wide.end[:month].nil? && date.wide.end[:day].nil?) ||
             (date.wide.start[:month] == date.wide.end[:month] && date.wide.start[:day] == date.wide.end[:day])
-            years[year][date.wide.start[:month]][date.wide.start[:day]] = true
+            years["always"][date.wide.start[:month]-1][date.wide.start[:day]-1] = true
           elsif date.wide.start[:month] == date.wide.end[:month]
-            for day in date.wide.start[:day]..date.wide.end[:day]
-              years[year][date.wide.start[:month]][day] = true
+            for day in date.wide.start[:day]-1..date.wide.end[:day]-1
+              years["always"][date.wide.start[:month]-1][day] = true
             end
           elsif date.wide.start[:month] != date.wide.end[:month]
-            for month in date.wide.start[:month]..date.wide.end[:month]
-              if month == date.wide.start[:month]
-                for day in date.wide.start[:day]...MONTH_END_DAY[date.wide.start[:month]-1]
-                  years[year][month][day] = true
+            for month in date.wide.start[:month]-1..date.wide.end[:month]-1
+              if month == date.wide.start[:month]-1
+                for day in date.wide.start[:day]-1...MONTH_END_DAY[month]
+                  years["always"][month][day] = true
                 end
-              elsif month == date.wide.end[:month]
-                for day in 0..date.wide.end[:day]
-                  years[year][month][day] = true
+              elsif month == date.wide.end[:month]-1
+                for day in 0..date.wide.end[:day]-1
+                  years["always"][month][day] = true
                 end
               else
-                for day in 0...MONTH_END_DAY[month-1]
-                  years[year][month][day] = true
+                for day in 0...MONTH_END_DAY[month]
+                  years["always"][month][day] = true
                 end
               end
             end
           end
         elsif !date.wide.start[:month].nil?
           if date.wide.end.nil? || date.wide.end[:month].nil? || date.wide.start[:month] == date.wide.end[:month]
-            years[year][date.wide.start[:month]].each_with_index do |month, i|
-              years[year][date.wide.start[:month]][i] = true
+            years["always"][date.wide.start[:month]-1].each_with_index do |month, i|
+              years["always"][date.wide.start[:month]-1][i] = true
             end
           else
-            for month in date.wide.start[:month]..date.wide.end[:month]
-              years[year][month].each_with_index do |day, i|
-                years[year][month][i] = true
+            for month in date.wide.start[:month]-1..date.wide.end[:month]-1
+              years["always"][month].each_with_index do |day, i|
+                years["always"][month][i] = true
+              end
+            end
+          end
+        end
+      else
+        for year in DateTime.now.year..DateTime.now.year + 5
+          if years[year].nil?
+            years[year] = Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
+          end
+          if !date.wide.start[:day].nil?
+            if date.wide.end.nil? || (date.wide.end[:month].nil? && date.wide.end[:day].nil?) ||
+              (date.wide.start[:month] == date.wide.end[:month] && date.wide.start[:day] == date.wide.end[:day])
+              years[year][date.wide.start[:month]-1][date.wide.start[:day]-1] = true
+            elsif date.wide.start[:month] == date.wide.end[:month]
+              for day in date.wide.start[:day]-1..date.wide.end[:day]-1
+                years[year][date.wide.start[:month]-1][day] = true
+              end
+            elsif date.wide.start[:month] != date.wide.end[:month]
+              for month in date.wide.start[:month]-1..date.wide.end[:month]-1
+                if month == date.wide.start[:month]-1
+                  for day in date.wide.start[:day]-1...MONTH_END_DAY[month]
+                    years[year][month][day] = true
+                  end
+                elsif month == date.wide.end[:month]-1
+                  for day in 0..date.wide.end[:day]-1
+                    years[year][month][day] = true
+                  end
+                else
+                  for day in 0...MONTH_END_DAY[month]
+                    years[year][month][day] = true
+                  end
+                end
+              end
+            end
+          elsif !date.wide.start[:month].nil?
+            if date.wide.end.nil? || date.wide.end[:month].nil? || date.wide.start[:month] == date.wide.end[:month]
+              years[year][date.wide.start[:month]-1].each_with_index do |month, i|
+                years[year][date.wide.start[:month]-1][i] = true
+              end
+            else
+              for month in date.wide.start[:month]-1..date.wide.end[:month]-1
+                years[year][month].each_with_index do |day, i|
+                  years[year][month][i] = true
+                end
               end
             end
           end
@@ -174,13 +317,13 @@ module OpeningHoursConverter
       elsif date.wide.type == "month"
         for year in date.wide.start[:year]..date.wide.end[:year]
           if year == date.wide.start[:year]
-            for month in date.wide.start[:month]..11
+            for month in date.wide.start[:month]-1..11
               years[year][month].each_with_index do |day, i|
                 years[year][month][day] = true
               end
             end
           elsif year == date.wide.end[:year]
-            for month in 0..date.wide.end[:month]
+            for month in 0..date.wide.end[:month]-1
               years[year][month].each_with_index do |day, i|
                 years[year][month][day] = true
               end
@@ -196,31 +339,31 @@ module OpeningHoursConverter
       elsif date.wide.type == "day"
         for year in date.wide.start[:year]..date.wide.end[:year]
           if year == date.wide.start[:year]
-            for month in date.wide.start[:month]..11
-              if month == date.wide.start[:month]
-                for day in date.wide.start[:day]...MONTH_END_DAY[month-1]
+            for month in date.wide.start[:month]-1..11
+              if month == date.wide.start[:month]-1
+                for day in date.wide.start[:day]-1...MONTH_END_DAY[month]
                   years[year][month][day] = true
                 end
               else
-                for day in 0...MONTH_END_DAY[month-1]
+                for day in 0...MONTH_END_DAY[month]
                   years[year][month][day] = true
                 end
               end
             end
           elsif year == date.wide.end[:year]
-            for month in 0..date.wide.end[:month]
-              if month == date.wide.end[:month]
-                for day in 0..date.wide.end[:day]
+            for month in 0..date.wide.end[:month]-1
+              if month == date.wide.end[:month]-1
+                for day in 0..date.wide.end[:day]-1
                   years[year][month][day] = true
                 end
               else
-                for day in 0...MONTH_END_DAY[month-1]
+                for day in 0...MONTH_END_DAY[month]
                   years[year][month][day] = true
                 end
               end
             end
           else
-            for day in 0...MONTH_END_DAY[month-1]
+            for day in 0...MONTH_END_DAY[month]
               years[year][month][day] = true
             end
           end
@@ -238,11 +381,11 @@ module OpeningHoursConverter
         end
       elsif date.wide.type == "month"
         if date.wide.end.nil? || date.wide.end[:month].nil? || date.wide.start[:month] == date.wide.end[:month]
-          years[date.wide.start[:year]][date.wide.start[:month]].each_with_index do |month, i|
-            years[date.wide.start[:year]][date.wide.start[:month]][i] = true
+          years[date.wide.start[:year]][date.wide.start[:month]-1].each_with_index do |month, i|
+            years[date.wide.start[:year]][date.wide.start[:month]-1][i] = true
           end
         else
-          for month in date.wide.start[:month]..date.wide.end[:month]
+          for month in date.wide.start[:month]-1..date.wide.end[:month]-1
             years[date.wide.start[:year]][month].each_with_index do |day, i|
               years[date.wide.start[:year]][month][i] = true
             end
@@ -251,24 +394,24 @@ module OpeningHoursConverter
       elsif date.wide.type == "day"
         if date.wide.start[:month] == date.wide.end[:month] || date.wide.end[:month].nil?
           if date.wide.start[:day] == date.wide.end[:day]
-            years[date.wide.start[:year]][date.wide.start[:month]][date.wide.start[:day]] = true
+            years[date.wide.start[:year]][date.wide.start[:month]-1][date.wide.start[:day]-1] = true
           else
-            for day in date.wide.start[:day]..date.wide.end[:day]
-              years[date.wide.start[:year]][date.wide.start[:month]][date.wide.end[:day]] = true
+            for day in date.wide.start[:day]-1..date.wide.end[:day]-1
+              years[date.wide.start[:year]][date.wide.start[:month]-1][date.wide.end[:day]-1] = true
             end
           end
         else
-          for month in date.wide.start[:month]..date.wide.end[:month]
-            if month == date.wide.start[:month]
-              for day in date.wide.start[:day]...MONTH_END_DAY[date.wide.start[:month]-1]
+          for month in date.wide.start[:month]-1..date.wide.end[:month]-1
+            if month == date.wide.start[:month]-1
+              for day in date.wide.start[:day]-1...MONTH_END_DAY[month]
                 years[date.wide.start[:year]][month][day] = true
               end
-            elsif month == date.wide.end[:month]
-              for day in 0..date.wide.end[:day]
+            elsif month == date.wide.end[:month]-1
+              for day in 0..date.wide.end[:day]-1
                 years[date.wide.start[:year]][month][day] = true
               end
             else
-              for day in 0...MONTH_END_DAY[month-1]
+              for day in 0...MONTH_END_DAY[month]
                 years[date.wide.start[:year]][month][day] = true
               end
             end
