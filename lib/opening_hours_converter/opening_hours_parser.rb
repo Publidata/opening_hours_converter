@@ -17,6 +17,7 @@ module OpeningHoursConverter
       @RGX_YEAR = /^(\d{4})(\-(\d{4}))?$/
       @RGX_YEAR_MONTH_DAY = /^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([012]?[0-9]|3[01])(\-((\d{4}) )?((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) )?([012]?[0-9]|3[01]))?\:?$/
       @RGX_YEAR_MONTH = /^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\-((\d{4}) )?((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)))?\:?$/
+      @RGX_COMMENT = /^\"[^\"]*\"$/
     end
 
     def parse(oh)
@@ -183,7 +184,6 @@ module OpeningHoursConverter
           times << {from: 0, to: 24*60}
         end
 
-        # pasur
         date_ranges.each do |dr|
           found_date_range = false
           res_dr_id = 0

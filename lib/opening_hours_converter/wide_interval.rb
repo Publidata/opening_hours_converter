@@ -80,6 +80,24 @@ module OpeningHoursConverter
       self
     end
 
+    def date_time(start_date, end_date=nil)
+      if start_date.nil?
+        raise(ArgumentError, "start_date is required")
+      end
+      if !start_date.instance_of?(DateTime)
+        raise(ArgumentError, "start_date is not a DateTime")
+      end
+      if !end_date.instance_of?(DateTime)
+        raise(ArgumentError, "end_date is not a DateTime")
+      end
+      @start = { day: start_date.day, month: start_date.month, year: start_date.year }
+      if !end_date.nil? && end_date != start_date
+        @end = { day: end_date.day, month: end_date.month, year: end_date.year }
+      end
+      @type = "day"
+      self
+    end
+
     def month(start_month, start_year=nil, end_month=nil, end_year=nil)
       if start_month.nil?
         raise(ArgumentError, "start_month is required")
