@@ -27,7 +27,6 @@ module OpeningHoursConverter
             end
             range_general_id -= 1
           end
-          # binding.pry
           if date_range_index == 0 || range_general.nil?
             if date_range.defines_typical_week?
               if !range_general_for.nil?
@@ -38,13 +37,13 @@ module OpeningHoursConverter
             else
               oh_rules = build_day(date_range)
             end
+            # binding.pry
+            oh_rules.each_with_index do |rule, i|
+              oh_rules[i].add_comment(date_range.comment)
+            end
+            # binding.pry
 
-            # oh_rule_index = 0
-            # for oh_rule_index in 0...oh_rules.length
             oh_rules.map do |oh_rule|
-            # while oh_rule_index < oh_rules.length
-
-              # oh_rule = oh_rules[oh_rule_index]
               oh_rule_added = false
               rule_index = 0
 
@@ -82,9 +81,7 @@ module OpeningHoursConverter
           end
         end
       end
-
       # binding.pry
-
 
       result = ""
       rules.each_with_index do |rule, rule_index|
@@ -114,7 +111,6 @@ module OpeningHoursConverter
     end
 
     def build_week(date_range)
-      # binding.pry
       result = []
       intervals = date_range.typical.get_intervals(true)
       time_intervals = create_time_intervals(date_range.wide_interval, date_range.wide_interval.type, intervals)
@@ -289,7 +285,6 @@ module OpeningHoursConverter
     end
 
     def create_time_intervals(wide_interval, type, intervals)
-      # binding.pry
       monday0 = -1
       sunday24 = -1
 

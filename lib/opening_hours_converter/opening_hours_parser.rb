@@ -24,6 +24,7 @@ module OpeningHoursConverter
       result = []
       blocks = oh.split(';')
 
+      comment = nil
       rule_modifier = nil
       time_selector = nil
       weekday_selector = nil
@@ -48,6 +49,13 @@ module OpeningHoursConverter
         tokens = tokenize(block)
         current_token = tokens.length - 1
 
+        # get comment
+        if current_token >= 0 && is_comment?(tokens[current_token])
+          comment = tokens[current_token]
+          current_token -= 1
+        end
+
+
         # get state
         if current_token >= 0 && is_rule_modifier?(tokens[current_token])
           rule_modifier = tokens[current_token].downcase
@@ -70,24 +78,6 @@ module OpeningHoursConverter
           weekdays = get_weekdays(weekday_selector)
           current_token -= 1
         end
-
-        # years = []
-        # if current_token >= 0 && is_year?(tokens[current_token])
-        #   year_selector = tokens[current_token]
-        #   year_selector = year_selector.split(',')
-        #   year_selector.each do |y|
-        #     single_year = y.gsub(/\:$/, '').split('-')
-        #     year_from = single_year[0]
-        #     if single_year.length > 1
-        #       year_to = single_year[1]
-        #     else
-        #       year_to = year_from
-        #     end
-
-        #     years << {from: year_from, to: year_to}
-        #   end
-        #   current_token -= 1
-        # end
 
         months = []
         years = []
@@ -189,7 +179,8 @@ module OpeningHoursConverter
           res_dr_id = 0
 
           while res_dr_id < result.length && !found_date_range
-            if result[res_dr_id].wide_interval.equals(dr)
+            puts result[res_dr_id].inspect
+            if result[res_dr_id].wide_interval.equals(dr) && result[res_dr_id].comment == comment
               found_date_range = true
             else
               res_dr_id += 1
@@ -198,8 +189,12 @@ module OpeningHoursConverter
 
           if found_date_range
             dr_obj = result[res_dr_id]
+            # dr_obj.add_comment(comment)
           else
             dr_obj = OpeningHoursConverter::DateRange.new(dr)
+            if !comment.nil?
+              dr_obj.add_comment(comment)
+            end
 
             general = -1
             for res_dr_id in 0...result.length
@@ -246,9 +241,12 @@ module OpeningHoursConverter
                 add_interval(dr_obj.typical, weekdays[wd_id], times[t_id])
               end
             end
+
+
           end
         end
       end
+
       return result
     end
 
@@ -491,6 +489,9 @@ module OpeningHoursConverter
       values[0].to_i * 60 + values[1].to_i
     end
 
+    def is_comment?(token)
+      !(@RGX_COMMENT =~ token).nil?
+    end
     def is_rule_modifier?(token)
       !(@RGX_RULE_MODIFIER =~ token).nil?
     end

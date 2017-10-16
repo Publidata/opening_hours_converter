@@ -3,11 +3,12 @@ require 'opening_hours_converter/constants'
 module OpeningHoursConverter
   class OpeningHoursRule
     include Constants
-    attr_accessor :date, :time
+    attr_accessor :date, :time, :comment
 
     def initialize
       @date = []
       @time = []
+      @comment = ""
     end
 
     def get
@@ -39,6 +40,10 @@ module OpeningHoursConverter
 
       if result.strip == "00:00-24:00" || (!(result =~ /00:00-24:00/).nil? && (result =~ rgx_day).nil?)
         result.gsub!("00:00-24:00", "24/7")
+      end
+
+      if !comment.nil? && comment.length != 0
+        result += " #{comment}"
       end
 
       result.strip
@@ -130,19 +135,8 @@ module OpeningHoursConverter
           end
         end
       end
-
-
       result_to_string(result)
-
     end
-
-# result.each do |date|
-#   (date[:start]..date[:end]).each do |d|
-#     puts "#{d.day}/#{d.month}/#{d.year}"
-#   end
-# end
-
-
 
     def result_to_string(result)
       str_result = ""
@@ -297,6 +291,10 @@ module OpeningHoursConverter
       else
         raise ArgumentError, "This time can't be added to this rule"
       end
+    end
+
+    def add_comment(comment)
+      @comment = comment
     end
   end
 end

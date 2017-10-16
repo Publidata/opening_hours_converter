@@ -72,9 +72,11 @@ module OpeningHoursConverter
         result.each do |interval|
           (interval[:start]..interval[:end]).each do |day|
             date_ranges[index].typical.intervals.each do |i|
-              if (i.day_start..i.day_end).include?(fix_datetime_wday(day.wday))
-                datetime_result << { start: Time.new(day.year, day.month, day.day, i.start/60, i.start%60),
-                  end: Time.new(day.year, day.month, day.day, i.end/60, i.end%60) }
+              if !i.nil?
+                if (i.day_start..i.day_end).include?(fix_datetime_wday(day.wday))
+                  datetime_result << { start: Time.new(day.year, day.month, day.day, i.start/60, i.start%60),
+                    end: Time.new(day.year, day.month, day.day, i.end/60, i.end%60) }
+                end
               end
             end
           end
@@ -127,6 +129,17 @@ module OpeningHoursConverter
       ti.each_with_index do |interval, index|
         return {end: interval[:end]} if interval[:start] <= time && interval[:end] >= time
         return {start: interval[:start]} if interval[:start] > time && ti[index-1][:end] <= time
+      end
+      return false
+    end
+
+
+    def next_period(opening_hours_string, time=Time.now)
+      date_ranges = OpeningHoursConverter::OpeningHoursParser.new.parse(opening_hours_string)
+      ti = get_time_iterator(date_ranges)
+      ti.each_with_index do |interval, index|
+        return ti[index+1] if interval[:start] <= time && interval[:end] >= time
+        return interval if interval[:start] > time && ti[index-1][:end] <= time
       end
       return false
     end
