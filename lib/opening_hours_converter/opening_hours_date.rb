@@ -3,7 +3,8 @@ require 'opening_hours_converter/constants'
 module OpeningHoursConverter
   class OpeningHoursDate
     include Constants
-    attr_accessor :wide_type, :wide, :weekdays, :weekdays_over
+    attr_accessor :weekdays, :weekdays_over
+    attr_reader :wide_type, :wide
 
     def initialize(wide, wide_type, weekdays)
       if wide.nil? || wide_type.nil? || weekdays.nil?
