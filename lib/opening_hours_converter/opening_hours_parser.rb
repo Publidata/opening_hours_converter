@@ -179,7 +179,6 @@ module OpeningHoursConverter
           res_dr_id = 0
 
           while res_dr_id < result.length && !found_date_range
-            puts result[res_dr_id].inspect
             if result[res_dr_id].wide_interval.equals(dr) && result[res_dr_id].comment == comment
               found_date_range = true
             else
@@ -189,7 +188,6 @@ module OpeningHoursConverter
 
           if found_date_range
             dr_obj = result[res_dr_id]
-            # dr_obj.add_comment(comment)
           else
             dr_obj = OpeningHoursConverter::DateRange.new(dr)
             if !comment.nil?
@@ -481,7 +479,13 @@ module OpeningHoursConverter
     end
 
     def tokenize(block)
-      block.split(' ')
+      if block.split('"').length > 1
+        comment = block.split('"')[1]
+        tokens = block.split('"')[0].split(' ')
+        tokens << "\"#{comment}\""
+      else
+        block.split(' ')
+      end
     end
 
     def as_minutes(time)

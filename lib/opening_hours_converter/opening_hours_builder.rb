@@ -16,6 +16,7 @@ module OpeningHoursConverter
           range_general = nil
           range_general_for = nil
           range_general_id = date_range_index - 1
+
           while range_general_id >= 0 && range_general.nil?
             if !date_range.nil?
               general_for = date_ranges[range_general_id].is_general_for?(date_range)
@@ -37,18 +38,17 @@ module OpeningHoursConverter
             else
               oh_rules = build_day(date_range)
             end
-            # binding.pry
+
             oh_rules.each_with_index do |rule, i|
               oh_rules[i].add_comment(date_range.comment)
             end
-            # binding.pry
 
             oh_rules.map do |oh_rule|
               oh_rule_added = false
               rule_index = 0
 
               while !oh_rule_added && rule_index < rules.length
-                if rules[rule_index].same_time?(oh_rule) && !rules[rule_index].equals(oh_rule)
+                if rules[rule_index].same_time?(oh_rule) && !rules[rule_index].equals(oh_rule) && rules[rule_index].comment == oh_rule.comment
                   begin
                     for date_id in 0...oh_rule.date.length
                       rules[rule_index].add_date(oh_rule.date[date_id])
