@@ -1,10 +1,11 @@
 module OpeningHoursConverter
   class DateRange
-    attr_accessor :wide_interval, :typical
+    attr_accessor :wide_interval, :typical, :comment
 
     def initialize(w=nil)
       @wide_interval = nil
       @typical = nil
+      @comment = ""
       update_range(w)
     end
 
@@ -33,12 +34,16 @@ module OpeningHoursConverter
       end
     end
 
+    def add_comment(comment="")
+      @comment += comment
+    end
+
     def has_same_typical?(date_range)
       defines_typical_day? == date_range.defines_typical_day? && @typical.same_as?(date_range.typical)
     end
 
     def is_general_for?(date_range)
-      defines_typical_day? == date_range.defines_typical_day? && @wide_interval.contains?(date_range.wide_interval)
+      defines_typical_day? == date_range.defines_typical_day? && @wide_interval.contains?(date_range.wide_interval) && @comment == date_range.comment
     end
   end
 end

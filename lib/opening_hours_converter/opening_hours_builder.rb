@@ -16,6 +16,7 @@ module OpeningHoursConverter
           range_general = nil
           range_general_for = nil
           range_general_id = date_range_index - 1
+
           while range_general_id >= 0 && range_general.nil?
             if !date_range.nil?
               general_for = date_ranges[range_general_id].is_general_for?(date_range)
@@ -27,7 +28,6 @@ module OpeningHoursConverter
             end
             range_general_id -= 1
           end
-          # binding.pry
           if date_range_index == 0 || range_general.nil?
             if date_range.defines_typical_week?
               if !range_general_for.nil?
@@ -39,17 +39,16 @@ module OpeningHoursConverter
               oh_rules = build_day(date_range)
             end
 
-            # oh_rule_index = 0
-            # for oh_rule_index in 0...oh_rules.length
-            oh_rules.map do |oh_rule|
-            # while oh_rule_index < oh_rules.length
+            oh_rules.each_with_index do |rule, i|
+              oh_rules[i].add_comment(date_range.comment)
+            end
 
-              # oh_rule = oh_rules[oh_rule_index]
+            oh_rules.map do |oh_rule|
               oh_rule_added = false
               rule_index = 0
 
               while !oh_rule_added && rule_index < rules.length
-                if rules[rule_index].same_time?(oh_rule) && !rules[rule_index].equals(oh_rule)
+                if rules[rule_index].same_time?(oh_rule) && !rules[rule_index].equals(oh_rule) && rules[rule_index].comment == oh_rule.comment
                   begin
                     for date_id in 0...oh_rule.date.length
                       rules[rule_index].add_date(oh_rule.date[date_id])
@@ -82,9 +81,7 @@ module OpeningHoursConverter
           end
         end
       end
-
       # binding.pry
-
 
       result = ""
       rules.each_with_index do |rule, rule_index|
@@ -114,7 +111,6 @@ module OpeningHoursConverter
     end
 
     def build_week(date_range)
-      # binding.pry
       result = []
       intervals = date_range.typical.get_intervals(true)
       time_intervals = create_time_intervals(date_range.wide_interval, date_range.wide_interval.type, intervals)
@@ -289,7 +285,6 @@ module OpeningHoursConverter
     end
 
     def create_time_intervals(wide_interval, type, intervals)
-      # binding.pry
       monday0 = -1
       sunday24 = -1
 
