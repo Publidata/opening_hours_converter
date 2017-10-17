@@ -3,11 +3,6 @@ require 'pry-nav'
 module OpeningHoursConverter
   class Iterator
     include Constants
-    attr_accessor :iterator
-
-    def initialize
-      @iterator = nil
-    end
 
     def get_iterator(date_ranges)
       date_ranges_array = []

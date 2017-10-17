@@ -3,7 +3,6 @@ require 'opening_hours_converter/constants'
 module OpeningHoursConverter
   class OpeningHoursParser
     include Constants
-    attr_accessor :RGX_RULE_MODIFIER, :RGX_WEEK_KEY, :RGX_WEEK_VAL, :RGX_MONTH, :RGX_MONTHDAY, :RGX_TIME, :RGX_WEEKDAY, :RGX_HOLIDAY, :RGX_WD
     def initialize
       @RGX_RULE_MODIFIER = /^(open|closed|off)$/i
       @RGX_WEEK_KEY = /^week$/
