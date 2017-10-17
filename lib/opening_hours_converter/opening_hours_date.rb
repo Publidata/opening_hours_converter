@@ -20,6 +20,12 @@ module OpeningHoursConverter
       result = ""
       wd = @weekdays.concat(@weekdays_over).sort.uniq
 
+      if wd.length > 0 && wd[0] == PH_WEEKDAY
+        result = "PH"
+        wd.shift
+      end
+
+
       if wd.length > 0 && wd.include?(6) && wd.include?(0) && (wd.include?(5) || wd.include?(1))
         start_we = 6
         i = wd.length - 2
@@ -101,6 +107,10 @@ module OpeningHoursConverter
         @weekdays << weekday
         @weekdays.sort!
       end
+    end
+
+    def add_ph_weekday
+      add_weekday(PH_WEEKDAY)
     end
 
     def add_overwritten_weekday(weekday)

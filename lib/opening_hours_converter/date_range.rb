@@ -28,7 +28,7 @@ module OpeningHoursConverter
           else
             @typical = OpeningHoursConverter::Week.new
           end
-        when "week", "month", "year", "always"
+        else
           @typical = OpeningHoursConverter::Week.new
         end
       end
@@ -44,6 +44,17 @@ module OpeningHoursConverter
 
     def is_general_for?(date_range)
       defines_typical_day? == date_range.defines_typical_day? && @wide_interval.contains?(date_range.wide_interval) && @comment == date_range.comment
+    end
+
+    def is_holiday?
+      result = false
+      result = @wide_interval.type == "holiday"
+      if !result
+        @typical.intervals.each do |i|
+          result = true if i.day_start == -2 && i.day_end == -2
+        end
+      end
+      result
     end
   end
 end

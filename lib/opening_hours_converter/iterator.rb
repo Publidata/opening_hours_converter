@@ -45,7 +45,8 @@ module OpeningHoursConverter
                     end_res = DateTime.new(year, month, MONTH_END_DAY[month])
                   end
                 else
-                  end_res = DateTime.new(year, month, day)
+
+                  end_res = DateTime.new(year, month+1, day)
                 end
 
                 result << { start: DateTime.new(year_start, month_start+1, day_start+1), end: end_res }
@@ -65,17 +66,30 @@ module OpeningHoursConverter
     end
 
     def get_time_iterator(date_ranges)
+      # binding.pry
+      is_ph = false
+      year = nil
+      year_ph = nil
+      date_ranges.each do |dr|
+        is_ph = true if dr.is_holiday?
+      end
       date_ranges_array = get_iterator(date_ranges)
       datetime_result = []
+
 
       date_ranges_array.each_with_index do |result, index|
         result.each do |interval|
           (interval[:start]..interval[:end]).each do |day|
+            if year != day.year && is_ph
+              year = day.year
+              year_ph = PublicHoliday.ph_for_year(year)
+            end
             date_ranges[index].typical.intervals.each do |i|
               if !i.nil?
-                if (i.day_start..i.day_end).include?(fix_datetime_wday(day.wday))
-                  datetime_result << { start: Time.new(day.year, day.month, day.day, i.start/60, i.start%60),
+                if (i.day_start..i.day_end).include?(fix_datetime_wday(day.wday)) || (is_ph && year_ph.include?(Time.new(day.year, day.month, day.day)))
+                  itr = { start: Time.new(day.year, day.month, day.day, i.start/60, i.start%60),
                     end: Time.new(day.year, day.month, day.day, i.end/60, i.end%60) }
+                  datetime_result << itr unless datetime_result.include?(itr)
                 end
               end
             end

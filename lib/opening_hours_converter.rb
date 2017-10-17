@@ -4,6 +4,7 @@ module OpeningHoursConverter
   require_relative './opening_hours_converter/day'
   require_relative './opening_hours_converter/week'
   require_relative './opening_hours_converter/year'
+  require_relative './opening_hours_converter/public_holiday'
   require_relative './opening_hours_converter/interval'
   require_relative './opening_hours_converter/iterator'
   require_relative './opening_hours_converter/opening_hours_builder'

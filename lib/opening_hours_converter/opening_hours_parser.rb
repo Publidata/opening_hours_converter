@@ -11,10 +11,11 @@ module OpeningHoursConverter
       @RGX_MONTH = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\-(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))?\:?$/
       @RGX_MONTHDAY = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([012]?[0-9]|3[01])(\-((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) )?([012]?[0-9]|3[01]))?\:?$/
       @RGX_TIME = /^((([01]?[0-9]|2[01234])\:[012345][0-9](\-([01]?[0-9]|2[01234])\:[012345][0-9])?(,([01]?[0-9]|2[01234])\:[012345][0-9](\-([01]?[0-9]|2[01234])\:[012345][0-9])?)*)|(24\/7))$/
-      @RGX_WEEKDAY = /^(((Mo|Tu|We|Th|Fr|Sa|Su)(\-(Mo|Tu|We|Th|Fr|Sa|Su))?)|(PH|SH|easter))(,(((Mo|Tu|We|Th|Fr|Sa|Su)(\-(Mo|Tu|We|Th|Fr|Sa|Su))?)|(PH|SH|easter)))*$/
+      @RGX_WEEKDAY = /^(((Mo|Tu|We|Th|Fr|Sa|Su)(\-(Mo|Tu|We|Th|Fr|Sa|Su))?)|(PH))(,(((Mo|Tu|We|Th|Fr|Sa|Su)(\-(Mo|Tu|We|Th|Fr|Sa|Su))?)|(PH)))*$/
       @RGX_HOLIDAY = /^(PH|SH|easter)$/
       @RGX_WD = /^(Mo|Tu|We|Th|Fr|Sa|Su)(\-(Mo|Tu|We|Th|Fr|Sa|Su))?$/
       @RGX_YEAR = /^(\d{4})(\-(\d{4}))?$/
+      @RGX_YEAR_PH = /^(\d{4})( PH|(\-(\d{4}) PH))\:?$/
       @RGX_YEAR_MONTH_DAY = /^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([012]?[0-9]|3[01])(\-((\d{4}) )?((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) )?([012]?[0-9]|3[01]))?\:?$/
       @RGX_YEAR_MONTH = /^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\-((\d{4}) )?((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)))?\:?$/
       @RGX_COMMENT = /^\"[^\"]*\"$/
@@ -71,18 +72,20 @@ module OpeningHoursConverter
 
         # get weekdays selector
         weekdays = []
+        holidays = []
         if time_selector == "24/7"
           weekdays << {from: 0, to: 6}
-        elsif current_token >= 0 && is_weekday?(tokens[current_token])
+        elsif current_token >= 0 && is_weekday?(tokens[current_token]) && (@RGX_YEAR_PH =~ "#{tokens[current_token-1]} #{tokens[current_token]}").nil?
           weekday_selector = tokens[current_token]
-          weekdays = get_weekdays(weekday_selector)
+          weekdays_and_holidays = get_weekdays(weekday_selector)
+          weekdays = weekdays_and_holidays[:weekdays]
+          holidays = weekdays_and_holidays[:holidays]
           current_token -= 1
         end
 
         months = []
         years = []
         if current_token >= 0
-
           wide_range_selector = tokens[0]
           for i in 1..current_token
             wide_range_selector += " #{tokens[i]}"
@@ -97,6 +100,8 @@ module OpeningHoursConverter
                 years << get_year_month(wrs)
               elsif !(@RGX_MONTHDAY =~ wrs).nil?
                 months << get_month_day(wrs)
+              elsif !(@RGX_YEAR_PH =~ wrs).nil?
+                holidays << get_year_holiday(wrs)
               elsif !(@RGX_MONTH =~ wrs).nil?
                 months << get_month(wrs)
               elsif !(@RGX_YEAR =~ wrs).nil?
@@ -116,7 +121,6 @@ module OpeningHoursConverter
         # puts "times : #{times}"
         # puts "years : #{years}"
         # puts "rule_modifier : #{rule_modifier}"
-
         date_ranges = []
         if months.length > 0
           months.each do |month|
@@ -135,6 +139,14 @@ module OpeningHoursConverter
                 date_range = OpeningHoursConverter::WideInterval.new.month(month[:from])
               end
               date_ranges << date_range
+            end
+          end
+        elsif holidays.length > 0 && weekdays.length == 0
+          holidays.each do |holiday|
+            if holiday == "PH"
+              date_ranges << WideInterval.new.holiday(holiday)
+            elsif holiday[:holiday] == "PH"
+              date_ranges << WideInterval.new.holiday(holiday[:holiday], holiday[:start], holiday[:end])
             end
           end
         elsif years.length > 0
@@ -166,10 +178,13 @@ module OpeningHoursConverter
           date_ranges << OpeningHoursConverter::WideInterval.new.always
         end
 
+        if weekdays.length > 0 && holidays.length > 0
+          weekdays << {from: -2, to: -2}
+          holidays = []
+        end
         if weekdays.length == 0
           weekdays << {from: 0, to: OSM_DAYS.length - 1}
         end
-
         if times.length == 0
           times << {from: 0, to: 24*60}
         end
@@ -239,8 +254,6 @@ module OpeningHoursConverter
                 add_interval(dr_obj.typical, weekdays[wd_id], times[t_id])
               end
             end
-
-
           end
         end
       end
@@ -328,6 +341,17 @@ module OpeningHoursConverter
       { from_month: year_month_from, to_month: year_month_to }
     end
 
+    def get_year_holiday(wrs)
+      single_year = wrs.gsub(/\:$/, '').split('-')
+      if single_year.length == 1
+        return { holiday: single_year[0].split(' ')[1], start: single_year[0].split(' ')[0] }
+      elsif single_year.length == 2
+        return { holiday: single_year[1].split(' ')[1], start: single_year[0], end: single_year[1].split(' ')[0] }
+      else
+        raise ArgumentError, "Invalid year_holiday : #{wrs.inspect}"
+      end
+    end
+
     def get_year_month_day(wrs)
       single_year_month_day = wrs.gsub(/\:$/, '').split('-')
       year_month_day_from = single_year_month_day[0].split(' ')
@@ -385,6 +409,7 @@ module OpeningHoursConverter
     end
 
     def get_weekdays(weekday_selector)
+      holidays = []
       weekdays = []
       wd_from = nil
       wd_to = nil
@@ -392,8 +417,10 @@ module OpeningHoursConverter
       weekday_selector = weekday_selector.split(',')
       weekday_selector.each do |wd|
         if !(@RGX_HOLIDAY =~ wd).nil?
+          holidays << wd
         elsif !(@RGX_WD =~ wd).nil?
           single_weekday = wd.split('-')
+
           wd_from = OSM_DAYS.find_index(single_weekday[0])
           if single_weekday.length > 1
             wd_to = OSM_DAYS.find_index(single_weekday[1])
@@ -407,7 +434,7 @@ module OpeningHoursConverter
         end
       end
 
-      weekdays
+      { weekdays: weekdays, holidays: holidays }
     end
 
     def remove_interval(typical, weekdays, times)
@@ -495,6 +522,9 @@ module OpeningHoursConverter
 
     def is_comment?(token)
       !(@RGX_COMMENT =~ token).nil?
+    end
+    def is_holiday?(token)
+      !(@RGX_HOLIDAY =~ token).nil?
     end
     def is_rule_modifier?(token)
       !(@RGX_RULE_MODIFIER =~ token).nil?

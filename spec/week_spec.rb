@@ -185,7 +185,6 @@ RSpec.describe OpeningHoursConverter::Week, 'intervals' do
     w1.add_interval(it4)
 
     result = w1.get_intervals_diff(w)
-    # puts result.inspect
     expect(result[:open].length).to eql(1)
     expect(result[:closed].length).to eql(0)
     result2 = w.get_intervals_diff(w1)
@@ -211,7 +210,6 @@ RSpec.describe OpeningHoursConverter::Week, 'intervals' do
     w1.add_interval(it3)
 
     result = w1.get_intervals_diff(w)
-    # puts result.inspect
     expect(result[:open].length).to eql(0)
     expect(result[:closed].length).to eql(1)
 
@@ -264,7 +262,6 @@ RSpec.describe OpeningHoursConverter::Week, 'intervals' do
     w1.add_interval(it2)
 
     result = w1.get_intervals_diff(w)
-    # puts result.inspect
     expect(result[:open].length).to eql(1)
     expect(result[:closed].length).to eql(0)
 
@@ -317,7 +314,6 @@ RSpec.describe OpeningHoursConverter::Week, 'intervals' do
     w1.add_interval(it18)
 
     result = w1.get_intervals_diff(w)
-    # puts result.inspect
     expect(result[:open].length).to eql(6)
     expect(result[:closed].length).to eql(1)
 

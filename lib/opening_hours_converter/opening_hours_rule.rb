@@ -13,7 +13,15 @@ module OpeningHoursConverter
 
     def get
       result = ""
-      if @date.length > 0
+      if @date.length == 1 && @date[0].wide_type == "holiday"
+        if !@date[0].wide.start[:year].nil?
+          result += @date[0].wide.start[:year]
+        end
+        if !@date[0].wide.end.nil?
+          result += "-#{@date[0].wide.end[:year]}"
+        end
+        result += " PH"
+      elsif @date.length > 0
         result += get_wide_selector
       end
 
@@ -23,10 +31,9 @@ module OpeningHoursConverter
           result += " #{wd}"
         end
       end
-
       if @time.length > 0
         result += " "
-        @time.each_with_index do |t, i|
+        @time.uniq.each_with_index do |t, i|
           if (i > 0)
             result += ","
           end
@@ -265,6 +272,12 @@ module OpeningHoursConverter
       end
     end
 
+    def add_ph_weekday
+      @date.each do |d|
+        d.add_ph_weekday
+      end
+    end
+
     def add_overwritten_weekday(weekday)
       @date.each do |d|
         d.add_overwritten_weekday(weekday)
@@ -285,11 +298,17 @@ module OpeningHoursConverter
       end
     end
 
+    def include_time?(time)
+      @time.each do |t|
+        return true if t.start == time.start && t.end == time.end
+      end
+      return false
+    end
+
     def add_time(time)
-      if (@time.length == 0 || @time[0].get != "off") && !@time.include?(time)
+
+      if (@time.length == 0 || @time[0].get != "off") && !include_time?(time)
         @time << time
-      else
-        raise ArgumentError, "This time can't be added to this rule"
       end
     end
 

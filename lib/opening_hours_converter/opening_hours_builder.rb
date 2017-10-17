@@ -10,9 +10,18 @@ module OpeningHoursConverter
       oh_rule_added = nil
       range_general = nil
       range_general_for = nil
+      day_ph = false
 
       date_ranges.each_with_index do |date_range, date_range_index|
+
         if !date_range.nil?
+          date_range.typical.intervals.each_with_index do |interval, interval_id|
+            if interval&.day_start == -2 && interval&.day_start == interval&.day_end
+              date_range.typical.remove_interval(interval_id)
+              day_ph = true
+            end
+          end
+
           range_general = nil
           range_general_for = nil
           range_general_id = date_range_index - 1
@@ -28,8 +37,11 @@ module OpeningHoursConverter
             end
             range_general_id -= 1
           end
+
           if date_range_index == 0 || range_general.nil?
-            if date_range.defines_typical_week?
+            if date_range.wide_interval.type == "holiday"
+              oh_rules = build_holiday(date_range)
+            elsif date_range.defines_typical_week?
               if !range_general_for.nil?
                 oh_rules = build_week_diff(date_range, date_ranges[range_general_for])
               else
@@ -56,12 +68,24 @@ module OpeningHoursConverter
                     oh_rule_added = true
                   rescue Exception => e
                     puts e
-                    rule_index += 1
+                    if oh_rule.date[0].wide_type == "holiday" && oh_rule.date[0].wide.get_time_selector == "PH"
+                      rules[rule_index].add_ph_weekday
+                      oh_rule_added = true
+                    elsif rules[rule_index].date[0].wide_type == "holiday" && rules[rule_index].date[0].wide.get_time_selector == "PH"
+                      oh_rule.add_ph_weekday
+                      rules[rule_index] = oh_rule
+                      oh_rule_added = true
+                    else
+                      rule_index += 1
+                    end
                   end
                 else
                   rule_index+=1
                 end
+              end
 
+              if day_ph
+                oh_rule.add_ph_weekday
               end
 
               if !oh_rule_added
@@ -81,7 +105,6 @@ module OpeningHoursConverter
           end
         end
       end
-      # binding.pry
 
       result = ""
       rules.each_with_index do |rule, rule_index|
@@ -92,6 +115,22 @@ module OpeningHoursConverter
       end
 
       return result
+    end
+
+    def build_holiday(date_range)
+      intervals = date_range.typical.get_intervals(true)
+
+      rule = OpeningHoursConverter::OpeningHoursRule.new
+      date = OpeningHoursConverter::OpeningHoursDate.new(date_range.wide_interval, date_range.wide_interval.type, [-1])
+      rule.add_date(date)
+
+      intervals.each do |interval|
+        if !interval.nil?
+          rule.add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, interval.end))
+        end
+      end
+
+      return [ rule ]
     end
 
     def build_day(date_range)
@@ -113,6 +152,7 @@ module OpeningHoursConverter
     def build_week(date_range)
       result = []
       intervals = date_range.typical.get_intervals(true)
+
       time_intervals = create_time_intervals(date_range.wide_interval, date_range.wide_interval.type, intervals)
 
       monday0 = time_intervals[0]

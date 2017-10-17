@@ -35,6 +35,11 @@ module OpeningHoursConverter
         if !@end.nil?
           result += "-#{@end[:year]}"
         end
+      when "holiday"
+        result = "#{@start[:year].nil? ? "" : "#{@start[:year]} "}PH"
+        if !@end.nil?
+          result = "#{@start[:year]}#{@start[:year] == @end[:year] ? "" : "-#{@end[:year]}"} PH"
+        end
       when "always"
         result = ""
       else
@@ -119,6 +124,18 @@ module OpeningHoursConverter
         @end = { year: end_year }
       end
       @type = "year"
+      self
+    end
+
+    def holiday(holiday, start_year=nil, end_year=nil)
+      if holiday.nil? || holiday != "PH"
+        raise(ArgumentError, "holiday is required and can only be PH")
+      end
+      @start = { holiday: holiday, year: start_year }
+      unless end_year.nil? || end_year == start_year
+        @end = { holiday: holiday, year: end_year }
+      end
+      @type = "holiday"
       self
     end
 
@@ -244,6 +261,10 @@ module OpeningHoursConverter
     def equals(o)
       return false unless o.instance_of?(OpeningHoursConverter::WideInterval)
       return @type == "always" if o.type == "always"
+      if @type == "holiday"
+        return (o.type == "holiday" && (@start[:year] == o.start[:year]) &&
+          (@end.nil? && o.end.nil? || (@end && o.end && @end[:year] == o.end[:year])))
+      end
       return false if @type == "always"
       self_to_day = to_day
       o_to_day = o.to_day

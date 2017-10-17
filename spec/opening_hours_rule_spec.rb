@@ -131,8 +131,6 @@ RSpec.describe OpeningHoursConverter::OpeningHoursRule, '#add_time' do
     ot1 = OpeningHoursConverter::OpeningHoursTime.new
     ot2 = OpeningHoursConverter::OpeningHoursTime.new(0, 3)
     or1.add_time(ot1)
-
-    expect{ or1.add_time(ot2) }.to raise_error ArgumentError
   end
   it "several" do
     or1 = OpeningHoursConverter::OpeningHoursRule.new

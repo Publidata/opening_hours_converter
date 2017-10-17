@@ -6,6 +6,27 @@ module OpeningHoursConverter
 
     def self.build_day_array_from_date_range(date_range, get_iterator=false)
       years = {}
+      if date_range.is_holiday? && get_iterator
+        if date_range.wide_interval.type == "holiday"
+          if !date_range.wide_interval.start[:year].nil?
+            if !date_range.wide_interval.end.nil?
+              for year in date_range.wide_interval.start[:year]..date_range.wide_interval.end[:year]
+                years[year] ||= Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
+              end
+              years = process_holidays(date_range.wide_interval, years)
+            else
+              years[date_range.wide_interval.start[:year]] ||= Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
+              years = process_holidays(date_range.wide_interval, years)
+            end
+          else
+            remove_holiday!(date_range)
+
+            years = process_always_holiday(date_range.wide_interval, years)
+          end
+        else
+
+        end
+      end
       if !date_range.wide_interval.start.nil? && !date_range.wide_interval.start[:year].nil?
         if date_range.wide_interval.end.nil? || date_range.wide_interval.end[:year].nil? || date_range.wide_interval.start[:year] == date_range.wide_interval.end[:year]
           if !years[date_range.wide_interval.start[:year]].nil?
@@ -27,6 +48,38 @@ module OpeningHoursConverter
         years = process_always(date_range.wide_interval, years, get_iterator)
       end
       years
+    end
+
+    def self.process_holidays(wide_interval, years)
+      if !wide_interval.end[:year].nil?
+        holidays = {}
+        for year in wide_interval.start[:year]..wide_interval.end[:year]
+          PublicHoliday.ph_for_year(year).each do |ht|
+            years[year][ht.month-1][ht.day-1] = true
+          end
+        end
+      else
+        PublicHoliday.ph_for_year(wide_interval.start[:year]).each do |ht|
+          years[wide_interval.start[:year]][ht.month-1][ht.day-1] = true
+        end
+      end
+      years
+    end
+
+    def self.process_always_holiday(wide_interval, years)
+      for year in (DateTime.now.year - 1)..(DateTime.now.year + 5)
+        years[year] ||= Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
+        PublicHoliday.ph_for_year(year).each do |ht|
+          years[year][ht.month-1][ht.day-1] = true
+        end
+      end
+      years
+    end
+
+    def self.remove_holiday!(date_range)
+      date_range.typical.intervals.each_with_index do |interval, interval_index|
+        date_range.remove_interval(interval_index) if interval.day_start == -2 && interval.day_end == -2
+      end
     end
 
     def self.build_day_array_from_dates(dates, get_iterator=false)
@@ -103,9 +156,7 @@ module OpeningHoursConverter
           if wide_interval.start.nil?
             years[year] = Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { true } }
           elsif !wide_interval.start[:day].nil?
-            if years[year].nil?
-              years[year] = Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
-            end
+            years[year] ||= Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
             if wide_interval.end.nil? || (wide_interval.end[:month].nil? && wide_interval.end[:day].nil?) ||
               (wide_interval.start[:month] == wide_interval.end[:month] && wide_interval.start[:day] == wide_interval.end[:day])
               years[year][wide_interval.start[:month]-1][wide_interval.start[:day]-1] = true

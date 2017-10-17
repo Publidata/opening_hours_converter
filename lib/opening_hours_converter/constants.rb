@@ -19,5 +19,6 @@ module OpeningHoursConverter
     MINUTES_MAX = 1440
     DAYS_MAX = 6
     YEAR_DAYS_MAX = 365
+    PH_WEEKDAY = -2
   end
 end

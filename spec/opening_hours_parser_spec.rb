@@ -1,7 +1,39 @@
 require 'opening_hours_converter'
-# require 'opening_hours_converter/opening_hours_parser'
 
 RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
+  it "PH,Su off" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('PH,Su 10:00-11:00'))).to eql('PH,Su 10:00-11:00')
+  end
+  it "PH,Mo-Sa 10:00-11:00 \"salut\"" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('PH,Mo-Sa 10:00-11:00 "salut"'))).to eql('PH,Mo-Sa 10:00-11:00 "salut"')
+  end
+  it "2017 PH,Mo-Sa 10:00-11:00 \"salut\"" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2017 PH,Mo-Sa 10:00-11:00 "salut"'))).to eql('2017 PH,Mo-Sa 10:00-11:00 "salut"')
+  end
+  it "2017-2018 PH,Mo-Sa 10:00-11:00 \"salut\"" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2017-2018 PH,Mo-Sa 10:00-11:00 "salut"'))).to eql('2017-2018 PH,Mo-Sa 10:00-11:00 "salut"')
+  end
+  it "PH,Mo-Sa 10:00-11:00" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('PH,Mo-Sa 10:00-11:00'))).to eql('PH,Mo-Sa 10:00-11:00')
+  end
+  it "PH off" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('PH off'))).to eql('PH off')
+  end
+  it "PH 10:00-11:00" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('PH 10:00-11:00'))).to eql('PH 10:00-11:00')
+  end
+  it "2017 PH off" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2017 PH off'))).to eql('2017 PH off')
+  end
+  it "2017 PH 10:00-11:00" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2017 PH 10:00-11:00'))).to eql('2017 PH 10:00-11:00')
+  end
+  it "2017-2018 PH off" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2017-2018 PH off'))).to eql('2017-2018 PH off')
+  end
+  it "2017-2018 PH 10:00-11:00" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2017-2018 PH 10:00-11:00'))).to eql('2017-2018 PH 10:00-11:00')
+  end
   it "void" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse(''))).to eql('')
   end
