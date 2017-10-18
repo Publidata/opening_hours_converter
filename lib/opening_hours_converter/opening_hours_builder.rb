@@ -107,11 +107,21 @@ module OpeningHoursConverter
       end
 
       result = ""
-      rules.each_with_index do |rule, rule_index|
-        if rule_index > 0
-          result += "; "
+      if rules.length == 0
+
+        date_ranges.each do |dr|
+          if dr.wide_interval.type != "always"
+            result += "#{dr.wide_interval.get_time_selector} off"
+          end
         end
-        result += rule.get
+
+      else
+        rules.each_with_index do |rule, rule_index|
+          if rule_index > 0
+            result += "; "
+          end
+          result += rule.get
+        end
       end
 
       return result

@@ -24,7 +24,7 @@ module OpeningHoursConverter
       result = []
       blocks = oh.split(';')
 
-      comment = nil
+      comment = ""
       rule_modifier = nil
       time_selector = nil
       weekday_selector = nil

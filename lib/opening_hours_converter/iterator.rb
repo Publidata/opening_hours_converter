@@ -1,5 +1,5 @@
 require 'opening_hours_converter/constants'
-require 'pry-nav'
+
 module OpeningHoursConverter
   class Iterator
     include Constants
