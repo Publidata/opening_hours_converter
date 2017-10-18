@@ -288,8 +288,8 @@ module OpeningHoursConverter
           end
         end
       elsif wide_interval.type == "day"
-        if wide_interval.end.nil? || wide_interval.start[:month] == wide_interval.end[:month]
-          if wide_interval.start[:day] == wide_interval.end[:day]
+        if wide_interval.end.nil? || !wide_interval.end.nil? && wide_interval.start[:month] == wide_interval.end[:month]
+          if wide_interval.end.nil? || !wide_interval.end.nil? && wide_interval.start[:day] == wide_interval.end[:day]
             years[wide_interval.start[:year]][wide_interval.start[:month]-1][wide_interval.start[:day]-1] = true
           else
             for day in wide_interval.start[:day]-1..wide_interval.end[:day]-1
