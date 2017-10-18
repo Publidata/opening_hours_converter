@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'opening_hours_converter'
-  s.version = '1.3.1'
+  s.version = '1.3.2'
   s.summary = "Datetime range to openinghours, openinghours to datetime range"
   s.description = "Datetime range to openinghours, openinghours to datetime range. Very strongly inspired by yohours."
   s.authors = ["Ziserman Martin"]
@@ -17,6 +17,9 @@ Gem::Specification.new do |s|
     "lib/opening_hours_converter/opening_hours_time.rb",
     "lib/opening_hours_converter/day.rb",
     "lib/opening_hours_converter/week.rb",
+    "lib/opening_hours_converter/year.rb",
+    "lib/opening_hours_converter/iterator.rb",
+    "lib/opening_hours_converter/public_holiday.rb",
     "lib/opening_hours_converter/wide_interval.rb"
   ]
   s.homepage ='https://github.com/Publidata/opening_hours_converter'
