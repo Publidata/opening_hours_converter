@@ -338,6 +338,17 @@ RSpec.describe OpeningHoursConverter::OpeningHoursBuilder, '#build' do
 
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("May-Sep Mo,Tu 14:00-18:00")
   end
+  it "2017 Dec 31 08:30-12:00" do
+    dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(31,12,2017)) ]
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 510, 0, 720))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 510, 1, 720))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(2, 510, 2, 720))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(3, 510, 3, 720))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(4, 510, 4, 720))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(5, 510, 5, 720))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(6, 510, 6, 720))
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("2017 Dec 31 08:30-12:00")
+  end
 
 
   it "12:00-14:00; We-Sa off (continuous week end)" do

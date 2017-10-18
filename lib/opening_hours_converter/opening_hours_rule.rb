@@ -99,7 +99,8 @@ module OpeningHoursConverter
               year_start = year
               month_start = month
               day_start = day
-            elsif day_bool && year_start >= 0 && month == 11 && day == 30 && years[year+1].nil?
+            end
+            if day_bool && year_start >= 0 && month == 11 && day == 30 && years[year+1].nil?
               if year_start == year
                 result[year] ||= []
                 result[year] << { start: { day: day_start, month: month_start }, end: { day: 30, month: 11 } }
@@ -142,6 +143,7 @@ module OpeningHoursConverter
           end
         end
       end
+
       result_to_string(result)
     end
 
@@ -188,7 +190,11 @@ module OpeningHoursConverter
             elsif starts_month?(interval) && ends_month?(interval)
               str_result += "#{str_result.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]}-#{OSM_MONTHS[interval[:end][:month]]}"
             elsif is_same_month?(interval)
-              str_result += "#{str_result.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day]+1 < 10 ? "0#{interval[:start][:day]+1}" : interval[:start][:day]+1}-#{interval[:end][:day]+1 < 10 ? "0#{interval[:end][:day]+1}" : interval[:end][:day]+1}"
+              if is_same_day?(interval)
+                str_result += "#{str_result.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day]+1 < 10 ? "0#{interval[:start][:day]+1}" : interval[:start][:day]+1}"
+              else
+                str_result += "#{str_result.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day]+1 < 10 ? "0#{interval[:start][:day]+1}" : interval[:start][:day]+1}-#{interval[:end][:day]+1 < 10 ? "0#{interval[:end][:day]+1}" : interval[:end][:day]+1}"
+              end
             else
               str_result += "#{str_result.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day]+1 < 10 ? "0#{interval[:start][:day]+1}" : interval[:start][:day]+1}-#{OSM_MONTHS[interval[:end][:month]]} #{interval[:end][:day]+1 < 10 ? "0#{interval[:end][:day]+1}" : interval[:end][:day]+1}"
             end
@@ -213,6 +219,10 @@ module OpeningHoursConverter
 
     def is_same_month?(r)
       r[:start][:month] == r[:end][:month]
+    end
+
+    def is_same_day?(r)
+      r[:start][:day] == r[:end][:day]
     end
 
     def starts_month?(r)
