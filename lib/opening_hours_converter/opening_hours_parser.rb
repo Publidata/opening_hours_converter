@@ -248,7 +248,7 @@ module OpeningHoursConverter
 
             for t_id in 0...times.length
               if rule_modifier == "closed" || rule_modifier == "off"
-                remove_interval(dr_obj.typical, weekdays[wd_id], times[t_id])
+                remove_interval(dr_obj, weekdays[wd_id], times[t_id])
               else
                 add_interval(dr_obj.typical, weekdays[wd_id], times[t_id])
               end
@@ -436,17 +436,21 @@ module OpeningHoursConverter
       { weekdays: weekdays, holidays: holidays }
     end
 
-    def remove_interval(typical, weekdays, times)
-      if weekdays[:from] <= weekdays[:to]
-        for wd in weekdays[:from]..weekdays[:to]
-          typical.remove_intervals_during_day(wd)
-        end
+    def remove_interval(date_range, weekdays, times)
+      if date_range.typical.instance_of?(OpeningHoursConverter::Day)
+        date_range.typical.clear_intervals
       else
-        for wd in weekdays[:from]..6
-          typical.remove_intervals_during_day(wd)
-        end
-        for wd in 0..weekdays[:to]
-          typical.remove_intervals_during_day(wd)
+        if weekdays[:from] <= weekdays[:to]
+          for wd in weekdays[:from]..weekdays[:to]
+            date_range.typical.remove_intervals_during_day(wd)
+          end
+        else
+          for wd in weekdays[:from]..6
+            date_range.typical.remove_intervals_during_day(wd)
+          end
+          for wd in 0..weekdays[:to]
+            date_range.typical.remove_intervals_during_day(wd)
+          end
         end
       end
     end

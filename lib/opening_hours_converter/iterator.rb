@@ -61,7 +61,6 @@ module OpeningHoursConverter
     end
 
     def get_time_iterator(date_ranges)
-      # binding.pry
       is_ph = false
       year = nil
       year_ph = nil

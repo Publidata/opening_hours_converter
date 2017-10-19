@@ -51,7 +51,9 @@ module OpeningHoursConverter
       result = @wide_interval.type == "holiday"
       if !result
         @typical.intervals.each do |i|
-          result = true if i.day_start == -2 && i.day_end == -2
+          if !i.nil?
+            result = true if i.day_start == -2 && i.day_end == -2
+          end
         end
       end
       result
