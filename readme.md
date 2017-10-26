@@ -8,17 +8,25 @@ OpeningHoursConverter::OpeningHoursBuilder.new.build(parsed)
 ```
 
 ## example data migration
-This gem was made to make data migration from date range to opening hours easy. For example, imagine you have a schedule table with a start_date and end_date to define the validity period and many opening_hours with start, end, day_start, day_end. Here is how you would convert this format in opening_hours format.
+This gem was made to make data migration from date range to opening hours easy. For example, imagine you have a schedule table with a start_date and end_date to define the validity period and many opening_hours with time_start, time_end, day_start, day_end. Here is how you would convert this format in opening_hours format.
 
 ```ruby
 builder = OpeningHoursConverter::OpeningHoursBuilder.new
 Schedule.find_each do |s|
   dr = OpeningHoursConverter::DateRange.new
-  dr.wide_interval = OpeningHoursConverter::WideInterval.new.day(s.starting_date.day, s.starting_date.month,
-    s.starting_date.year, s.ending_date.day, s.ending_date.month, s.ending_date.year)
+  # Assuming dates are instance of Date.
+  dr.wide_interval = OpeningHoursConverter::WideInterval.new.day(
+    s.starting_date.day,
+    s.starting_date.month,
+    s.starting_date.year,
+    s.ending_date.day,
+    s.ending_date.month,
+    s.ending_date.year)
 
+  # Assuming days are weekdays and week start is monday (0 is monday, 6 is sunday).
+  # Assuming times are expressed in minutes from midnight (600 is 10:00, 1200 is 20:00)
   s.opening_hours.find_each do |oh|
-    dr.typical.add_interval(day_start, start, day_end, end)
+    dr.typical.add_interval(oh.day_start, oh.time_start, oh.day_end, oh.time_end)
   end
   s.opening_hours = builder.build([dr])
   s.save
