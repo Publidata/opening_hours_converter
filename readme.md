@@ -28,14 +28,14 @@ Schedule.find_each do |s|
   s.opening_hours.find_each do |oh|
     dr.typical.add_interval(oh.day_start, oh.time_start, oh.day_end, oh.time_end)
   end
-  s.opening_hours = builder.build([dr])
+  s.opening_hours_string = builder.build([dr])
   s.save
 end
 ```
 And you can now remove start_date, end_date from schedule and drop the opening_hours table. To get your opening hours in a ruby object, you can now do :
 ```ruby
 parser = OpeningHoursConverter::OpeningHoursParser.new
-oh = parser.parse(Schedule.first.opening_hours)
+oh = parser.parse(Schedule.first.opening_hours_string)
 ```
 
 # test
