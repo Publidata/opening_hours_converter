@@ -1,10 +1,11 @@
 Gem::Specification.new do |s|
   s.name = 'opening_hours_converter'
-  s.version = '1.3.12'
+  s.version = '1.4.0'
   s.summary = "Datetime range to openinghours, openinghours to datetime range"
   s.description = "Datetime range to openinghours, openinghours to datetime range. Very strongly inspired by yohours."
   s.authors = ["Ziserman Martin"]
   s.email = 'tech@publidata.io'
+  s.add_runtime_dependency "json"
   s.files = [
     "lib/opening_hours_converter.rb",
     "lib/opening_hours_converter/constants.rb",
