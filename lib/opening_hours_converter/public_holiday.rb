@@ -35,6 +35,38 @@ module OpeningHoursConverter
       end
     end
 
+    def self.new_year(year=Time.now.year)
+      Time.new(year, 1, 1)
+    end
+
+    def self.christmas(year=Time.now.year)
+      Time.new(year, 12, 25)
+    end
+
+    def self.assomption(year=Time.now.year)
+      Time.new(year, 8, 15)
+    end
+
+    def self.work_day(year=Time.now.year)
+      Time.new(year, 5, 1)
+    end
+
+    def self.toussaint(year=Time.now.year)
+      Time.new(year, 11, 1)
+    end
+
+    def self.victory(year=Time.now.year)
+      Time.new(year, 5, 8)
+    end
+
+    def self.armistice(year=Time.now.year)
+      Time.new(year, 11, 11)
+    end
+
+    def self.bastille_day(year=Time.now.year)
+      Time.new(year, 7, 14)
+    end
+
     def self.easter_monday(year=Time.now.year)
       easter(year) + days(1)
     end
@@ -43,7 +75,7 @@ module OpeningHoursConverter
       easter(year) - days(2)
     end
 
-    def self.ascension(year=Time.now.year)
+    def self.rise(year=Time.now.year)
       easter(year) + days(39)
     end
 
@@ -57,20 +89,20 @@ module OpeningHoursConverter
 
     def self.ph_for_year(year=Time.now.year)
       ph = []
-      ph << Time.new(year, 1, 1)
+      ph << new_year
       ph << good_friday
       ph << easter
       ph << easter_monday
-      ph << Time.new(year, 5, 1)
-      ph << Time.new(year, 5, 8)
-      ph << ascension
+      ph << work_day
+      ph << victory
+      ph << rise
       ph << pentecote
       ph << pentecote_monday
-      ph << Time.new(year, 7, 14)
-      ph << Time.new(year, 8, 15)
-      ph << Time.new(year, 11, 1)
-      ph << Time.new(year, 11, 11)
-      ph << Time.new(year, 12, 25)
+      ph << bastille_day
+      ph << assomption
+      ph << toussaint
+      ph << armistice
+      ph << christmas
       ph.sort
     end
 
