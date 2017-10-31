@@ -262,34 +262,28 @@ module OpeningHoursConverter
     end
 
     def from_json(json)
-      ret_date_ranges = []
-
       parsed = JSON.parse(json)
-      parsed.each do |date_ranges|
-        date_range = OpeningHoursConverter::DateRange.new
-        date_ranges.each do |dr|
-          wi = {}
-          start_day = DateTime.parse(dr["wide_interval"]["start"])
-          end_day = DateTime.parse(dr["wide_interval"]["end"])
-          case dr["wide_interval"]
-          when "always"
-            wi = OpeningHoursConverter::WideInterval.new.day(start_day.day, start_day.month, nil, end_day.day, end_day.month)
-          else
-            wi = OpeningHoursConverter::WideInterval.new.day(start_day.day, start_day.month, start_day.year, end_day.day, end_day.month, end_day.year)
-          end
-          date_range = OpeningHoursConverter::DateRange.new(wi)
-          dr["typical"]["intervals"].each do |interval|
-            if !interval.nil?
-              start_interval = DateTime.parse(interval["start"])
-              end_interval = DateTime.parse(interval["end"])
-              date_range.typical.add_interval(OpeningHoursConverter::Interval.new(((start_interval.wday + 6) % 7), (start_interval.hour * 60 + start_interval.min), ((end_interval.wday + 6) % 7), (end_interval.hour * 60 + end_interval.min)))
-            end
-          end
-          date_range.add_comment(dr["comment"])
-          ret_date_ranges << [date_range]
+      parsed.each do |dr|
+        wi = {}
+        start_day = DateTime.parse(dr["wide_interval"]["start"])
+        end_day = DateTime.parse(dr["wide_interval"]["end"])
+        case dr["wide_interval"]
+        when "always"
+          wi = OpeningHoursConverter::WideInterval.new.day(start_day.day, start_day.month, nil, end_day.day, end_day.month)
+        else
+          wi = OpeningHoursConverter::WideInterval.new.day(start_day.day, start_day.month, start_day.year, end_day.day, end_day.month, end_day.year)
         end
+        date_range = OpeningHoursConverter::DateRange.new(wi)
+        dr["typical"]["intervals"].each do |interval|
+          if !interval.nil?
+            start_interval = DateTime.parse(interval["start"])
+            end_interval = DateTime.parse(interval["end"])
+            date_range.typical.add_interval(OpeningHoursConverter::Interval.new(((start_interval.wday + 6) % 7), (start_interval.hour * 60 + start_interval.min), ((end_interval.wday + 6) % 7), (end_interval.hour * 60 + end_interval.min)))
+          end
+        end
+        date_range.add_comment(dr["comment"])
       end
-      ret_date_ranges
+      [date_range]
     end
 
     def get_year(wrs)
