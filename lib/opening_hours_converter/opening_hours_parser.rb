@@ -263,11 +263,12 @@ module OpeningHoursConverter
 
     def from_json(json)
       parsed = JSON.parse(json)
+      date_range = {}
       parsed.each do |dr|
         wi = {}
         start_day = DateTime.parse(dr["wide_interval"]["start"])
         end_day = DateTime.parse(dr["wide_interval"]["end"])
-        case dr["wide_interval"]
+        case dr["wide_interval"]["type"]
         when "always"
           wi = OpeningHoursConverter::WideInterval.new.day(start_day.day, start_day.month, nil, end_day.day, end_day.month)
         else

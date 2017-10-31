@@ -73,7 +73,8 @@ module OpeningHoursConverter
             if day_bool && month_start < 0
               month_start = month
               day_start = day
-            elsif day_bool && month_start >= 0 && month == 11 && day == 30
+            end
+            if day_bool && month_start >= 0 && month == 11 && day == 30
               result["always"] ||= []
               result["always"] << {start: { day: day_start, month: month_start }, end: { day: 30, month: 11 }}
               month_start = -1
@@ -161,7 +162,11 @@ module OpeningHoursConverter
             elsif starts_month?(interval) && ends_month?(interval)
               str_result += "#{OSM_MONTHS[interval[:start][:month]]}-#{OSM_MONTHS[interval[:end][:month]]}"
             elsif is_same_month?(interval)
-              str_result += "#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day]+1 < 10 ? "0#{interval[:start][:day]+1}" : interval[:start][:day]+1}-#{interval[:end][:day]+1 < 10 ? "0#{interval[:end][:day]+1}" : interval[:end][:day]+1}"
+              if is_same_day?(interval)
+                str_result += "#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day]+1 < 10 ? "0#{interval[:start][:day]+1}" : interval[:start][:day]+1}"
+              else
+                str_result += "#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day]+1 < 10 ? "0#{interval[:start][:day]+1}" : interval[:start][:day]+1}-#{interval[:end][:day]+1 < 10 ? "0#{interval[:end][:day]+1}" : interval[:end][:day]+1}"
+              end
             else
               str_result += "#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day]+1 < 10 ? "0#{interval[:start][:day]+1}" : interval[:start][:day]+1}-#{OSM_MONTHS[interval[:end][:month]]} #{interval[:end][:day]+1 < 10 ? "0#{interval[:end][:day]+1}" : interval[:end][:day]+1}"
             end

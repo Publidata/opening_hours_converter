@@ -107,6 +107,7 @@ module OpeningHoursConverter
       end
 
       result = ""
+
       if rules.length == 0
 
         date_ranges.each do |dr|
