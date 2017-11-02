@@ -334,7 +334,11 @@ module OpeningHoursConverter
 
       if single_month.length > 1
         month_to = single_month[1].split(' ')
-        month_to = { day: month_to[1].to_i, month: OSM_MONTHS.find_index(month_to[0]) + 1 }
+        if month_to.length > 1
+          month_to = { day: month_to[1].to_i, month: OSM_MONTHS.find_index(month_to[0]) + 1 }
+        else
+          month_to = { day: month_to[0].to_i, month: month_from[:month] }
+        end
         if month_to[:month] < 1
           raise ArgumentError, "Invalid month : #{month_to.inspect}"
         end
