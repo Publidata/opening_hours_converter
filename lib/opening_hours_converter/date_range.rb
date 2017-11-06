@@ -35,7 +35,7 @@ module OpeningHoursConverter
     end
 
     def add_comment(comment="")
-      @comment += comment
+      @comment += comment if comment
     end
 
     def has_same_typical?(date_range)
