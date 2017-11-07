@@ -15,10 +15,10 @@ module OpeningHoursConverter
       result = ""
       if @date.length == 1 && @date[0].wide_type == "holiday"
         if !@date[0].wide.start[:year].nil?
-          result += @date[0].wide.start[:year]
+          result += @date[0].wide.start[:year].to_s
         end
         if !@date[0].wide.end.nil?
-          result += "-#{@date[0].wide.end[:year]}"
+          result += "-#{@date[0].wide.end[:year].to_s}"
         end
         result += " PH"
       elsif @date.length > 0
