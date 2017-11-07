@@ -187,23 +187,24 @@ module OpeningHoursConverter
             end
           end
         else
-          str_result += "#{selector} "
+          local_str = "#{selector} "
           intervals.each do |interval|
             if is_full_year?(interval)
             elsif is_full_month?(interval)
-              str_result += "#{str_result.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]}"
+              local_str += "#{local_str.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]}"
             elsif starts_month?(interval) && ends_month?(interval)
-              str_result += "#{str_result.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]}-#{OSM_MONTHS[interval[:end][:month]]}"
+              local_str += "#{local_str.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]}-#{OSM_MONTHS[interval[:end][:month]]}"
             elsif is_same_month?(interval)
               if is_same_day?(interval)
-                str_result += "#{str_result.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day]+1 < 10 ? "0#{interval[:start][:day]+1}" : interval[:start][:day]+1}"
+                local_str += "#{local_str.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day]+1 < 10 ? "0#{interval[:start][:day]+1}" : interval[:start][:day]+1}"
               else
-                str_result += "#{str_result.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day]+1 < 10 ? "0#{interval[:start][:day]+1}" : interval[:start][:day]+1}-#{interval[:end][:day]+1 < 10 ? "0#{interval[:end][:day]+1}" : interval[:end][:day]+1}"
+                local_str += "#{local_str.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day]+1 < 10 ? "0#{interval[:start][:day]+1}" : interval[:start][:day]+1}-#{interval[:end][:day]+1 < 10 ? "0#{interval[:end][:day]+1}" : interval[:end][:day]+1}"
               end
             else
-              str_result += "#{str_result.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day]+1 < 10 ? "0#{interval[:start][:day]+1}" : interval[:start][:day]+1}-#{OSM_MONTHS[interval[:end][:month]]} #{interval[:end][:day]+1 < 10 ? "0#{interval[:end][:day]+1}" : interval[:end][:day]+1}"
+              local_str += "#{local_str.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day]+1 < 10 ? "0#{interval[:start][:day]+1}" : interval[:start][:day]+1}-#{OSM_MONTHS[interval[:end][:month]]} #{interval[:end][:day]+1 < 10 ? "0#{interval[:end][:day]+1}" : interval[:end][:day]+1}"
             end
           end
+          str_result += "#{str_result.length > 0 ? ", " : ""}#{local_str}"
         end
       end
 
