@@ -1,5 +1,6 @@
 require 'opening_hours_converter/constants'
 require 'json'
+require 'pry-nav'
 
 module OpeningHoursConverter
   class OpeningHoursParser
@@ -18,6 +19,8 @@ module OpeningHoursConverter
       @RGX_YEAR_PH = /^(\d{4})( PH|(\-(\d{4}) PH))\:?$/
       @RGX_YEAR_MONTH_DAY = /^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([012]?[0-9]|3[01])(\-((\d{4}) )?((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) )?([012]?[0-9]|3[01]))?\:?$/
       @RGX_YEAR_MONTH = /^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\-((\d{4}) )?((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)))?\:?$/
+      @RGX_YEAR_RANGE_MONTH = /^(\d{4})\-(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\-(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))?\:?$/
+      @RGX_YEAR_RANGE_MONTH_DAY = /^(\d{4})\-(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([012]?[0-9]|3[01])(\-(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([012]?[0-9]|3[01]))?\:?$/
       @RGX_COMMENT = /^\"[^\"]*\"$/
     end
 
@@ -91,6 +94,7 @@ module OpeningHoursConverter
             wide_range_selector += " #{tokens[i]}"
           end
           if wide_range_selector.length > 0
+            binding.pry
             wide_range_selector = wide_range_selector.strip
             wide_range_selector = wide_range_selector.split(',')
             wide_range_selector.each do |wrs|
@@ -98,6 +102,10 @@ module OpeningHoursConverter
                 years << get_year_month_day(wrs)
               elsif !(@RGX_YEAR_MONTH =~ wrs).nil?
                 years << get_year_month(wrs)
+              elsif !(@RGX_YEAR_RANGE_MONTH =~ wrs).nil?
+                years << get_year_range_month(wrs)
+              elsif !(@RGX_YEAR_RANGE_MONTH_DAY =~ wrs).nil?
+                years << get_year_range_month_day(wrs)
               elsif !(@RGX_MONTHDAY =~ wrs).nil?
                 months << get_month_day(wrs)
               elsif !(@RGX_YEAR_PH =~ wrs).nil?
@@ -369,6 +377,33 @@ module OpeningHoursConverter
         year_month_to = nil
       end
       { from_month: year_month_from, to_month: year_month_to }
+    end
+
+    def get_year_range_month(wrs)
+      single_year_month = wrs.gsub(/\:$/, '').split(' ')
+      year_month_from = single_year_month[0].split(' ')
+      year_month_from = { month: OSM_MONTHS.find_index(year_month_from[1]) + 1, year: year_month_from[0].to_i }
+      if year_month_from.length < 1
+        raise ArgumentError, "Invalid year_month : #{year_month_from.inspect}"
+      end
+      if single_year_month.length > 1
+        year_month_to = single_year_month[1].split(' ')
+        if year_month_to.length == 2
+          year_month_to = { month: OSM_MONTHS.find_index(year_month_to[1]) + 1, year: year_month_to[0].to_i }
+        elsif year_month_to.length == 1
+          year_month_to = { month: OSM_MONTHS.find_index(year_month_to[0]) + 1, year: year_month_from[:year] }
+        end
+        if year_month_to.length < 1
+          raise ArgumentError, "Invalid year_month : #{year_month_to.inspect}"
+        end
+      else
+        year_month_to = nil
+      end
+      { from_month: year_month_from, to_month: year_month_to }
+    end
+
+    def get_year_range_month_day(wrs)
+      # TODO
     end
 
     def get_year_holiday(wrs)
