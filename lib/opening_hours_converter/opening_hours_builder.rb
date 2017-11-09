@@ -1,5 +1,5 @@
 require 'opening_hours_converter/constants'
-
+require 'pry-nav'
 module OpeningHoursConverter
   class OpeningHoursBuilder
     include Constants
@@ -212,12 +212,6 @@ module OpeningHoursConverter
             day.add_weekday(last_same_day)
             result << day
           elsif same_day_count > 2
-            for j in (index+1)...last_same_day do
-              if days_status[j] == 0
-                days_status[j] = -index -1
-                day.add_overwritten_weekday(j)
-              end
-            end
             day.add_weekday(last_same_day)
             result << day
           end
@@ -304,11 +298,13 @@ module OpeningHoursConverter
 
         end
       end
+      binding.pry
       result = merge_days(result)
       return result
     end
 
     def merge_days(rules)
+      binding.pry
       return rules if rules.length == 0
       result = []
       result << rules[0]

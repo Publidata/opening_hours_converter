@@ -167,7 +167,7 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('24/7; Jan Su 01:00-08:00'))).to eql('24/7; Jan Su 01:00-08:00')
   end
   it "Su-Tu 12:00-14:00 (continous week-end)" do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('Su-Tu 12:00-14:00'))).to eql('12:00-14:00; We-Sa off')
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('Su-Tu 12:00-14:00'))).to eql('Su-Tu 12:00-14:00')
   end
   it "2017 Nov 11 off (single off day)" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2017 Nov 11 off'))).to eql('2017 Nov 11 off')
