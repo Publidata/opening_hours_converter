@@ -263,7 +263,7 @@ module OpeningHoursConverter
 
     def from_json(json)
       parsed = JSON.parse(json)
-      date_range = {}
+      date_range = []
       parsed.each do |dr|
         wi = {}
         start_day = DateTime.parse(dr["wide_interval"]["start"])
@@ -274,17 +274,17 @@ module OpeningHoursConverter
         else
           wi = OpeningHoursConverter::WideInterval.new.day(start_day.day, start_day.month, start_day.year, end_day.day, end_day.month, end_day.year)
         end
-        date_range = OpeningHoursConverter::DateRange.new(wi)
+        date_range << OpeningHoursConverter::DateRange.new(wi)
+        date_range.last.add_comment(dr["comment"])
         dr["typical"]["intervals"].each do |interval|
           if !interval.nil?
             start_interval = DateTime.parse(interval["start"])
             end_interval = DateTime.parse(interval["end"])
-            date_range.typical.add_interval(OpeningHoursConverter::Interval.new(((start_interval.wday + 6) % 7), (start_interval.hour * 60 + start_interval.min), ((end_interval.wday + 6) % 7), (end_interval.hour * 60 + end_interval.min)))
+            date_range.last.typical.add_interval(OpeningHoursConverter::Interval.new(((start_interval.wday + 6) % 7), (start_interval.hour * 60 + start_interval.min), ((end_interval.wday + 6) % 7), (end_interval.hour * 60 + end_interval.min)))
           end
         end
-        date_range.add_comment(dr["comment"])
       end
-      [date_range]
+      date_range
     end
 
     def get_year(wrs)
