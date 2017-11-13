@@ -1,5 +1,5 @@
 require 'opening_hours_converter/constants'
-require 'pry-nav'
+
 module OpeningHoursConverter
   class OpeningHoursBuilder
     include Constants
@@ -298,13 +298,11 @@ module OpeningHoursConverter
 
         end
       end
-      binding.pry
       result = merge_days(result)
       return result
     end
 
     def merge_days(rules)
-      binding.pry
       return rules if rules.length == 0
       result = []
       result << rules[0]

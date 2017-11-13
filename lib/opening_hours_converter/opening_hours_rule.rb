@@ -204,7 +204,7 @@ module OpeningHoursConverter
               local_str += "#{local_str.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day]+1 < 10 ? "0#{interval[:start][:day]+1}" : interval[:start][:day]+1}-#{OSM_MONTHS[interval[:end][:month]]} #{interval[:end][:day]+1 < 10 ? "0#{interval[:end][:day]+1}" : interval[:end][:day]+1}"
             end
           end
-          str_result += "#{str_result.length > 0 ? ", " : ""}#{local_str}"
+          str_result += "#{str_result.length > 0 ? "," : ""}#{local_str}"
         end
       end
 

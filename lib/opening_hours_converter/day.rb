@@ -20,6 +20,9 @@ module OpeningHoursConverter
           if interval.day_start == interval.day_end || interval.day_end == DAYS_MAX && interval.end == MINUTES_MAX
             start_minute = interval.start
             end_minute = interval.end
+          elsif interval.day_end == interval.day_start + 1 && interval.end == 0
+            start_minute = interval.start
+            end_minute = MINUTES_MAX
           end
 
           unless start_minute.nil? && end_minute.nil?
