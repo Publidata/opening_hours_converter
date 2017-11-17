@@ -40,3 +40,6 @@ oh = parser.parse(Schedule.first.opening_hours_string)
 
 # test
 rspec spec --format=documentation
+
+# References
+Done with [yohours](https://framagit.org/PanierAvide/YoHours) as inspiration and with constant help from the [evaluation tool](http://openingh.openstreetmap.de/evaluation_tool/) [repository](https://github.com/opening-hours/opening_hours.js)
