@@ -45,15 +45,11 @@ module OpeningHoursConverter
         minute_start = -1
         minute_end = nil
         minute_array.each_with_index do |minute, i|
-          if i == 0
-            if minute
-              minute_start = i
-            end
-          elsif i == minute_array.length - 1
-            if minute
-              intervals << OpeningHoursConverter::Interval.new(0, minute_start, 0, i - 1)
-              minute_start = -1
-            end
+          if i == 0 && minute
+            minute_start = i
+          elsif i == minute_array.length - 1 && minute
+            intervals << OpeningHoursConverter::Interval.new(0, minute_start, 0, i - 1)
+            minute_start = -1
           else
             if minute && minute_start < 0
               minute_start = i

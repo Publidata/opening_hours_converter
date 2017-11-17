@@ -280,6 +280,9 @@ module OpeningHoursConverter
           if !interval.nil?
             start_interval = DateTime.parse(interval["start"])
             end_interval = DateTime.parse(interval["end"])
+            if end_interval.day == start_interval.day + 1 && end_interval.hour == 0 && end_interval.min == 0
+              end_interval -= (1/1440.0)
+            end
             date_range.last.typical.add_interval(OpeningHoursConverter::Interval.new(((start_interval.wday + 6) % 7), (start_interval.hour * 60 + start_interval.min), ((end_interval.wday + 6) % 7), (end_interval.hour * 60 + end_interval.min)))
           end
         end

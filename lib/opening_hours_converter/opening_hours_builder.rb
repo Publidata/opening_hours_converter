@@ -13,7 +13,6 @@ module OpeningHoursConverter
       day_ph = false
 
       date_ranges.each_with_index do |date_range, date_range_index|
-
         if !date_range.nil?
           date_range.typical.intervals.each_with_index do |interval, interval_id|
             if interval&.day_start == -2 && interval&.day_start == interval&.day_end
