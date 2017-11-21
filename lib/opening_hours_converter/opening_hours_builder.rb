@@ -104,7 +104,6 @@ module OpeningHoursConverter
           end
         end
       end
-
       result = ""
 
       if rules.length == 0

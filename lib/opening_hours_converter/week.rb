@@ -44,9 +44,11 @@ module OpeningHoursConverter
                 day_start = day_index
                 minute_start = minute_index
               end
-            elsif day_index == DAYS_MAX && minute_index == day.length - 1
-              if day_start >= 0 && minute
+            elsif minute && day_index == DAYS_MAX && minute_index == day.length - 1
+              if day_start >= 0
                 intervals << OpeningHoursConverter::Interval.new(day_start, minute_start, day_index, minute_index)
+              else
+                intervals << OpeningHoursConverter::Interval.new(6, minute_index, 6, minute_index)
               end
             else
               if minute && day_start < 0
