@@ -1,5 +1,6 @@
 require 'opening_hours_converter/constants'
 require 'json'
+require 'pry-nav'
 
 module OpeningHoursConverter
   class OpeningHoursParser
@@ -26,7 +27,6 @@ module OpeningHoursConverter
       blocks = oh.split(';')
 
       comment = ""
-      rule_modifier = nil
       time_selector = nil
       weekday_selector = nil
       wide_range_selector = nil
@@ -44,6 +44,7 @@ module OpeningHoursConverter
       res_dr_id = nil
 
       blocks.each do |block|
+        rule_modifier = nil
         block.strip!
         next if block.length == 0
 
