@@ -1,6 +1,5 @@
 require 'opening_hours_converter/constants'
 require 'json'
-require 'pry-nav'
 
 module OpeningHoursConverter
   class OpeningHoursParser
