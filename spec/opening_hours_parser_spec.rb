@@ -1,6 +1,9 @@
 require 'opening_hours_converter'
 
 RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
+  it "off" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('off'))).to eql('off')
+  end
   it "PH,Su off" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('PH,Su 10:00-11:00'))).to eql('PH,Su 10:00-11:00')
   end
@@ -180,5 +183,8 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   end
   it "Nov 11 00:00-23:59" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('Nov 11 00:00-23:59'))).to eql('Nov 11 00:00-23:59')
+  end
+  it "Mo-We 00:00-01:00,18:00-24:00; Th 00:00-01:00,10:00-20:00; Fr 18:00-24:00; Sa,Su 00:00-04:00,18:00-24:00" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse("Mo-We 00:00-01:00,18:00-24:00; Th 00:00-01:00,10:00-20:00; Fr 18:00-24:00; Sa,Su 00:00-04:00,18:00-24:00"))).to eql("Mo-We 00:00-01:00,18:00-24:00; Th 00:00-01:00,10:00-20:00; Fr 18:00-24:00; Sa,Su 00:00-04:00,18:00-24:00")
   end
 end

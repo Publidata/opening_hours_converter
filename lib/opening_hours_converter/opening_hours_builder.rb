@@ -108,13 +108,9 @@ module OpeningHoursConverter
       result = ""
 
       if rules.length == 0
-
         date_ranges.each do |dr|
-          if dr.wide_interval.type != "always"
-            result += "#{dr.wide_interval.get_time_selector} off"
-          end
+          result += "#{dr.wide_interval.get_time_selector} off"
         end
-
       else
         rules.each_with_index do |rule, rule_index|
           if rule_index > 0
@@ -124,7 +120,7 @@ module OpeningHoursConverter
         end
       end
 
-      return result
+      return result.strip
     end
 
     def build_holiday(date_range)
@@ -161,16 +157,10 @@ module OpeningHoursConverter
 
     def build_week(date_range)
       result = []
+
       intervals = date_range.typical.get_intervals(true)
 
-      time_intervals = create_time_intervals(date_range.wide_interval, date_range.wide_interval.type, intervals)
-
-      monday0 = time_intervals[0]
-      sunday24 = time_intervals[1]
-      days = time_intervals[2]
-
-      days = night_monday_sunday(days, monday0, sunday24)
-
+      days = create_time_intervals(date_range.wide_interval, date_range.wide_interval.type, intervals)
 
       days_status = Array.new(OSM_DAYS.length, 0)
 
@@ -224,20 +214,17 @@ module OpeningHoursConverter
     def build_week_diff(date_range, general_date_range)
       intervals = date_range.typical.get_intervals_diff(general_date_range.typical)
 
-      time_intervals = create_time_intervals(
+      time_intervals =
+      days = create_time_intervals(
         date_range.wide_interval,
         date_range.wide_interval.type,
         intervals[:open])
-      monday0 = time_intervals[0]
-      sunday24 = time_intervals[1]
-      days = time_intervals[2]
+
       intervals[:closed].each do |interval|
         for i in interval.day_start..interval.day_end do
           days[i].add_time(OpeningHoursConverter::OpeningHoursTime.new)
         end
       end
-
-      days = night_monday_sunday(days, monday0, sunday24)
 
       days_status = Array.new(OSM_DAYS.length, 0)
       result = []
@@ -329,9 +316,6 @@ module OpeningHoursConverter
     end
 
     def create_time_intervals(wide_interval, type, intervals)
-      monday0 = -1
-      sunday24 = -1
-
       days = []
       for i in 0...7
         days << OpeningHoursConverter::OpeningHoursRule.new
@@ -340,22 +324,12 @@ module OpeningHoursConverter
 
       intervals.each do |interval|
         if !interval.nil?
-          if interval.day_start == DAYS_MAX && interval.day_end == DAYS_MAX && interval.end == MINUTES_MAX
-            sunday24 = interval.start
-          end
-          if interval.day_start == 0 && interval.day_end == 0 && interval.start == 0
-            monday0 = interval.end
-          end
           begin
             if interval.day_start == interval.day_end
               days[interval.day_start].add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, interval.end))
             elsif interval.day_end - interval.day_start == 1
-              if interval.start > interval.end
-                days[interval.day_start].add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, interval.end))
-              else
-                days[interval.day_start].add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, MINUTES_MAX))
-                days[interval.day_end].add_time(OpeningHoursConverter::OpeningHoursTime.new(0, interval.end))
-              end
+              days[interval.day_start].add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, MINUTES_MAX))
+              days[interval.day_end].add_time(OpeningHoursConverter::OpeningHoursTime.new(0, interval.end))
             else
               for j in interval.day_start..interval.day_end
                 if j == interval.day_start
@@ -373,17 +347,6 @@ module OpeningHoursConverter
         end
       end
 
-      return [ monday0, sunday24, days ]
-    end
-
-    def night_monday_sunday(days, monday0, sunday24)
-      if monday0 >= 0 && sunday24 >= 0 && monday0 < sunday24
-        days[0].time.sort! { |a, b| a.start <=> b.start }
-        days[6].time.sort! { |a, b| a.start <=> b.start }
-
-        days[6].time[days[6].time.length - 1] = OpeningHoursConverter::OpeningHoursTime.new(sunday24, monday0)
-        days[0].time.shift
-      end
       return days
     end
   end

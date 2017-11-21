@@ -35,7 +35,7 @@ RSpec.describe OpeningHoursConverter::OpeningHoursBuilder, '#build' do
     dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.always) ]
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 23*60, 1, 3*60))
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 23*60, 2, 3*60))
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Mo,Tu 23:00-03:00")
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Mo 23:00-24:00; Tu 00:00-03:00,23:00-24:00; We 00:00-03:00")
   end
   it "Mo,Tu 23:00-03:00 following" do
     dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.always) ]
@@ -43,7 +43,7 @@ RSpec.describe OpeningHoursConverter::OpeningHoursBuilder, '#build' do
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 0, 1, 3*60))
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 23*60, 1, 24*60))
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(2, 0, 2, 3*60))
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Mo,Tu 23:00-03:00")
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Mo 23:00-24:00; Tu 00:00-03:00,23:00-24:00; We 00:00-03:00")
   end
   it "Mo,Su 23:00-03:00 following" do
     dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.always) ]
@@ -51,7 +51,7 @@ RSpec.describe OpeningHoursConverter::OpeningHoursBuilder, '#build' do
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 0, 1, 3*60))
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(6, 23*60, 6, 24*60))
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 0, 0, 3*60))
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Mo,Su 23:00-03:00")
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Mo 00:00-03:00,23:00-24:00; Tu 00:00-03:00; Su 23:00-24:00")
   end
   it "Mo 8:00-10:00 merging" do
     dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.always) ]
@@ -207,7 +207,7 @@ RSpec.describe OpeningHoursConverter::OpeningHoursBuilder, '#build' do
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(6, 23*60, 6, 24*60))
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 0, 0, 1*60))
 
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Tu,Su 23:00-01:00")
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Mo,We 00:00-01:00; Tu,Su 23:00-24:00")
   end
   it "08:00-18:00; Aug off" do
     dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.always), OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.month(8)) ]
@@ -396,6 +396,19 @@ RSpec.describe OpeningHoursConverter::OpeningHoursBuilder, '#build' do
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(5, 18*60, 5, 22*60))
 
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Tu,We,Fr 18:00-19:00; Sa 18:00-22:00")
+  end
+  it "over midnight override" do
+    dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.always) ]
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 0*60, 0, 1*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 18*60, 1, 1*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 18*60, 2, 1*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(2, 18*60, 3, 1*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(4, 18*60, 5, 4*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(5, 18*60, 6, 4*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(6, 18*60, 6, 24*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(3, 10*60, 3, 20*60))
+
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Mo-We 00:00-01:00,18:00-24:00; Th 00:00-01:00,10:00-20:00; Fr 18:00-24:00; Sa,Su 00:00-04:00,18:00-24:00")
   end
 end
 

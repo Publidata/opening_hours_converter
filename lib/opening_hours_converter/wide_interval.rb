@@ -53,21 +53,52 @@ module OpeningHoursConverter
       case @type
       when "day"
         if !@end.nil?
-          result = "toutes les semaines du #{@start[:day]} #{IRL_MONTHS[@start[:month] - 1]}"
-          if @start[:month] != @end[:month]
-            result += " au #{@end[:day]} #{IRL_MONTHS[@end[:month] - 1]}"
+          if @start[:year] && !@end[:year] || @start[:year] && @start[:year] == @end[:year]
+            result = "du #{@start[:day]} #{IRL_MONTHS[@start[:month] - 1]} #{@start[:year]} au #{@end[:day]} #{IRL_MONTHS[@end[:month] - 1]} #{@start[:year]}"
+          elsif @start[:year] && @end[:year] && @start[:year] != @end[:year]
+            result = "du #{@start[:day]} #{IRL_MONTHS[@start[:month] - 1]} #{@start[:year]} au #{@end[:day]} #{IRL_MONTHS[@end[:month] - 1]} #{@end[:year]}"
+          elsif @start[:month] != @end[:month]
+            result = "du #{@start[:day]} #{IRL_MONTHS[@start[:month] - 1]} au #{@end[:day]} #{IRL_MONTHS[@end[:month] - 1]}"
+          else
+            result = "le #{@start[:day]} #{IRL_MONTHS[@start[:month] - 1]}"
           end
         else
-          result = "le #{@start[:day]} #{IRL_MONTHS[@start[:month] - 1]}"
+          result = "le #{@start[:day]} #{IRL_MONTHS[@start[:month] - 1]} #{@start[:year] ? @start[:year] : ""}"
         end
       when "month"
         if !@end.nil?
-          result = "toutes les semaines de #{IRL_MONTHS[@start[:month] - 1]} à #{IRL_MONTHS[@endd[:month] - 1]}"
+          if @start[:year] && !@end[:year] || @start[:year] && @start[:year] == @end[:year]
+            result = "de #{IRL_MONTHS[@start[:month] - 1]} #{@start[:year]} à #{IRL_MONTHS[@end[:month] - 1]} #{@start[:year]}"
+          elsif @start[:year] && @end[:year] && @start[:year] != @end[:year]
+            result = "de #{IRL_MONTHS[@start[:month] - 1]} #{@start[:year]} à #{IRL_MONTHS[@end[:month] - 1]} #{@end[:year]}"
+          else
+            result = "de #{IRL_MONTHS[@start[:month] - 1]} à #{IRL_MONTHS[@end[:month] - 1]}"
+          end
         else
-          result = "toutes les semaines de #{IRL_MONTHS[@start[:month] - 1]}"
+          result = "#{IRL_MONTHS[@start[:month] - 1]}#{@start[:year] ? " #{@start[:year]}" : ""}"
+        end
+      when "year"
+        if !@end.nil?
+          result = "de #{@start[:year]} à #{@end[:year]}"
+        else
+          result = "#{@start[:year]}"
+        end
+      when "holiday"
+        if !@end.nil?
+          if !@start[:year]
+            result = "jours fériés"
+          else
+            result = "les jours fériés de #{@start[:year]} à #{@end[:year]}"
+          end
+        else
+          if !@start[:year]
+            result = "jours fériés"
+          else
+            result = "les jours fériés de #{@start[:year]}"
+          end
         end
       when "always"
-        result = "toutes les semaines"
+        result = "tout le temps"
       end
       return result
     end

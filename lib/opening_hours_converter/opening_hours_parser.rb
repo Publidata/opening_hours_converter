@@ -178,6 +178,7 @@ module OpeningHoursConverter
           date_ranges << OpeningHoursConverter::WideInterval.new.always
         end
 
+
         if weekdays.length > 0 && holidays.length > 0
           weekdays << {from: -2, to: -2}
           holidays = []
@@ -536,7 +537,7 @@ module OpeningHoursConverter
         if wd < 6
           typical.add_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd+1, times[:to]))
         else
-          typical.add_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd+1, 24*60))
+          typical.add_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd, 24*60))
           typical.add_interval(OpeningHoursConverter::Interval.new(0, 0, 0, times[:to]))
         end
       end

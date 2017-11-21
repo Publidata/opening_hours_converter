@@ -28,12 +28,12 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#day" do
   end
 
   it "initialize" do
-    expect { wi = OpeningHoursConverter::WideInterval.new.day(1, 1, 1, 2, 2, 2) }.not_to raise_error
-    expect { wi2 = OpeningHoursConverter::WideInterval.new.day(1, 1, 1) }.not_to raise_error
-    expect { wi5 = OpeningHoursConverter::WideInterval.new.day(1, 1) }.not_to raise_error
-    expect { wi5 = OpeningHoursConverter::WideInterval.new.day(1, 1, nil, 2, 2) }.not_to raise_error
-    expect { wi3 = OpeningHoursConverter::WideInterval.new.day() }.to raise_error ArgumentError
-    expect { wi4 = OpeningHoursConverter::WideInterval.new.day(1) }.to raise_error ArgumentError
+    expect { OpeningHoursConverter::WideInterval.new.day(1, 1, 1, 2, 2, 2) }.not_to raise_error
+    expect { OpeningHoursConverter::WideInterval.new.day(1, 1, 1) }.not_to raise_error
+    expect { OpeningHoursConverter::WideInterval.new.day(1, 1) }.not_to raise_error
+    expect { OpeningHoursConverter::WideInterval.new.day(1, 1, nil, 2, 2) }.not_to raise_error
+    expect { OpeningHoursConverter::WideInterval.new.day() }.to raise_error ArgumentError
+    expect { OpeningHoursConverter::WideInterval.new.day(1) }.to raise_error ArgumentError
   end
 
   it "type is day" do
@@ -142,6 +142,12 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#day" do
       expect(@november_28_2017.contains?(@basic_month)).to be false
       expect(@november_28_2017.contains?(@basic_always)).to be false
     end
+
+    it "get time for human" do
+      expect(@november_28_2017.get_time_for_humans).to eql('le 28 Novembre 2017')
+      expect(@november_28_to_november_29_2017.get_time_for_humans).to eql('du 28 Novembre 2017 au 29 Novembre 2017')
+      expect(@november_2017_in_day.get_time_for_humans).to eql('du 1 Novembre 2017 au 30 Novembre 2017')
+    end
   end
   context "several days" do
     it "get time selector" do
@@ -189,6 +195,7 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#month" do
     @october_10_to_december_25_2017 = OpeningHoursConverter::WideInterval.new.day(10, 10, 2017, 25, 12, 2017)
     @september_10_to_november_10_2017 = OpeningHoursConverter::WideInterval.new.day(10, 9, 2017, 10, 11, 2017)
     @october_2017 = OpeningHoursConverter::WideInterval.new.month(10, 2017)
+    @october = OpeningHoursConverter::WideInterval.new.month(10)
 
     @october_to_december_2017 = OpeningHoursConverter::WideInterval.new.month(10, 2017, 12, 2017)
     @october_to_november_2017 = OpeningHoursConverter::WideInterval.new.month(10, 2017, 11, 2017)
@@ -197,11 +204,11 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#month" do
   end
 
   it "initialize" do
-    expect { wi = OpeningHoursConverter::WideInterval.new.month(1,2017, 3,2017) }.not_to raise_error
-    expect { wi2 = OpeningHoursConverter::WideInterval.new.month(1,2017) }.not_to raise_error
-    expect { wi2 = OpeningHoursConverter::WideInterval.new.month(1) }.not_to raise_error
-    expect { wi2 = OpeningHoursConverter::WideInterval.new.month(1,nil,2) }.not_to raise_error
-    expect { wi3 = OpeningHoursConverter::WideInterval.new.month }.to raise_error ArgumentError
+    expect { OpeningHoursConverter::WideInterval.new.month(1,2017, 3,2017) }.not_to raise_error
+    expect { OpeningHoursConverter::WideInterval.new.month(1,2017) }.not_to raise_error
+    expect { OpeningHoursConverter::WideInterval.new.month(1) }.not_to raise_error
+    expect { OpeningHoursConverter::WideInterval.new.month(1,nil,2) }.not_to raise_error
+    expect { OpeningHoursConverter::WideInterval.new.month }.to raise_error ArgumentError
   end
 
   it "type is month" do
@@ -258,6 +265,12 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#month" do
     expect(@january_2017.ends_month?).to be true
   end
 
+  it "get time for human" do
+    expect(@november_2017.get_time_for_humans).to eql('Novembre 2017')
+    expect(@october.get_time_for_humans).to eql('Octobre')
+    expect(@october_to_november_2017.get_time_for_humans).to eql('de Octobre 2017 à Novembre 2017')
+  end
+
 
   context "single month" do
     it "get time selector" do
@@ -303,6 +316,7 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#month" do
     end
   end
 end
+
 RSpec.describe OpeningHoursConverter::WideInterval, "#year" do
   before(:all) do
     @basic_always = OpeningHoursConverter::WideInterval.new.always
@@ -332,9 +346,9 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#year" do
     @november_to_december_2018 = OpeningHoursConverter::WideInterval.new.month(11,2018,12,2018)
   end
   it "initialize" do
-    expect { wi = OpeningHoursConverter::WideInterval.new.year(2017) }.not_to raise_error
-    expect { wi2 = OpeningHoursConverter::WideInterval.new.year(2017, 2018) }.not_to raise_error
-    expect { wi3 = OpeningHoursConverter::WideInterval.new.year }.to raise_error ArgumentError
+    expect { OpeningHoursConverter::WideInterval.new.year(2017) }.not_to raise_error
+    expect { OpeningHoursConverter::WideInterval.new.year(2017, 2018) }.not_to raise_error
+    expect { OpeningHoursConverter::WideInterval.new.year }.to raise_error ArgumentError
   end
 
   it "type is year" do
@@ -420,6 +434,14 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#year" do
     expect(@year_2017.is_full_year?).to be true
     expect(@year_2017_to_2018.is_full_year?).to be false
   end
+
+
+
+  it "get time for human" do
+    expect(@year_2017.get_time_for_humans).to eql('2017')
+    expect(@year_2017_to_2018.get_time_for_humans).to eql('de 2017 à 2018')
+  end
+
   context "single year" do
     it "get time selector" do
       expect(@year_2017.get_time_selector).to eql("2017")
@@ -463,6 +485,18 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#year" do
   end
 
 end
+RSpec.describe OpeningHoursConverter::WideInterval, "#holiday" do
+  before(:all) do
+    @always_holiday = OpeningHoursConverter::WideInterval.new.holiday("PH", )
+    @holiday_2017 = OpeningHoursConverter::WideInterval.new.holiday("PH", 2017)
+    @holiday_2017_2020 = OpeningHoursConverter::WideInterval.new.holiday("PH", 2017, 2020)
+  end
+  it "get time for human" do
+    expect(@always_holiday.get_time_for_humans).to eql('jours fériés')
+    expect(@holiday_2017.get_time_for_humans).to eql('les jours fériés de 2017')
+    expect(@holiday_2017_2020.get_time_for_humans).to eql('les jours fériés de 2017 à 2020')
+  end
+end
 RSpec.describe OpeningHoursConverter::WideInterval, "#always" do
   before(:all) do
     @basic_always = OpeningHoursConverter::WideInterval.new.always
@@ -470,7 +504,7 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#always" do
     @basic_day = OpeningHoursConverter::WideInterval.new.day(1, 1, 1)
   end
   it "initialize" do
-    expect { wi = OpeningHoursConverter::WideInterval.new.always }.not_to raise_error
+    expect { OpeningHoursConverter::WideInterval.new.always }.not_to raise_error
   end
   it "starts month" do
     expect(OpeningHoursConverter::WideInterval.new.always.starts_month?).to be true
