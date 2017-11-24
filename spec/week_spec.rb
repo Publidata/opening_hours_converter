@@ -1,4 +1,4 @@
-require 'opening_hours_converter/week'
+require 'opening_hours_converter'
 
 RSpec.describe OpeningHoursConverter::Week, '#initialize' do
   it "initialize" do
@@ -231,7 +231,7 @@ RSpec.describe OpeningHoursConverter::Week, 'intervals' do
     w1.add_interval(it2)
 
     result = w1.get_intervals_diff(w)
-    # puts result.inspect
+
     expect(result[:open].length).to eql(1)
     expect(result[:closed].length).to eql(2)
 

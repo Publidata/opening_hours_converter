@@ -3,25 +3,18 @@ require 'opening_hours_converter/constants'
 module OpeningHoursConverter
   class OpeningHoursRule
     include Constants
-    attr_accessor :date, :time, :comment
+    attr_accessor :date, :time, :comment, :is_defined_off
 
     def initialize
       @date = []
       @time = []
+      @is_defined_off = false
       @comment = ""
     end
 
     def get
       result = ""
-      if @date.length == 1 && @date[0].wide_type == "holiday"
-        if !@date[0].wide.start[:year].nil?
-          result += @date[0].wide.start[:year].to_s
-        end
-        if !@date[0].wide.end.nil?
-          result += "-#{@date[0].wide.end[:year].to_s}"
-        end
-        result += " PH"
-      elsif @date.length > 0
+      if @date.length > 0
         result += get_wide_selector
       end
 
@@ -31,7 +24,9 @@ module OpeningHoursConverter
           result += " #{wd}"
         end
       end
-      if @time.length > 0
+      if @is_defined_off
+        result += " off"
+      elsif @time.length > 0
         result += " "
         @time.uniq.each_with_index do |t, i|
           if (i > 0)
@@ -57,8 +52,18 @@ module OpeningHoursConverter
     end
 
     def get_wide_selector
+      if @date.length == 1 && @date[0].wide.type == "holiday"
+        if @date[0].wide.start[:year].nil?
+          return "PH"
+        else
+          if @date[0].wide.end && @date[0].wide.end[:year]
+            return "#{@date[0].wide.start[:year]}-#{@date[0].wide.end[:year]} PH"
+          else
+            return "#{@date[0].wide.start[:year]} PH"
+          end
+        end
+      end
       years = OpeningHoursConverter::Year.build_day_array_from_dates(@date)
-
       year_start = -1
       month_start = -1
       day_start = -1

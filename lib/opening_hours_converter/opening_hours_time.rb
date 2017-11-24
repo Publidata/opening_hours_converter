@@ -1,6 +1,6 @@
 module OpeningHoursConverter
   class OpeningHoursTime
-    attr_reader :start, :end
+    attr_reader :start, :end, :priority
 
     def initialize(minute_start=nil, minute_end=nil)
       @start = minute_start

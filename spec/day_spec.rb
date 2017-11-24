@@ -1,4 +1,4 @@
-require 'opening_hours_converter/day'
+require 'opening_hours_converter'
 
 RSpec.describe OpeningHoursConverter::Day, '#initialize' do
   it "initialize" do
@@ -21,6 +21,14 @@ RSpec.describe OpeningHoursConverter::Day, '#get_as_minute_array' do
       else
         expect(minutes[m]).to be false
       end
+    end
+  end
+  it "has the right values for off interval" do
+    d = OpeningHoursConverter::Day.new
+    d.add_interval(OpeningHoursConverter::Interval.new(0, 0, 0, 24*60, true))
+    minutes = d.get_as_minute_array
+    for m in 0..(24*60)
+      expect(minutes[m]).to eql("off")
     end
   end
 end

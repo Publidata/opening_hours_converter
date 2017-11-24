@@ -17,14 +17,26 @@ module OpeningHoursConverter
           for day in interval.day_start..interval.day_end
             start_minute = (day == interval.day_start) ? interval.start : 0
             end_minute = (day == interval.day_end) ? interval.end : MINUTES_MAX
-            if start_minute && end_minute
-              for minute in start_minute..end_minute
-                minute_array[day][minute] = true
+            if interval.is_off
+              if start_minute && end_minute
+                for minute in 0..MINUTES_MAX
+                  minute_array[day][minute] = "off"
+                end
+              end
+            else
+              if start_minute && end_minute
+                if minute_array[day][0] == "off"
+                  minute_array[day] = Array.new(MINUTES_MAX + 1, false)
+                end
+                for minute in start_minute..end_minute
+                  minute_array[day][minute] = true
+                end
               end
             end
           end
         end
       end
+
       minute_array
     end
 
@@ -35,37 +47,41 @@ module OpeningHoursConverter
         day_start = -1
         minute_start = -1
         minute_end = nil
-
-
+        off = false
         minute_array.each_with_index do |day, day_index|
           day.each_with_index do |minute, minute_index|
             if day_index == 0 && minute_index == 0
               if minute
+                off = true if minute == "off"
                 day_start = day_index
                 minute_start = minute_index
               end
             elsif minute && day_index == DAYS_MAX && minute_index == day.length - 1
+              off = true if minute == "off"
               if day_start >= 0
-                intervals << OpeningHoursConverter::Interval.new(day_start, minute_start, day_index, minute_index)
+                intervals << OpeningHoursConverter::Interval.new(day_start, minute_start, day_index, minute_index, off)
               else
-                intervals << OpeningHoursConverter::Interval.new(6, minute_index, 6, minute_index)
+                intervals << OpeningHoursConverter::Interval.new(6, minute_index, 6, minute_index, off)
               end
             else
               if minute && day_start < 0
+                off = true if minute == "off"
                 day_start = day_index
                 minute_start = minute_index
               elsif !minute && day_start >= 0
                 if minute_index == 0
-                  intervals << OpeningHoursConverter::Interval.new(day_start, minute_start, day_index - 1, MINUTES_MAX)
+                  intervals << OpeningHoursConverter::Interval.new(day_start, minute_start, day_index - 1, MINUTES_MAX, off)
                 else
-                  intervals << OpeningHoursConverter::Interval.new(day_start, minute_start, day_index, minute_index - 1)
+                  intervals << OpeningHoursConverter::Interval.new(day_start, minute_start, day_index, minute_index - 1, off)
                 end
+                off = false
                 day_start = -1
                 minute_start = - 1
               end
             end
           end
         end
+
         return intervals
       else
         return @intervals
@@ -76,16 +92,19 @@ module OpeningHoursConverter
       self_minutes_array = get_as_minute_array
       other_minutes_array = week.get_as_minute_array
 
+
       intervals = { open: [], closed: [] }
       day_start = -1
       min_start = -1
 
-
       for d in 0..DAYS_MAX
         diff_day = false
         m = 0
+        off = false
         intervals_length = intervals[:open].length
         while m <= MINUTES_MAX
+          off = self_minutes_array[d][m] == "off"
+          break if off
           # Copy entire day
           if diff_day
             # first minute of monday
@@ -97,7 +116,7 @@ module OpeningHoursConverter
             # last minute of sunday
             elsif d == DAYS_MAX && m == MINUTES_MAX
               if day_start >= 0 && self_minutes_array[d][m]
-                intervals[:open] << OpeningHoursConverter::Interval.new(day_start, min_start, d, m)
+                intervals[:open] << OpeningHoursConverter::Interval.new(day_start, min_start, d, m, off)
               end
             #  other days and minutes
             else
@@ -108,9 +127,9 @@ module OpeningHoursConverter
               # end interval
               elsif !self_minutes_array[d][m] && day_start >= 0
                 if m == 0
-                  intervals[:open] << OpeningHoursConverter::Interval.new(day_start, min_start, d - 1, MINUTES_MAX)
+                  intervals[:open] << OpeningHoursConverter::Interval.new(day_start, min_start, d - 1, MINUTES_MAX, off)
                 else
-                  intervals[:open] << OpeningHoursConverter::Interval.new(day_start, min_start, d, m - 1)
+                  intervals[:open] << OpeningHoursConverter::Interval.new(day_start, min_start, d, m - 1, off)
                 end
                 day_start = -1
                 min_start = -1
@@ -119,7 +138,12 @@ module OpeningHoursConverter
             m += 1
           # check diff
           else
-            diff_day = self_minutes_array[d][m] ? !other_minutes_array[d][m] : other_minutes_array[d][m]
+            if !self_minutes_array[d][m]
+              diff_day = other_minutes_array[d][m] != "off" && other_minutes_array[d][m]
+            else
+              diff_day = other_minutes_array[d][m] == "off" || !other_minutes_array[d][m]
+            end
+
             if diff_day
               m = 0
             else
@@ -127,19 +151,20 @@ module OpeningHoursConverter
             end
           end
         end
-        if !diff_day && day_start > -1
-          intervals[:open] << OpeningHoursConverter::Interval.new(day_start, min_start, d-1, MINUTES_MAX)
+        if !diff_day && day_start > -1 && !off
+          intervals[:open] << OpeningHoursConverter::Interval.new(day_start, min_start, d-1, MINUTES_MAX, off)
           day_start = -1
           min_start = -1
         end
-        if diff_day && day_start == -1 && intervals_length == intervals[:open].length
+        if diff_day && day_start == -1 && intervals_length == intervals[:open].length || off
           if intervals[:closed].length > 0 && intervals[:closed][intervals[:closed].length - 1].day_end == d - 1
-            intervals[:closed][intervals[:closed].length - 1] = OpeningHoursConverter::Interval.new(intervals[:closed][intervals[:closed].length - 1].day_start, 0, d, MINUTES_MAX)
+            intervals[:closed][-1] = OpeningHoursConverter::Interval.new(intervals[:closed].last.day_start, 0, d, MINUTES_MAX, off)
           else
-            intervals[:closed] << OpeningHoursConverter::Interval.new(d, 0, d, MINUTES_MAX)
+            intervals[:closed] << OpeningHoursConverter::Interval.new(d, 0, d, MINUTES_MAX, off)
           end
         end
       end
+
       return intervals
     end
 
@@ -165,10 +190,10 @@ module OpeningHoursConverter
             if day_diff > 1 || day_diff == 0 || interval.day_start == day || interval.start <= interval.end
               if interval.day_end - interval.day_start >= 1 && interval.start <= interval.end
                 if interval.day_start < day
-                  add_interval(OpeningHoursConverter::Interval.new(interval.day_start, interval.start, day - 1, 24*60))
+                  add_interval(OpeningHoursConverter::Interval.new(interval.day_start, interval.start, day - 1, 24*60, interval.is_off))
                 end
                 if interval.day_end > day
-                  add_interval(OpeningHoursConverter::Interval.new(day + 1, 0, interval.day_end, interval.end))
+                  add_interval(OpeningHoursConverter::Interval.new(day + 1, 0, interval.day_end, interval.end, interval.is_off))
                 end
               end
               remove_interval(i)
@@ -184,8 +209,9 @@ module OpeningHoursConverter
 
     def copy_intervals(intervals)
       @intervals = []
+
       intervals.each do |interval|
-        unless interval.nil?
+        if !interval.nil? && !interval.is_off
           @intervals << interval.dup
         end
       end

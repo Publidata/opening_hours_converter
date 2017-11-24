@@ -16,8 +16,12 @@ module OpeningHoursConverter
         if !interval.nil?
           start_minute = nil
           end_minute = nil
+          off = interval.is_off
 
-          if interval.day_start == interval.day_end || interval.day_end == DAYS_MAX && interval.end == MINUTES_MAX
+          if off
+            start_minute = 0
+            end_minute = MINUTES_MAX
+          elsif interval.day_start == interval.day_end || interval.day_end == DAYS_MAX && interval.end == MINUTES_MAX
             start_minute = interval.start
             end_minute = interval.end
           elsif interval.day_end == interval.day_start + 1 && interval.end == 0
@@ -27,7 +31,7 @@ module OpeningHoursConverter
 
           unless start_minute.nil? && end_minute.nil?
             for minute in start_minute..end_minute
-              minute_array[minute] = true
+              minute_array[minute] = off ? "off" : true
             end
           else
             raise "Invalid interval #{interval.inspect}"
@@ -44,18 +48,23 @@ module OpeningHoursConverter
         intervals = []
         minute_start = -1
         minute_end = nil
+        off = false
+
         minute_array.each_with_index do |minute, i|
           if i == 0 && minute
+            off = true if minute == "off"
             minute_start = i
           elsif i == minute_array.length - 1 && minute
-            intervals << OpeningHoursConverter::Interval.new(0, minute_start, 0, i - 1)
+            intervals << OpeningHoursConverter::Interval.new(0, minute_start, 0, i - 1, off)
             minute_start = -1
+            off = false
           else
             if minute && minute_start < 0
               minute_start = i
             elsif !minute && minute_start >= 0
-              intervals << OpeningHoursConverter::Interval.new(0, minute_start, 0, i - 1)
+              intervals << OpeningHoursConverter::Interval.new(0, minute_start, 0, i - 1, off)
               minute_start = -1
+              off = false
             end
           end
         end
@@ -85,7 +94,7 @@ module OpeningHoursConverter
     def copy_intervals(intervals)
       @intervals = []
       intervals.each do |interval|
-        if !interval.nil? && interval.day_start == 0 && interval.day_end == 0
+        if !interval.nil? && !interval.is_off && interval.day_start == 0 && interval.day_end == 0
           @intervals << interval.dup
         end
       end

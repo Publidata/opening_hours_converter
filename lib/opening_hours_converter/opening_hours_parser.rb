@@ -1,10 +1,10 @@
 require 'opening_hours_converter/constants'
 require 'json'
-require 'pry-nav'
 
 module OpeningHoursConverter
   class OpeningHoursParser
     include Constants
+
     def initialize
       @RGX_RULE_MODIFIER = /^(open|closed|off)$/i
       @RGX_WEEK_KEY = /^week$/
@@ -32,7 +32,6 @@ module OpeningHoursConverter
       wide_range_selector = nil
       month_selector = nil
 
-      times = nil
       weekdays = nil
       months = nil
       years = nil
@@ -43,31 +42,28 @@ module OpeningHoursConverter
       res_dr_id = nil
 
       blocks.each do |block|
-        rule_modifier = nil
         block.strip!
         next if block.length == 0
 
         tokens = tokenize(block)
+        @current_token = tokens.length - 1
 
-        current_token = tokens.length - 1
+        weekdays = {}
 
         # get comment
-        if current_token >= 0 && is_comment?(tokens[current_token])
-          comment = tokens[current_token]
-          current_token -= 1
+        if @current_token >= 0 && is_comment?(tokens[@current_token])
+          comment = tokens[@current_token]
+          @current_token -= 1
         end
 
 
-        # get state
-        times = []
-        rule_modifier = []
-        weekdays = {}
-        while current_token >= 0 && (is_rule_modifier?(tokens[current_token]) || is_time?(tokens[current_token]))
-          if is_rule_modifier?(tokens[current_token])
-            local_modifier = tokens[current_token].downcase
-            current_token -= 1
+        # get state and time associated with weekdays
+        while @current_token >= 0 && (is_rule_modifier?(tokens[@current_token]) || is_time?(tokens[@current_token]))
+          if is_rule_modifier?(tokens[@current_token])
+            local_modifier = tokens[@current_token].downcase
+            @current_token -= 1
             begin
-              weekday_selector = tokens[current_token]
+              weekday_selector = tokens[@current_token]
               weekdays_and_holidays = get_weekdays(weekday_selector)
             rescue
               weekdays[[{from: 0, to: 6}]] ||= {}
@@ -77,14 +73,17 @@ module OpeningHoursConverter
               weekdays[weekdays_and_holidays] ||= {}
               weekdays[weekdays_and_holidays][:modifiers] ||= []
               weekdays[weekdays_and_holidays][:modifiers] << local_modifier
-              current_token -= 1
+              @current_token -= 1
             end
           else
-            time_selector = tokens[current_token]
-            local_times = get_times(time_selector)
-            current_token -= 1
+            local_times = []
+            while @current_token >= 0 && is_time?(tokens[@current_token])
+              time_selector = tokens[@current_token]
+              local_times.concat get_times(time_selector)
+              @current_token -= 1
+            end
             begin
-              weekday_selector = tokens[current_token]
+              weekday_selector = tokens[@current_token]
               weekdays_and_holidays = get_weekdays(weekday_selector)
             rescue
               weekdays[[{from: 0, to: 6}]] ||= {}
@@ -94,30 +93,17 @@ module OpeningHoursConverter
               weekdays[weekdays_and_holidays] ||= {}
               weekdays[weekdays_and_holidays][:times] ||= []
               weekdays[weekdays_and_holidays][:times].concat(local_times)
-              current_token -= 1
+              @current_token -= 1
             end
           end
         end
 
-        # get weekdays selector
-        # weekdays = []
-
-        # if time_selector == "24/7"
-        #   weekdays << {from: 0, to: 6}
-        # elsif current_token >= 0 && is_weekday?(tokens[current_token]) && (@RGX_YEAR_PH =~ "#{tokens[current_token-1]} #{tokens[current_token]}").nil?
-        #   weekday_selector = tokens[current_token]
-        #   weekdays_and_holidays = get_weekdays(weekday_selector)
-        #   weekdays = weekdays_and_holidays[:weekdays]
-        #   holidays = weekdays_and_holidays[:holidays]
-        #   current_token -= 1
-        # end
-
         months = []
         years = []
         holidays = []
-        if current_token >= 0
+        if @current_token >= 0
           wide_range_selector = tokens[0]
-          for i in 1..current_token
+          for i in 1..@current_token
             wide_range_selector += " #{tokens[i]}"
           end
           if wide_range_selector.length > 0
@@ -130,8 +116,6 @@ module OpeningHoursConverter
                 years << get_year_month(wrs)
               elsif !(@RGX_MONTHDAY =~ wrs).nil?
                 months << get_month_day(wrs)
-              elsif !(@RGX_YEAR_PH =~ wrs).nil?
-                holidays << get_year_holiday(wrs)
               elsif !(@RGX_MONTH =~ wrs).nil?
                 months << get_month(wrs)
               elsif !(@RGX_YEAR =~ wrs).nil?
@@ -143,16 +127,14 @@ module OpeningHoursConverter
           end
         end
 
-
-        if current_token == tokens.length - 1
+        if @current_token == tokens.length - 1
           raise ArgumentError, "Unreadable string"
         end
-        # puts "months : #{months}"
+
         # puts "weekdays : #{weekdays}"
-        # puts "times : #{times}"
+        # puts "months : #{months}"
         # puts "years : #{years}"
-        # puts "rule_modifier : #{rule_modifier}"
-        binding.pry
+
         date_ranges = []
         if months.length > 0
           months.each do |month|
@@ -171,14 +153,6 @@ module OpeningHoursConverter
                 date_range = OpeningHoursConverter::WideInterval.new.month(month[:from])
               end
               date_ranges << date_range
-            end
-          end
-        elsif holidays.length > 0 && weekdays.length == 0
-          holidays.each do |holiday|
-            if holiday == "PH"
-              date_ranges << WideInterval.new.holiday(holiday)
-            elsif holiday[:holiday] == "PH"
-              date_ranges << WideInterval.new.holiday(holiday[:holiday], holiday[:start], holiday[:end])
             end
           end
         elsif years.length > 0
@@ -210,15 +184,14 @@ module OpeningHoursConverter
           date_ranges << OpeningHoursConverter::WideInterval.new.always
         end
 
-
         if weekdays.length == 0
+          weekdays[[{from: 0, to: 6}]] = {}
           weekdays[[{from: 0, to: 6}]][:times] = [{from: 0, to: 24*60}]
         end
 
         date_ranges.each do |dr|
           found_date_range = false
           res_dr_id = 0
-
           while res_dr_id < result.length && !found_date_range
             if result[res_dr_id].wide_interval.equals(dr) && result[res_dr_id].comment == comment
               found_date_range = true
@@ -247,51 +220,49 @@ module OpeningHoursConverter
             result << dr_obj
           end
 
-          # todo
-          # for rule_modifer_index in  0...rule_modifier.length
-          #   if rule_modifier[rule_modifer_index]
-          # end
+          weekdays.each do |weekday_ranges, weekday_object|
+            weekday_ranges.each do |weekday_range|
+              if weekday_range[:from] <= weekday_range[:to]
+                for wd_rm in weekday_range[:from]..weekday_range[:to]
+                  if dr_obj.defines_typical_week?
+                    dr_obj.typical.remove_intervals_during_day(wd_rm)
+                  else
+                    dr_obj.typical.clear_intervals
+                  end
+                end
+              else
+                for wd_rm in weekday_range[:from]..6
+                  if dr_obj.defines_typical_week?
+                    dr_obj.typical.remove_intervals_during_day(wd_rm)
+                  else
+                    dr_obj.typical.clear_intervals
+                  end
+                end
+                for wd_rm in 0..weekday_range[:to]
+                  if dr_obj.defines_typical_week?
+                    dr_obj.typical.remove_intervals_during_day(wd_rm)
+                  else
+                    dr_obj.typical.clear_intervals
+                  end
+                end
+              end
 
-          # for times_index in 0...times.length
+              if weekday_object[:modifiers]
+                weekday_object[:modifiers].each do |modifier|
+                  if modifier == "closed" || modifier == "off"
+                    remove_interval(dr_obj, weekday_range)
+                    add_off_interval(dr_obj, weekday_range)
+                  end
+                end
+              end
 
-          # end
-
-          # for wd_id in 0...weekdays.length
-          #   if weekdays[wd_id][:from] <= weekdays[wd_id][:to]
-          #     for wd_rm in weekdays[wd_id][:from]..weekdays[wd_id][:to]
-          #       if dr_obj.defines_typical_week?
-          #         dr_obj.typical.remove_intervals_during_day(wd_rm)
-          #       else
-          #         dr_obj.typical.clear_intervals
-          #       end
-          #     end
-          #   else
-          #     for wd_rm in weekdays[wd_id][:from]..6
-          #       if dr_obj.defines_typical_week?
-          #         dr_obj.typical.remove_intervals_during_day(wd_rm)
-          #       else
-          #         dr_obj.typical.clear_intervals
-          #       end
-          #     end
-          #     for wd_rm in 0..weekdays[wd_id][:to]
-          #       if dr_obj.defines_typical_week?
-          #         dr_obj.typical.remove_intervals_during_day(wd_rm)
-          #       else
-          #         dr_obj.typical.clear_intervals
-          #       end
-          #     end
-          #   end
-
-
-
-          #   for t_id in 0...times.length
-          #     if rule_modifier == "closed" || rule_modifier == "off"
-          #       remove_interval(dr_obj, weekdays[wd_id], times[t_id])
-          #     else
-          #       add_interval(dr_obj.typical, weekdays[wd_id], times[t_id])
-          #     end
-          #   end
-          # end
+              if weekday_object[:times]
+                weekday_object[:times].each do |time_range|
+                  add_interval(dr_obj.typical, weekday_range, time_range)
+                end
+              end
+            end
+          end
         end
       end
 
@@ -506,7 +477,7 @@ module OpeningHoursConverter
       weekdays
     end
 
-    def remove_interval(date_range, weekdays, times)
+    def remove_interval(date_range, weekdays)
       if date_range.typical.instance_of?(OpeningHoursConverter::Day)
         date_range.typical.clear_intervals
       else
@@ -561,6 +532,33 @@ module OpeningHoursConverter
         end
         for wd in 0..weekdays[:to]
           add_interval_wd(typical, times, wd)
+        end
+      end
+    end
+
+    def add_off_interval(date_range, weekdays)
+      if date_range.typical.instance_of?(OpeningHoursConverter::Day)
+        if weekdays[:from] != 0
+          weekdays = weekdays.dup
+          weekdays[:from] = 0
+          if times[:from] <= times[:to]
+            weekdays[:to] = 0
+          else
+            weekdays[:to] = 1
+          end
+        end
+      end
+
+      if weekdays[:from] <= weekdays[:to]
+        for wd in weekdays[:from]..weekdays[:to]
+          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24*60, true))
+        end
+      else
+        for wd in weekdays[:from]..6
+          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24*60, true))
+        end
+        for wd in 0..weekdays[:to]
+          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24*60, true))
         end
       end
     end
