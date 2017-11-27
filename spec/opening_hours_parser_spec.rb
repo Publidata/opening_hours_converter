@@ -1,11 +1,14 @@
 require 'opening_hours_converter'
 
 RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
-  it "merge weekdays token" do
-    expect(OpeningHoursConverter::OpeningHoursParser.new.merge_weekdays_tokens(["2017", "Jan", "01", "Mo", "Tu", "Sa-Su"])).to eql(["2017", "Jan", "01", "Mo,Tu,Sa-Su"])
+  it "merge tokens" do
+    expect(OpeningHoursConverter::OpeningHoursParser.new.merge_groups([["2017", "Jan", "01", "Mo", "Tu", "Sa-Su"]])).to eql(["2017 Jan 01", "Mo,Tu,Sa-Su"])
   end
   it "off" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('off'))).to eql('off')
+  end
+  it "2000 Jan 01,2001 Jan 01 13:30-17:35" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2000 Jan 01,2001 Jan 01 13:30-17:35'))).to eql('2000 Jan 01,2001 Jan 01 13:30-17:35')
   end
   it "PH,Su off" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('PH,Su 10:00-11:00'))).to eql('PH,Su 10:00-11:00')

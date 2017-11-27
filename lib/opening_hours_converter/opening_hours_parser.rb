@@ -15,6 +15,7 @@ module OpeningHoursConverter
       @RGX_WEEKDAY = /^(((Mo|Tu|We|Th|Fr|Sa|Su)(\-(Mo|Tu|We|Th|Fr|Sa|Su))?)|(PH))(,(((Mo|Tu|We|Th|Fr|Sa|Su)(\-(Mo|Tu|We|Th|Fr|Sa|Su))?)|(PH)))*$/
       @RGX_HOLIDAY = /^(PH|SH|easter)$/
       @RGX_WD = /^(Mo|Tu|We|Th|Fr|Sa|Su)(\-(Mo|Tu|We|Th|Fr|Sa|Su))?$/
+      @RGX_DAY = /^([012]?[0-9]|3[01])(\-[012]?[0-9]|3[01])?$/
       @RGX_YEAR = /^(\d{4})(\-(\d{4}))?$/
       @RGX_YEAR_PH = /^(\d{4})( PH|(\-(\d{4}) PH))\:?$/
       @RGX_YEAR_MONTH_DAY = /^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([012]?[0-9]|3[01])(\-((\d{4}) )?((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) )?([012]?[0-9]|3[01]))?\:?$/
@@ -579,37 +580,70 @@ module OpeningHoursConverter
     def tokenize(block)
       if block.split('"').length > 1
         comment = block.split('"')[1]
-        tokens = block.split('"')[0].split(/\s|,/)
-        tokens << "\"#{comment}\""
-        merge_weekdays_tokens(tokens)
+
+        groups = block.split('"')[0].split(',').map { |s| s.split(' ') }
+        groups[-1] << "\"#{comment}\""
+
+        merge_groups(groups)
       else
-        merge_weekdays_tokens(block.split(/\s|,/))
+        merge_groups(block.split(',').map { |s| s.split(' ') })
       end
     end
 
-    def merge_weekdays_tokens(tokens)
+    def merge_groups(groups)
       new_tokens = []
-      to_merge = []
-      tokens.each_with_index do |token, index|
-        if is_weekday?(token)
-          to_merge << token
-          if index == tokens.length - 1
-            new_tokens << to_merge.join(',')
+      weekday_merge = []
+      wide_interval_merge = []
+      merged_wide_interval = []
+      groups.each_with_index do |group, group_index|
+        if !wide_interval_merge.empty?
+          merged_wide_interval += [wide_interval_merge.join(' ')]
+          wide_interval_merge = []
+        end
+        group.each_with_index do |token, token_index|
+          if !wide_interval_merge.empty? && !is_part_of_wide_interval?(token)
+            merged_wide_interval += [wide_interval_merge.join(' ')]
+            wide_interval_merge = []
+            new_tokens << merged_wide_interval.join(',')
           end
-        elsif !to_merge.empty?
-          new_tokens << to_merge.join(',')
-          new_tokens << token
-          to_merge = []
-        else
-          new_tokens << token
+          if is_weekday?(token)
+            weekday_merge << token
+            if token_index == group.length - 1 && group_index == groups.length - 1
+              new_tokens << weekday_merge.join(',')
+            end
+          elsif !weekday_merge.empty?
+            new_tokens << weekday_merge.join(',')
+            new_tokens << token
+            weekday_merge = []
+          elsif is_part_of_wide_interval?(token)
+            wide_interval_merge << token
+            if token_index == group.length - 1 && group_index == groups.length - 1
+              new_tokens << wide_interval_merge.join(',')
+            end
+          else
+            new_tokens << token
+          end
         end
       end
+
       new_tokens
     end
 
     def as_minutes(time)
       values = time.split(':')
       values[0].to_i * 60 + values[1].to_i
+    end
+
+    def is_part_of_wide_interval?(string)
+      is_wide_interval = false
+      string.split('-').each do |str|
+        if ((!(@RGX_YEAR =~ str).nil? || !(@RGX_YEAR_MONTH =~ str).nil? || !(@RGX_YEAR_MONTH_DAY =~ str).nil? || !(@RGX_DAY =~ str).nil? || !(@RGX_MONTHDAY =~ str).nil? || !(@RGX_MONTH =~ str).nil?) && ((@RGX_TIME =~ str).nil? && (@RGX_WEEKDAY =~ str).nil?))
+          is_wide_interval = true
+        else
+          return false
+        end
+      end
+      is_wide_interval
     end
 
     def is_comment?(token)
