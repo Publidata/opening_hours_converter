@@ -79,7 +79,7 @@ module OpeningHoursConverter
               year_ph = PublicHoliday.ph_for_year(year)
             end
             date_ranges[index].typical.intervals.each do |i|
-              if !i.nil?
+              if !i.nil? && !i.is_off
                 if (i.day_start..i.day_end).include?(fix_datetime_wday(day.wday)) || (is_ph && year_ph.include?(Time.new(day.year, day.month, day.day)))
                   itr = { start: Time.new(day.year, day.month, day.day, i.start/60, i.start%60),
                     end: Time.new(day.year, day.month, day.day, i.end/60, i.end%60) }
@@ -114,6 +114,7 @@ module OpeningHoursConverter
 
       datetime_result.sort {|a,b| a[:start] <=> b[:start]}
     end
+
 
 
     def fix_datetime_wday(d)
