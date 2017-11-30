@@ -122,18 +122,43 @@ module OpeningHoursConverter
               years["always"][wide_interval.start[:month]-1][day] = true
             end
           elsif wide_interval.start[:month] != wide_interval.end[:month]
-            for month in wide_interval.start[:month]-1..wide_interval.end[:month]-1
-              if month == wide_interval.start[:month]-1
-                for day in wide_interval.start[:day]-1...MONTH_END_DAY[month]
-                  years["always"][month][day] = true
+            if wide_interval.end[:month] < wide_interval.start[:month]
+              for month in wide_interval.start[:month]-1..11
+                if month == wide_interval.start[:month]-1
+                  for day in wide_interval.start[:day]-1...MONTH_END_DAY[month]
+                    years["always"][month][day] = true
+                  end
+                else
+                  for day in 0...MONTH_END_DAY[month]
+                    years["always"][month][day] = true
+                  end
                 end
-              elsif month == wide_interval.end[:month]-1
-                for day in 0..wide_interval.end[:day]-1
-                  years["always"][month][day] = true
+              end
+              for month in 0..wide_interval.end[:month]-1
+                if month == wide_interval.end[:month]-1
+                  for day in 0..wide_interval.end[:day]-1
+                    years["always"][month][day] = true
+                  end
+                else
+                  for day in 0...MONTH_END_DAY[month]
+                    years["always"][month][day] = true
+                  end
                 end
-              else
-                for day in 0...MONTH_END_DAY[month]
-                  years["always"][month][day] = true
+              end
+            else
+              for month in wide_interval.start[:month]-1..wide_interval.end[:month]-1
+                if month == wide_interval.start[:month]-1
+                  for day in wide_interval.start[:day]-1...MONTH_END_DAY[month]
+                    years["always"][month][day] = true
+                  end
+                elsif month == wide_interval.end[:month]-1
+                  for day in 0..wide_interval.end[:day]-1
+                    years["always"][month][day] = true
+                  end
+                else
+                  for day in 0...MONTH_END_DAY[month]
+                    years["always"][month][day] = true
+                  end
                 end
               end
             end

@@ -14,6 +14,7 @@ module OpeningHoursConverter
 
     def get
       result = ""
+
       if @date.length > 0
         result += get_wide_selector
       end

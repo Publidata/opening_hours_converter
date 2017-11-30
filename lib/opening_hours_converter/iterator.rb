@@ -37,7 +37,7 @@ module OpeningHoursConverter
                   if month == 0
                     end_res = DateTime.new(year-1, 12, 31)
                   else
-                    end_res = DateTime.new(year, month, MONTH_END_DAY[month])
+                    end_res = DateTime.new(year, month, MONTH_END_DAY[month-1])
                   end
                 else
 
