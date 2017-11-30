@@ -67,7 +67,7 @@ module OpeningHoursConverter
     end
 
     def self.process_always_holiday(wide_interval, years)
-      for year in (DateTime.now.year - 1)..(DateTime.now.year + 5)
+      for year in (DateTime.now.year)..(DateTime.now.year + 1)
         years[year] ||= Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
         PublicHoliday.ph_for_year(year).each do |ht|
           years[year][ht.month-1][ht.day-1] = true
@@ -177,7 +177,7 @@ module OpeningHoursConverter
           end
         end
       else
-        for year in (DateTime.now.year - 1)..(DateTime.now.year + 5)
+        for year in (DateTime.now.year)..(DateTime.now.year + 1)
           if wide_interval.start.nil?
             years[year] = Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { true } }
           elsif !wide_interval.start[:day].nil?
