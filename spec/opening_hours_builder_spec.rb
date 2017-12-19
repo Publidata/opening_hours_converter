@@ -436,6 +436,45 @@ RSpec.describe OpeningHoursConverter::OpeningHoursBuilder, '#build' do
 
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Mo-We 00:00-01:00,18:00-24:00; Th 00:00-01:00,10:00-20:00; Fr 18:00-24:00; Sa,Su 00:00-04:00,18:00-24:00")
   end
+  it "two years dr" do
+    dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(15, 12, 2017, 15, 1, 2018)) ]
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 10*60, 0, 19*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 10*60, 1, 19*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(2, 10*60, 2, 19*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(3, 10*60, 3, 19*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(4, 10*60, 4, 19*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(5, 10*60, 5, 19*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(6, 10*60, 6, 19*60))
+
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("2017 Dec 15-2018 Jan 15 10:00-19:00")
+  end
+  it "two years dr" do
+    dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(15, 12, 2017, 15, 1, 2018)) ]
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 10*60, 0, 19*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(2, 10*60, 2, 19*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(3, 10*60, 3, 19*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(4, 10*60, 4, 19*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(5, 10*60, 5, 19*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(6, 10*60, 6, 19*60))
+
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("2017 Dec 15-2018 Jan 15 We-Mo 10:00-19:00")
+  end
+  it "two years dr over night su-mo" do
+    dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(15, 12, 2017, 15, 1, 2018)) ]
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 10*60, 1, 3*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(6, 10*60, 0, 3*60))
+
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("2017 Dec 15-2018 Jan 15 00:00-03:00,10:00-24:00")
+  end
+  it "two years dr over night Tu-Fr" do
+    dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(15, 12, 2017, 15, 1, 2018)) ]
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 10*60, 2, 3*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(2, 10*60, 3, 3*60))
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(3, 10*60, 4, 3*60))
+    # dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(4, 10*60, 0, 3*60))
+
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("2017 Dec 15-2018 Jan 15 Tu 10:00-24:00; 2017 Dec 15-2018 Jan 15 We,Th 00:00-03:00,10:00-24:00; 2017 Dec 15-2018 Jan 15 Fr 00:00-03:00")
+  end
 end
 
 

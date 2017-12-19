@@ -163,6 +163,17 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#day" do
       expect(@november_28_to_december_3_2017.contains?(@basic_month)).to be false
       expect(@november_28_to_december_3_2017.contains?(@basic_always)).to be false
     end
+
+    it "touches some days" do
+      expect(@november_28_to_december_3_2017.touch?(@november_28_to_december_3_2017)).to be true
+      expect(@november_28_to_december_3_2017.touch?(@november_29_to_december_3_2017)).to be true
+      expect(@november_28_to_december_3_2017.touch?(@november_28_to_december_2_2017)).to be true
+      expect(@november_28_to_december_3_2017.touch?(@november_28_2017)).to be true
+      expect(@november_28_to_december_3_2017.touch?(@november_27_to_november_29_2017)).to be true
+      expect(@november_28_to_december_3_2017.touch?(@basic)).to be false
+      expect(@november_28_to_december_3_2017.touch?(@basic_month)).to be false
+      expect(@november_28_to_december_3_2017.touch?(@basic_always)).to be true
+    end
   end
 end
 
@@ -294,6 +305,17 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#month" do
       expect(@november_2017.contains?(@basic_always)).to be false
       expect(@november_2017.contains?(@year_2017)).to be false
     end
+
+    it "touches some days" do
+      expect(@november_2017.touch?(@november_28_2017)).to be true
+      expect(@november_2017.touch?(@november_28_to_november_29_2017)).to be true
+      expect(@november_2017.touch?(@october_25_to_november_15_2017)).to be true
+      expect(@november_2017.touch?(@november_15_to_december_25_2017)).to be true
+      expect(@november_2017.touch?(@november_2017)).to be true
+      expect(@november_2017.touch?(@november_to_december_2017)).to be true
+      expect(@november_2017.touch?(@basic_always)).to be true
+      expect(@november_2017.touch?(@year_2017)).to be true
+    end
   end
   context "several months" do
     it "get time selector" do
@@ -313,6 +335,23 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#month" do
       expect(@october_to_november_2017.contains?(@november_to_december_2017)).to be false
       expect(@october_to_november_2017.contains?(@year_2017)).to be false
       expect(@october_to_november_2017.contains?(@basic_always)).to be false
+    end
+    it "touch some days and months" do
+      expect(@october_to_november_2017.touch?(@october_to_november_2017_in_day)).to be true
+      expect(@october_to_november_2017.touch?(@november_28_2017)).to be true
+      expect(@october_to_november_2017.touch?(@january_2017)).to be false
+      expect(@october_to_november_2017.touch?(@january_to_february_2017)).to be false
+      expect(@october_to_november_2017.touch?(@october_1_to_november_29_2017)).to be true
+      expect(@october_to_november_2017.touch?(@october_10_to_december_25_2017)).to be true
+      expect(@october_to_november_2017.touch?(@september_10_to_november_10_2017)).to be true
+      expect(@october_to_november_2017.touch?(@october_2017)).to be true
+      expect(@october_to_november_2017.touch?(@november_2017)).to be true
+      expect(@october_to_november_2017.touch?(@october_to_december_2017)).to be true
+      expect(@october_to_november_2017.touch?(@october_to_november_2017)).to be true
+      expect(@october_to_november_2017.touch?(@september_to_october_2017)).to be true
+      expect(@october_to_november_2017.touch?(@november_to_december_2017)).to be true
+      expect(@october_to_november_2017.touch?(@year_2017)).to be true
+      expect(@october_to_november_2017.touch?(@basic_always)).to be true
     end
   end
 end

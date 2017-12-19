@@ -233,6 +233,179 @@ module OpeningHoursConverter
       return result
     end
 
+    def touch?(o)
+      return true if contains?(o)
+      return true if o.type == "always" || @type == "always"
+      result = false
+      if self.equals(o)
+        result = true
+      else
+        my = to_day
+        o = o.to_day
+
+        result = ((my_start_is_before_o_end?(my, o) && my_start_is_after_o_start?(my, o)) ||
+          (my_end_is_before_o_end?(my, o) && my_end_is_after_o_start?(my, o))) ||
+          ((my_start_is_before_o_end?(o, my) && my_start_is_after_o_start?(o, my)) ||
+            (my_end_is_before_o_end?(o, my) && my_end_is_after_o_start?(o, my)))
+      end
+      return result
+    end
+
+    def my_start_is_after_o_start?(my, o)
+      result = false
+      if has_start_year?(o) && has_start_year?(my)
+        result = o.start[:year] < my.start[:year] || (o.start[:year] == my.start[:year] &&
+          my_start_day_is_after_o_start_day?(my, o))
+      elsif !has_start_year?(o) && !has_start_year?(my)
+        result = my_start_day_is_after_o_start_day?(my, o)
+      end
+      result
+    end
+
+    def my_start_is_before_o_start?(my, o)
+      result = false
+      if has_start_year?(o) && has_start_year?(my)
+        result = o.start[:year] > my.start[:year] || (o.start[:year] == my.start[:year] &&
+          my_start_day_is_before_o_start_day?(my, o))
+      elsif !has_start_year?(o) && !has_start_year?(my)
+        result = my_start_day_is_before_o_start_day?(my, o)
+      end
+      result
+    end
+
+    def my_end_is_before_o_end?(my, o)
+      result = false
+      if !my.end.nil? && !o.end.nil?
+        if has_end_year?(o) && has_end_year?(my)
+          result = o.end[:year] > my.end[:year] || (o.end[:year] == my.end[:year] &&
+            my_end_day_is_before_o_end_day?(my, o))
+        elsif !has_end_year?(o) && !has_end_year?(my)
+          result = my_end_day_is_before_o_end_day?(my, o)
+        end
+      else
+        my_start_is_before_o_start?(my, o)
+      end
+      result
+    end
+
+    def my_start_is_before_o_end?(my, o)
+      result = false
+      if has_start_year?(o) && has_start_year?(my)
+        if o.end
+          result = o.end[:year] > my.start[:year] || (o.end[:year] == my.start[:year] &&
+            my_start_day_is_before_o_end_day?(my, o))
+        else
+          result = o.start[:year] > my.start[:year] || (o.start[:year] == my.start[:year] &&
+            my_start_day_is_before_o_end_day?(my, o))
+        end
+      elsif !has_start_year?(o) && !has_start_year?(my)
+        result = my_start_day_is_before_o_end_day?(my, o)
+      end
+      result
+    end
+
+    def my_end_is_after_o_start?(my, o)
+      result = false
+      if has_start_year?(o) && has_start_year?(my)
+        if my.end
+          result = o.start[:year] < my.end[:year] || (o.start[:year] == my.end[:year] &&
+            my_end_day_is_after_o_start_day?(my, o))
+        else
+          result = o.start[:year] < my.start[:year] || (o.start[:year] == my.start[:year] &&
+            my_end_day_is_after_o_start_day?(my, o))
+        end
+      elsif !has_start_year?(o) && !has_start_year?(my)
+        result = my_end_day_is_after_o_start_day?(my, o)
+      end
+      result
+    end
+
+    def my_start_day_is_after_o_start_day?(my, o)
+      (o.start[:month] < my.start[:month] ||
+        (o.start[:month] == my.start[:month] &&
+          o.start[:day] <= my.start[:day]))
+    end
+
+    def my_start_day_is_before_o_start_day?(my, o)
+      (o.start[:month] > my.start[:month] ||
+        (o.start[:month] == my.start[:month] &&
+          o.start[:day] >= my.start[:day]))
+    end
+
+    def my_start_day_is_before_o_end_day?(my, o)
+      if !o.end.nil?
+        (o.end[:month] > my.start[:month] ||
+          (o.end[:month] == my.start[:month] &&
+            o.end[:day] >= my.start[:day]))
+      else
+        (o.start[:month] > my.start[:month] ||
+          (o.start[:month] == my.start[:month] &&
+            o.start[:day] >= my.start[:day]))
+      end
+    end
+
+    def my_start_day_is_after_o_end_day?(my, o)
+      if !o.end.nil?
+        (o.end[:month] < my.start[:month] ||
+          (o.end[:month] == my.start[:month] &&
+            o.end[:day] <= my.start[:day]))
+      else
+        (o.start[:month] < my.start[:month] ||
+          (o.start[:month] == my.start[:month] &&
+            o.start[:day] <= my.start[:day]))
+      end
+    end
+
+    def my_end_day_is_before_o_end_day?(my, o)
+      if !o.end.nil? && !my.end.nil?
+        (o.end[:month] > my.end[:month] ||
+          (o.end[:month] == my.end[:month] &&
+            o.end[:day] >= my.end[:day]))
+      elsif o.end && my.end
+        (o.start[:month] > my.start[:month] ||
+          (o.start[:month] == my.start[:month] &&
+            o.start[:day] >= my.start[:day]))
+      elsif o.end
+        (o.end[:month] > my.start[:month] ||
+          (o.end[:month] == my.start[:month] &&
+            o.end[:day] >= my.start[:day]))
+      else
+        (o.start[:month] > my.end[:month] ||
+          (o.start[:month] == my.end[:month] &&
+            o.start[:day] >= my.end[:day]))
+      end
+    end
+
+    def my_end_day_is_after_o_start_day?(my, o)
+      if !o.end.nil?
+        (o.start[:month] < my.end[:month] ||
+          (o.start[:month] == my.end[:month] &&
+            o.start[:day] <= my.end[:day]))
+      else
+        (o.start[:month] < my.start[:month] ||
+          (o.start[:month] == my.start[:month] &&
+            o.start[:day] <= my.start[:day]))
+      end
+    end
+
+    def my_end_day_is_before_o_start_day?(my, o)
+      if !o.end.nil?
+        (o.start[:month] < my.end[:month] ||
+          (o.start[:month] == my.end[:month] &&
+            o.start[:day] <= my.end[:day]))
+      else
+        (o.start[:month] < my.start[:month] ||
+          (o.start[:month] == my.start[:month] &&
+            o.start[:day] <= my.start[:day]))
+      end
+    end
+
+    def has_superior_start_month?(my, o)
+      (o.start[:month] > my.start[:month] ||
+        (o.start[:month] == my.start[:month] &&
+          o.start[:day] >= my.start[:day]))
+    end
+
     def has_superior_or_equal_start_day?(my, o)
       result = false
       if has_start_year?(o) && has_start_year?(my)
@@ -241,12 +414,6 @@ module OpeningHoursConverter
         result = has_superior_start_month?(my, o)
       end
       result
-    end
-
-    def has_superior_start_month?(my, o)
-      (o.start[:month] > my.start[:month] ||
-        (o.start[:month] == my.start[:month] &&
-          o.start[:day] >= my.start[:day]))
     end
 
     def has_inferior_or_equal_end_day?(my, o)
