@@ -1,5 +1,6 @@
 require 'opening_hours_converter/constants'
 require 'json'
+require 'pry-byebug'
 
 module OpeningHoursConverter
   class OpeningHoursParser
@@ -211,7 +212,7 @@ module OpeningHoursConverter
 
             general = -1
             for res_dr_id in 0...result.length
-              if result[res_dr_id].is_general_for?(OpeningHoursConverter::DateRange.new(dr))
+              if result[res_dr_id].is_general_for?(dr_obj)
                 general = res_dr_id
               end
             end
