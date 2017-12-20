@@ -377,7 +377,7 @@ module OpeningHoursConverter
     end
 
     def my_end_day_is_after_o_start_day?(my, o)
-      if !o.end.nil?
+      if !my.end.nil?
         (o.start[:month] < my.end[:month] ||
           (o.start[:month] == my.end[:month] &&
             o.start[:day] <= my.end[:day]))
@@ -389,7 +389,7 @@ module OpeningHoursConverter
     end
 
     def my_end_day_is_before_o_start_day?(my, o)
-      if !o.end.nil?
+      if !my.end.nil?
         (o.start[:month] < my.end[:month] ||
           (o.start[:month] == my.end[:month] &&
             o.start[:day] <= my.end[:day]))
@@ -410,7 +410,7 @@ module OpeningHoursConverter
       result = false
       if has_start_year?(o) && has_start_year?(my)
         result = o.start[:year] > my.start[:year] || (o.start[:year] == my.start[:year] && has_superior_start_month?(my, o))
-      elsif !has_start_year?(o) && !has_start_year?(my)
+      elsif !has_start_year?(my)
         result = has_superior_start_month?(my, o)
       end
       result
@@ -422,13 +422,13 @@ module OpeningHoursConverter
       if !o.end.nil?
         if has_end_year?(o) && has_end_year?(my)
           result = o.end[:year] < my.end[:year] || (o.end[:year] == my.end[:year] && has_inferior_end_month?(my, o))
-        elsif !has_end_year?(o) && !has_end_year?(my)
+        elsif !has_end_year?(my)
           result = has_inferior_end_month?(my, o)
         end
       else
         if has_start_year?(o) && has_end_year?(my)
           result = o.start[:year] < my.end[:year] || (o.start[:year] == my.end[:year] && has_inferior_end_month?(my, o))
-        elsif !has_start_year?(o) && !has_end_year?(my)
+        elsif !has_end_year?(my)
           result = has_inferior_end_month?(my, o)
         end
       end
