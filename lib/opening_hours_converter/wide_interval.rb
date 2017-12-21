@@ -473,6 +473,52 @@ module OpeningHoursConverter
             self_to_day.end[:month] == o_to_day.end[:month] &&
             self_to_day.end[:day] == o_to_day.end[:day])))
     end
+
+    def width
+      in_day = to_day
+      days_count = 0
+      if in_day.end
+        if in_day.start[:year]
+          if in_day.start[:year] != in_day.end[:year]
+            for year in in_day.start[:year]..in_day.end[:year]
+              if year == in_day.start[:year]
+                for month in in_day.start[:month]..12
+                  if month == in_day.start[:month]
+                    days_count += MONTH_END_DAY[month - 1] - in_day.start[:day]
+                  else
+                    days_count += MONTH_END_DAY[month - 1]
+                  end
+                end
+              elsif year == in_day.end[:year]
+                for month in 1..in_day.end[:month]
+                  if month == in_day.end[:month]
+                    days_count += in_day.end[:day]
+                  else
+                    days_count += MONTH_END_DAY[month - 1]
+                  end
+                end
+              else
+                for month in 1..12
+                  days_count += MONTH_END_DAY[month - 1]
+                end
+              end
+            end
+          else
+            for month in in_day.start[:month]..in_day.end[:month]
+              days_count += MONTH_END_DAY[month - 1]
+            end
+          end
+        else
+          for month in in_day.start[:month]..in_day.end[:month]
+            days_count += MONTH_END_DAY[month - 1]
+          end
+        end
+        return days_count
+      else
+        return 1
+      end
+    end
+
     def to_day
       case @type
       when "day"

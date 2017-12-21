@@ -1,6 +1,5 @@
 require 'opening_hours_converter/constants'
 require 'json'
-require 'pry-byebug'
 
 module OpeningHoursConverter
   class OpeningHoursParser
