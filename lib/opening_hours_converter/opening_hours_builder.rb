@@ -56,6 +56,7 @@ module OpeningHoursConverter
               oh_rules[i].add_comment(date_range.comment)
             end
 
+
             oh_rules.map do |oh_rule|
               oh_rule_added = false
               rule_index = 0
@@ -221,6 +222,9 @@ module OpeningHoursConverter
             result << day
           end
         end
+      end
+      if result == [] && days_status = [8, 8, 8, 8, 8, 8, 8]
+        result = days
       end
 
       result = merge_days(result)

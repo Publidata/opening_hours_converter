@@ -207,6 +207,8 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#month" do
     @september_10_to_november_10_2017 = OpeningHoursConverter::WideInterval.new.day(10, 9, 2017, 10, 11, 2017)
     @october_2017 = OpeningHoursConverter::WideInterval.new.month(10, 2017)
     @october = OpeningHoursConverter::WideInterval.new.month(10)
+    @october_15 = OpeningHoursConverter::WideInterval.new.day(15, 10)
+    @october_15_2017 = OpeningHoursConverter::WideInterval.new.day(15, 10, 2017)
 
     @october_to_december_2017 = OpeningHoursConverter::WideInterval.new.month(10, 2017, 12, 2017)
     @october_to_november_2017 = OpeningHoursConverter::WideInterval.new.month(10, 2017, 11, 2017)
@@ -298,6 +300,9 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#month" do
     it "contains some days" do
       expect(@november_2017.contains?(@november_28_2017)).to be true
       expect(@november_2017.contains?(@november_28_to_november_29_2017)).to be true
+
+      expect(@october.contains?(@october_15)).to be true
+      expect(@october.contains?(@october_15_2017)).to be true
       expect(@november_2017.contains?(@october_25_to_november_15_2017)).to be false
       expect(@november_2017.contains?(@november_15_to_december_25_2017)).to be false
       expect(@november_2017.contains?(@november_2017)).to be false

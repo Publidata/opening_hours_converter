@@ -475,6 +475,29 @@ RSpec.describe OpeningHoursConverter::OpeningHoursBuilder, '#build' do
 
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("2017 Dec 15-2018 Jan 15 Tu 10:00-24:00; 2017 Dec 15-2018 Jan 15 We,Th 00:00-03:00,10:00-24:00; 2017 Dec 15-2018 Jan 15 Fr 00:00-03:00")
   end
+  it "multiple years, same month" do
+    dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(15, 12, 2017, 18, 12, 2028)) ]
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 10*60, 1, 13*60))
+
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("2017 Dec 15-2028 Dec 18 Tu 10:00-13:00")
+  end
+  it "multiple years, same month, start month and end month" do
+    dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(1, 12, 2017, 31, 12, 2028)) ]
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 10*60, 1, 13*60))
+
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("2017 Dec 01-2028 Dec 31 Tu 10:00-13:00")
+  end
+  it "multiple years, same month, start month and end month feb" do
+    dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(1, 2, 2017, 28, 2, 2028)) ]
+    dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(1, 10*60, 1, 13*60))
+
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("2017 Feb 01-2028 Feb 28 Tu 10:00-13:00")
+  end
+  it "multiple years, same month, start month and end month feb off" do
+    dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(1, 2, 2017, 28, 2, 2028)) ]
+
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("2017 Feb 01-2028 Feb 28 off")
+  end
 end
 
 

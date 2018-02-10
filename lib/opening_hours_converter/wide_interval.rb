@@ -475,16 +475,17 @@ module OpeningHoursConverter
     end
 
     def width
+      return Float::INFINITY if @type == "always"
       in_day = to_day
       days_count = 0
       if in_day.end
-        if in_day.start[:year]
+        if in_day.start[:year] && in_day.end[:year]
           if in_day.start[:year] != in_day.end[:year]
             for year in in_day.start[:year]..in_day.end[:year]
               if year == in_day.start[:year]
                 for month in in_day.start[:month]..12
                   if month == in_day.start[:month]
-                    days_count += MONTH_END_DAY[month - 1] - in_day.start[:day]
+                    days_count += MONTH_END_DAY[month - 1] - in_day.start[:day] + 1
                   else
                     days_count += MONTH_END_DAY[month - 1]
                   end
@@ -504,13 +505,33 @@ module OpeningHoursConverter
               end
             end
           else
-            for month in in_day.start[:month]..in_day.end[:month]
-              days_count += MONTH_END_DAY[month - 1]
+            if in_day.start[:month] == in_day.end[:month]
+              days_count += in_day.end[:day] - in_day.start[:day] + 1
+            else
+              for month in in_day.start[:month]..in_day.end[:month]
+                if month == in_day.end[:month]
+                  days_count += in_day.end[:day]
+                elsif month == in_day.start[:month]
+                  days_count += MONTH_END_DAY[month - 1] - in_day.start[:day] + 1
+                else
+                  days_count += MONTH_END_DAY[month - 1]
+                end
+              end
             end
           end
         else
-          for month in in_day.start[:month]..in_day.end[:month]
-            days_count += MONTH_END_DAY[month - 1]
+          if in_day.start[:month] == in_day.end[:month]
+            days_count += in_day.end[:day] - in_day.start[:day] + 1
+          else
+            for month in in_day.start[:month]..in_day.end[:month]
+              if month == in_day.end[:month]
+                days_count += in_day.end[:day]
+              elsif month == in_day.start[:month]
+                days_count += MONTH_END_DAY[month - 1] - in_day.start[:day] + 1
+              else
+                days_count += MONTH_END_DAY[month - 1]
+              end
+            end
           end
         end
         return days_count
