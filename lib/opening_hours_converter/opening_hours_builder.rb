@@ -223,7 +223,7 @@ module OpeningHoursConverter
           end
         end
       end
-      if result == [] && days_status = [8, 8, 8, 8, 8, 8, 8]
+      if result == [] && days_status == [8, 8, 8, 8, 8, 8, 8]
         result = days
       end
 
