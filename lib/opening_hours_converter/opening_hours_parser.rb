@@ -50,6 +50,7 @@ module OpeningHoursConverter
         @current_token = tokens.length - 1
 
         weekdays = {}
+        comment = ""
 
         # get comment
         if @current_token >= 0 && is_comment?(tokens[@current_token])

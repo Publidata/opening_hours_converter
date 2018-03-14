@@ -224,6 +224,9 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   it "2017 10:00-11:00; Jan 11:00-12:00" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse("2017 10:00-11:00; Jan 11:00-12:00"))).to eql("2017 10:00-11:00; Jan 11:00-12:00")
   end
+  it "2017 10:00-11:00 \"Salut\"; Jan 11:00-12:00" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse("2017 10:00-11:00 \"Salut\"; Jan 11:00-12:00"))).to eql("2017 10:00-11:00 \"Salut\"; Jan 11:00-12:00")
+  end
 
   # todo
   it "2017 PH 10:00-11:00" do
