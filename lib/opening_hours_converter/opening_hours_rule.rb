@@ -254,7 +254,7 @@ module OpeningHoursConverter
     end
 
     def same_time?(o)
-      if o.nil? || o.time.length != @time.length
+      if o.nil? || o.time.length != @time.length || @is_defined_off != o.is_defined_off
         return false
       else
         @time.each_with_index do |t, i|

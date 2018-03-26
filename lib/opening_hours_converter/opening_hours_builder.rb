@@ -11,14 +11,19 @@ module OpeningHoursConverter
       range_general = nil
       range_general_for = nil
       day_ph = false
+      off_day_ph = false
 
       date_ranges.each_with_index do |date_range, date_range_index|
         if !date_range.nil?
           if date_range.typical.intervals.length != 1
             date_range.typical.intervals.each_with_index do |interval, interval_id|
               if interval&.day_start == -2 && interval&.day_start == interval&.day_end
+                if interval.is_off
+                  off_day_ph = true
+                else
+                  day_ph = true
+                end
                 date_range.typical.remove_interval(interval_id)
-                day_ph = true
               end
             end
           end
@@ -51,6 +56,8 @@ module OpeningHoursConverter
             else
               oh_rules = build_day(date_range)
             end
+
+
 
             oh_rules.each_with_index do |rule, i|
               oh_rules[i].add_comment(date_range.comment)
@@ -90,6 +97,10 @@ module OpeningHoursConverter
                 oh_rule.add_ph_weekday
               end
 
+              if off_day_ph
+                rules += build_off_holiday(date_range)
+              end
+
               if !oh_rule_added
                 rules << oh_rule
               end
@@ -123,6 +134,21 @@ module OpeningHoursConverter
       end
 
       return result.strip
+    end
+
+    def build_off_holiday(date_range)
+
+      start_year = date_range.wide_interval.start&.key?(:year) ? date_range.wide_interval.start[:year] : date_range.wide_interval.start
+      end_year = date_range.wide_interval.end&.key?(:year) ? date_range.wide_interval.end[:year] : date_range.wide_interval.end
+
+      date_range = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.holiday("PH", start_year, end_year))
+
+      rule = OpeningHoursConverter::OpeningHoursRule.new
+      date = OpeningHoursConverter::OpeningHoursDate.new(date_range.wide_interval, date_range.wide_interval.type, [-1])
+      rule.add_date(date)
+      rule.is_defined_off = true
+
+      return [ rule ]
     end
 
     def build_holiday(date_range)
