@@ -89,20 +89,20 @@ module OpeningHoursConverter
 
     def self.ph_for_year(year=Time.now.year)
       ph = []
-      ph << new_year
-      ph << good_friday
-      ph << easter
-      ph << easter_monday
-      ph << work_day
-      ph << victory
-      ph << rise
-      ph << pentecote
-      ph << pentecote_monday
-      ph << bastille_day
-      ph << assomption
-      ph << toussaint
-      ph << armistice
-      ph << christmas
+      ph << new_year(year)
+      ph << good_friday(year)
+      ph << easter(year)
+      ph << easter_monday(year)
+      ph << work_day(year)
+      ph << victory(year)
+      ph << rise(year)
+      ph << pentecote(year)
+      ph << pentecote_monday(year)
+      ph << bastille_day(year)
+      ph << assomption(year)
+      ph << toussaint(year)
+      ph << armistice(year)
+      ph << christmas(year)
       ph.sort
     end
 
