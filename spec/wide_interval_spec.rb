@@ -174,6 +174,11 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#day" do
       expect(@november_28_to_december_3_2017.touch?(@basic_month)).to be false
       expect(@november_28_to_december_3_2017.touch?(@basic_always)).to be true
     end
+
+    it "has a width" do
+      expect(@november_28_to_december_3_2017.width).to be_a(Integer)
+      expect(@november_28_to_december_3_2017.width).to eql(6)
+    end
   end
 end
 
@@ -214,6 +219,7 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#month" do
     @october_to_november_2017 = OpeningHoursConverter::WideInterval.new.month(10, 2017, 11, 2017)
     @september_to_october_2017 = OpeningHoursConverter::WideInterval.new.month(9, 2017, 10, 2017)
     @november_to_december_2017 = OpeningHoursConverter::WideInterval.new.month(11, 2017, 12, 2017)
+    @november_to_january = OpeningHoursConverter::WideInterval.new.month(11, nil, 1)
   end
 
   it "initialize" do
@@ -321,6 +327,10 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#month" do
       expect(@november_2017.touch?(@basic_always)).to be true
       expect(@november_2017.touch?(@year_2017)).to be true
     end
+    it "has a width" do
+      expect(@november_2017.width).to be_a(Integer)
+      expect(@november_2017.width).to eql(30)
+    end
   end
   context "several months" do
     it "get time selector" do
@@ -357,6 +367,13 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#month" do
       expect(@october_to_november_2017.touch?(@november_to_december_2017)).to be true
       expect(@october_to_november_2017.touch?(@year_2017)).to be true
       expect(@october_to_november_2017.touch?(@basic_always)).to be true
+    end
+    it "has a width" do
+      expect(@october_to_november_2017.width).to be_a(Integer)
+      expect(@october_to_november_2017.width).to eql(61)
+      expect(@november_to_december_2017.width).to eql(61)
+      expect(@january_2017.width).to eql(31)
+      expect(@november_to_january.width).to eql(92)
     end
   end
 end
@@ -505,6 +522,10 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#year" do
       expect(@year_2017.contains?(@basic_always)).to be false
       expect(@year_2017.contains?(@year_2017)).to be false
     end
+    it "has a width" do
+      expect(@year_2017.width).to be_a(Integer)
+      expect(@year_2017.width).to eql(365)
+    end
   end
   context "several years" do
     it "get time selector" do
@@ -525,6 +546,10 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#year" do
       expect(@year_2017_to_2018.contains?(@basic_always)).to be false
       expect(@year_2017_to_2018.contains?(@year_2017)).to be true
       expect(@year_2017_to_2018.contains?(@year_2017_to_2018)).to be false
+    end
+    it "has a width" do
+      expect(@year_2017_to_2018.width).to be_a(Integer)
+      expect(@year_2017_to_2018.width).to eql(730)
     end
   end
 
@@ -570,5 +595,9 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#always" do
     expect(wi.contains?(OpeningHoursConverter::WideInterval.new.month(10,2017, 11,2017))).to be true
     expect(wi.contains?(OpeningHoursConverter::WideInterval.new.month(9,2017, 11,2017))).to be true
     expect(wi.contains?(OpeningHoursConverter::WideInterval.new.month(11,2017, 12,2017))).to be true
+  end
+
+  it "width is infinite" do
+    expect(@basic_always.width).to be(Float::INFINITY)
   end
 end

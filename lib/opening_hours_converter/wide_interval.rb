@@ -520,8 +520,24 @@ module OpeningHoursConverter
             end
           end
         else
+          # binding.pry
           if in_day.start[:month] == in_day.end[:month]
             days_count += in_day.end[:day] - in_day.start[:day] + 1
+          elsif in_day.start[:month] > in_day.end[:month]
+            for month in in_day.start[:month]..12
+              if month == in_day.start[:month]
+                days_count += MONTH_END_DAY[month - 1] - in_day.start[:day] + 1
+              else
+                days_count += MONTH_END_DAY[month - 1]
+              end
+            end
+            for month in 1..in_day.end[:month]
+              if month == in_day.end[:month]
+                days_count += in_day.end[:day]
+              else
+                days_count += MONTH_END_DAY[month - 1]
+              end
+            end
           else
             for month in in_day.start[:month]..in_day.end[:month]
               if month == in_day.end[:month]
