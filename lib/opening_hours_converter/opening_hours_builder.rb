@@ -97,12 +97,13 @@ module OpeningHoursConverter
                 oh_rule.add_ph_weekday
               end
 
-              if off_day_ph
-                rules += build_off_holiday(date_range)
-              end
 
               if !oh_rule_added
                 rules << oh_rule
+              end
+
+              if off_day_ph
+                rules += build_off_holiday(date_range)
               end
 
               if oh_rule == oh_rules.last && oh_rule.has_overwritten_weekday?
