@@ -54,6 +54,25 @@ RSpec.describe OpeningHoursConverter::OpeningHoursDatetime, '#add_time_to_weekda
     expect(datetime.weekdays_with_time[[1]]).to eql([time1, time3])
   end
 
+  it "create many day with many times and comment" do
+
+    time1 = OpeningHoursConverter::OpeningHoursTime.new(1, 60, nil, true)
+    time2 = OpeningHoursConverter::OpeningHoursTime.new(70, 900, '"couucou"')
+    time3 = OpeningHoursConverter::OpeningHoursTime.new(970, 1000)
+    datetime = OpeningHoursConverter::OpeningHoursDatetime.new("Apr 21-Aug 22", "day")
+    datetime.add_time_to_weekday(1, time1)
+    datetime.add_time_to_weekday(1, time3)
+    datetime.add_time_to_weekday(2, time1)
+    datetime.add_time_to_weekday(2, time2)
+    datetime.add_time_to_weekday(3, time2)
+    datetime.add_time_to_weekday(3, time1)
+
+    binding.pry
+
+    expect(datetime.weekdays_with_time[[2, 3]]).to eql([time1, time2])
+    expect(datetime.weekdays_with_time[[1]]).to eql([time1, time3])
+  end
+
   it "sort times" do
     time1 = OpeningHoursConverter::OpeningHoursTime.new(1, 60)
     time2 = OpeningHoursConverter::OpeningHoursTime.new(70, 900)
@@ -82,6 +101,6 @@ RSpec.describe OpeningHoursConverter::OpeningHoursDatetime, '#add_time_to_weekda
   end
 
 end
-RSpec.describe OpeningHoursConverter::OpeningHoursTime, '#equals' do
+RSpec.describe OpeningHoursConverter::OpeningHoursTime, '#get' do
 
 end
