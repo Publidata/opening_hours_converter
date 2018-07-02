@@ -1,6 +1,7 @@
 module OpeningHoursConverter
   class OpeningHoursTime
-    attr_reader :start, :end, :comment, :is_off
+    attr_reader :start, :end
+    attr_accessor :comment, :is_off
 
     def initialize(minute_start=nil, minute_end=nil, comment=nil, is_off=false)
       @start = minute_start
@@ -15,7 +16,13 @@ module OpeningHoursConverter
 
     def get
       return "off#{get_comment}" if (@start.nil? && @end.nil?)
-      "#{time_string(@start)}#{@end.nil? ? "#{get_comment}" : "-#{time_string(@end)}#{get_comment}"}"
+      result = ""
+      result += time_string(@start)
+      if !@end.nil?
+        result += "-" + time_string(@end)
+      end
+      result += get_comment + get_modifier
+      result
     end
 
     def get_modifier
