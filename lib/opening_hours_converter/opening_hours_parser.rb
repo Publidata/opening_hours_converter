@@ -540,14 +540,10 @@ module OpeningHoursConverter
 
     def add_off_interval(date_range, weekdays)
       if date_range.typical.instance_of?(OpeningHoursConverter::Day)
-        if weekdays[:from] != 0
+        if weekdays[:from] != 0 || weekdays[:to] != 0
           weekdays = weekdays.dup
           weekdays[:from] = 0
-          if times[:from] <= times[:to]
-            weekdays[:to] = 0
-          else
-            weekdays[:to] = 1
-          end
+          weekdays[:to] = 0
         end
       end
 
