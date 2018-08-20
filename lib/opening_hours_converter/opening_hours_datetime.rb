@@ -3,11 +3,11 @@ require 'opening_hours_converter/constants'
 module OpeningHoursConverter
   class OpeningHoursDatetime
     include Constants
-    attr_accessor :weekdays, :weekdays_over, :weekdays_with_time
+    attr_accessor :weekdays, :weekdays_with_time
     attr_reader :wide_type, :wide
 
     def initialize(wide, wide_type)
-      if wide.nil? || wide_type.nil?
+      if wide.nil?
         raise ArgumentError
       end
 
@@ -42,6 +42,33 @@ module OpeningHoursConverter
       @weekdays_with_time[weekdays].compact!
     end
 
+    def merge_following_days
+      keys = @weekdays_with_time.keys
+      keys.each do |weekdays|
+        next if @weekdays_with_time[weekdays].nil?
+        @weekdays_with_time[weekdays].each do |time|
+          if time.end == 1440
+            weekdays.each do |wd|
+              next_day_times = time_for_weekday(wd + 1)
+              next_day_times.each do |next_day_time|
+                if next_day_time.start == 0 && time.same_modifiers?(next_day_time)
+                  time.end += next_day_time.time.end
+                end
+              end
+            end
+            # check if next day start at 0 and same comment/modifier
+              # time.end = 1440 + next_day.time.end
+              # if next_day.time.length == 0
+                # del next day
+              # else
+                # remove time from next day
+              # end
+            # end
+          end
+        end
+      end
+    end
+
     def merge_weekdays
       keys = @weekdays_with_time.keys
       keys.each do |weekdays|
@@ -62,15 +89,18 @@ module OpeningHoursConverter
     end
 
     def sort_times
+
       @weekdays_with_time.each do |weekdays, times|
         @weekdays_with_time[weekdays].sort! { |a, b| a.start <=> b.start }
       end
+
     end
 
     def add_time_to_weekday(weekday, time)
       if @weekdays_with_time.keys.empty?
         @weekdays_with_time[[weekday]] = [time]
       end
+
       @weekdays_with_time.keys.each do |weekdays|
         if weekdays.include?(weekday)
           times = @weekdays_with_time[weekdays]
@@ -78,6 +108,7 @@ module OpeningHoursConverter
           remove_weekday(weekdays, weekday)
 
           weekday_times = times + [time]
+
           if key = times_exist(weekday_times)
             add_weekday(key, weekday)
             clean(key)
@@ -85,6 +116,7 @@ module OpeningHoursConverter
             @weekdays_with_time[[weekday]] = weekday_times
             clean([weekday])
           end
+
           return
         end
       end
@@ -96,6 +128,7 @@ module OpeningHoursConverter
         @weekdays_with_time[[weekday]] = [time]
         clean(weekdays)
       end
+
     end
 
     def remove_time_from_weekday(weekday, compare_time)
@@ -130,17 +163,23 @@ module OpeningHoursConverter
         @weekdays_with_time.delete(weekdays)
         return
       end
+
       @weekdays_with_time[(weekdays - [weekday_to_remove]).sort] = @weekdays_with_time.delete(weekdays)
     end
 
     def add_weekday(weekdays, weekday_to_add)
-      @weekdays_with_time[(weekdays + [weekday_to_add]).sort] = @weekdays_with_time.delete(weekdays)
+      if @weekdays_with_time[weekdays]
+        @weekdays_with_time[(weekdays + [weekday_to_add]).sort] = @weekdays_with_time.delete(weekdays)
+      else
+        @weekdays_with_time[weekdays_to_add] = []
+      end
     end
 
     def time_exist(comparison_time)
       @weekdays_with_time.each do |weekdays, times|
         return weekdays if times.any? { |time| time.equals(comparison_time) }
       end
+
       false
     end
 
@@ -148,6 +187,7 @@ module OpeningHoursConverter
       @weekdays_with_time.each do |weekdays, times|
         return weekdays if same_times(weekdays, comparison_times)
       end
+
       false
     end
 
@@ -159,6 +199,16 @@ module OpeningHoursConverter
       end
 
       true
+    end
+
+    def time_for_weekday(weekday)
+      times = []
+      @weekdays_with_time.keys.each do |wd|
+        if wd.include?(weekday)
+          times += @weekdays_with_time[wd]
+        end
+      end
+      times
     end
 
     def get
@@ -184,7 +234,12 @@ module OpeningHoursConverter
     end
 
     def get_for(result, weekdays, times)
-      result += result.length > 0 ? ", #{@wide}" : @wide
+      if result.length > 0
+        result += ","
+      end
+      if @wide.strip.length > 0
+        result += result.length > 0 ? ", #{@wide}" : @wide
+      end
       result += result.length > 0 ? " #{get_weekdays(weekdays)}" : get_weekdays(weekdays)
       result += result.length > 0 ? " #{get_times(times)}" : get_times(times)
       result

@@ -364,32 +364,29 @@ module OpeningHoursConverter
     end
 
     def create_time_intervals(wide_interval, type, intervals)
-      days = []
-      for i in 0...7
-        days << OpeningHoursConverter::OpeningHoursRule.new
-        days[i].add_date(OpeningHoursConverter::OpeningHoursDate.new(wide_interval, type, [ i ]))
-      end
+      days = OpeningHoursConverter::OpeningHoursDatetime.new(wide_interval.get_time_selector, type)
+
+      # for i in 0...7
+      #   days << OpeningHoursConverter::OpeningHoursDateTime.new(wide_interval, type)
+      #   days[i].add_weekday(nil, [ i ])
+      # end
 
       intervals.each do |interval|
         if !interval.nil?
           begin
             if interval.day_start == interval.day_end
-              days[interval.day_start].add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, interval.end))
-              days[interval.day_start].is_defined_off = days[interval.day_start].is_defined_off ? true : interval.is_off
+              days.add_time_to_weekdays([interval.day_start], OpeningHoursConverter::OpeningHoursTime.new(interval.start, interval.end))
             elsif interval.day_end - interval.day_start == 1
-              days[interval.day_start].add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, MINUTES_MAX))
-              days[interval.day_start].is_defined_off = days[interval.day_start].is_defined_off ? true : interval.is_off
-              days[interval.day_end].add_time(OpeningHoursConverter::OpeningHoursTime.new(0, interval.end))
-              days[interval.day_end].is_defined_off = days[interval.day_end].is_defined_off ? true : interval.is_off
+              days.add_time_to_weekdays([interval.day_start], OpeningHoursConverter::OpeningHoursTime.new(interval.start, MINUTES_MAX))
+              days.add_time_to_weekdays([interval.day_end], OpeningHoursConverter::OpeningHoursTime.new(0, interval.end))
             else
               for j in interval.day_start..interval.day_end
-                days[j].is_defined_off = days[j].is_defined_off ? true : interval.is_off
                 if j == interval.day_start
-                  days[j].add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, MINUTES_MAX))
+                  days.add_time_to_weekdays([j], OpeningHoursConverter::OpeningHoursTime.new(interval.start, MINUTES_MAX))
                 elsif j == interval.day_end
-                  days[j].add_time(OpeningHoursConverter::OpeningHoursTime.new(0, interval.end))
+                  days.add_time_to_weekdays([j], OpeningHoursConverter::OpeningHoursTime.new(0, interval.end))
                 else
-                  days[j].add_time(OpeningHoursConverter::OpeningHoursTime.new(0, MINUTES_MAX))
+                  days.add_time_to_weekdays([j], OpeningHoursConverter::OpeningHoursTime.new(0, MINUTES_MAX))
                 end
               end
             end
@@ -398,6 +395,8 @@ module OpeningHoursConverter
           end
         end
       end
+
+      binding.pry
 
       return days
     end

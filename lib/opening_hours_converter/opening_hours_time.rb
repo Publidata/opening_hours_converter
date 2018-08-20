@@ -19,6 +19,10 @@ module OpeningHoursConverter
       result = ""
       result += time_string(@start)
       if !@end.nil?
+        end_minute = @end
+        if end_minute > 1440
+          end_minute = end_minute - 1440
+        end
         result += "-" + time_string(@end)
       end
       result += get_comment + get_modifier
