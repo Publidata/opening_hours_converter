@@ -52,12 +52,12 @@ module OpeningHoursConverter
           day.each_with_index do |minute, minute_index|
             if day_index == 0 && minute_index == 0
               if minute
-                off = true if minute == "off"
+                off = minute == "off"
                 day_start = day_index
                 minute_start = minute_index
               end
             elsif minute && day_index == DAYS_MAX && minute_index == day.length - 1
-              off = true if minute == "off"
+              off = minute == "off"
               if day_start >= 0
                 intervals << OpeningHoursConverter::Interval.new(day_start, minute_start, day_index, minute_index, off)
               else
@@ -65,9 +65,14 @@ module OpeningHoursConverter
               end
             else
               if minute && day_start < 0
-                off = true if minute == "off"
+                off = minute == "off"
                 day_start = day_index
                 minute_start = minute_index
+              elsif off && minute != "off"
+                intervals << OpeningHoursConverter::Interval.new(day_start, minute_start, day_index - 1, MINUTES_MAX, off)
+                off = false
+                day_start = minute ? day_index : -1
+                minute_start = minute ? minute_index : -1
               elsif !minute && day_start >= 0
                 if minute_index == 0
                   intervals << OpeningHoursConverter::Interval.new(day_start, minute_start, day_index - 1, MINUTES_MAX, off)
