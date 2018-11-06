@@ -25,4 +25,6 @@ Gem::Specification.new do |s|
   ]
   s.homepage ='https://github.com/Publidata/opening_hours_converter'
   s.license = 'AGPL-3.0'
+
+  s.add_development_dependency "simplecov"
 end
