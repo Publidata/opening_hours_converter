@@ -4,3 +4,9 @@
 .ruby-version
 coverage/*
 tmp/*
+
+# As per https://yehudakatz.com/2010/12/16/clarifying-the-roles-of-the-gemspec-and-gemfile/
+# "Do not check your Gemfile.lock into version control, since it enforces
+# precision that does not exist in the gem command, which is used to install
+# gems in practice."
+Gemfile.lock
