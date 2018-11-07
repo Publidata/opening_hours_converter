@@ -14,22 +14,65 @@ module OpeningHoursConverter
 
       @intervals.each do |interval|
         if !interval.nil?
-          for day in interval.day_start..interval.day_end
-            start_minute = (day == interval.day_start) ? interval.start : 0
-            end_minute = (day == interval.day_end) ? interval.end : MINUTES_MAX
-            if interval.is_off
-              if start_minute && end_minute
-                for minute in 0..MINUTES_MAX
-                  minute_array[day][minute] = "off"
+          if interval.day_start > interval.day_end
+            for day in 0..interval.day_end
+              start_minute = 0
+              end_minute = (day == interval.day_end) ? interval.end : MINUTES_MAX
+              if interval.is_off
+                if start_minute && end_minute
+                  for minute in 0..MINUTES_MAX
+                    minute_array[day][minute] = "off"
+                  end
+                end
+              else
+                if start_minute && end_minute
+                  if minute_array[day][0] == "off"
+                    minute_array[day] = Array.new(MINUTES_MAX + 1, false)
+                  end
+                  for minute in start_minute..end_minute
+                    minute_array[day][minute] = true
+                  end
                 end
               end
-            else
-              if start_minute && end_minute
-                if minute_array[day][0] == "off"
-                  minute_array[day] = Array.new(MINUTES_MAX + 1, false)
+            end
+            for day in interval.day_start..6
+              start_minute = (day == interval.day_start) ? interval.start : 0
+              end_minute = MINUTES_MAX
+              if interval.is_off
+                if start_minute && end_minute
+                  for minute in 0..MINUTES_MAX
+                    minute_array[day][minute] = "off"
+                  end
                 end
-                for minute in start_minute..end_minute
-                  minute_array[day][minute] = true
+              else
+                if start_minute && end_minute
+                  if minute_array[day][0] == "off"
+                    minute_array[day] = Array.new(MINUTES_MAX + 1, false)
+                  end
+                  for minute in start_minute..end_minute
+                    minute_array[day][minute] = true
+                  end
+                end
+              end
+            end
+          else
+            for day in interval.day_start..interval.day_end
+              start_minute = (day == interval.day_start) ? interval.start : 0
+              end_minute = (day == interval.day_end) ? interval.end : MINUTES_MAX
+              if interval.is_off
+                if start_minute && end_minute
+                  for minute in 0..MINUTES_MAX
+                    minute_array[day][minute] = "off"
+                  end
+                end
+              else
+                if start_minute && end_minute
+                  if minute_array[day][0] == "off"
+                    minute_array[day] = Array.new(MINUTES_MAX + 1, false)
+                  end
+                  for minute in start_minute..end_minute
+                    minute_array[day][minute] = true
+                  end
                 end
               end
             end
