@@ -464,7 +464,7 @@ RSpec.describe OpeningHoursConverter::OpeningHoursBuilder, '#build' do
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(0, 10*60, 1, 3*60))
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(6, 10*60, 0, 3*60))
 
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("2017 Dec 15-2018 Jan 15 00:00-03:00,10:00-24:00")
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("2017 Dec 15-2018 Jan 15 Mo 00:00-03:00,10:00-24:00; 2017 Dec 15-2018 Jan 15 Tu 00:00-03:00; 2017 Dec 15-2018 Jan 15 Su 10:00-24:00")
   end
   it "two years dr over night Tu-Fr" do
     dr = [ OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.day(15, 12, 2017, 15, 1, 2018)) ]
