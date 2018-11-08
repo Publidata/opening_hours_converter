@@ -193,13 +193,9 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   it "Mo-We 00:00-01:00,18:00-24:00; Th 00:00-01:00,10:00-20:00; Fr 18:00-24:00; Sa,Su 00:00-04:00,18:00-24:00" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse("Mo-We 00:00-01:00,18:00-24:00; Th 00:00-01:00,10:00-20:00; Fr 18:00-24:00; Sa,Su 00:00-04:00,18:00-24:00"))).to eql("Mo-We 00:00-01:00,18:00-24:00; Th 00:00-01:00,10:00-20:00; Fr 18:00-24:00; Sa,Su 00:00-04:00,18:00-24:00")
   end
-  # TODO
-  # it "Sa,Su 00:00-04:00,18:00-24:00; Jan Mo-Tu off,Fr 10:00-20:00,21:00-03:00" do
-  #   expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse("Sa,Su 00:00-04:00,18:00-24:00; Jan Mo-Tu off,Fr 10:00-20:00,21:00-03:00"))).to eql("Sa,Su 00:00-04:00,18:00-24:00; Jan Mo-Tu off; Jan Fr 10:00-20:00,21:00-24:00; Jan Sa 00:00-03:00")
-  # end
-  # it "Sa,Su 00:00-04:00,18:00-24:00; Jan Mo-Tu off,Fr 10:00-20:00,21:00-24:00,Sa 00:00-03:00" do
-  #   expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse("Sa,Su 00:00-04:00,18:00-24:00; Jan Mo-Tu off,Fr 10:00-20:00,21:00-03:00"))).to eql("Sa,Su 00:00-04:00,18:00-24:00; Jan Mo-Tu off; Jan Fr 10:00-20:00,21:00-24:00; Jan Sa 00:00-03:00")
-  # end
+  it "Sa,Su 18:00-24:00; Jan Mo-Tu off,Fr 10:00-20:00,21:00-03:00" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse("Sa,Su 18:00-24:00; Jan Mo-Tu off,Fr 10:00-20:00,21:00-03:00"))).to eql("Sa,Su 18:00-24:00; Jan Mo,Tu off; Jan Fr 10:00-20:00,21:00-24:00; Jan Sa 00:00-03:00,18:00-24:00")
+  end
   it "Sa,Su 00:00-04:00,18:00-24:00; Jan Mo-Tu off,Fr 10:00-20:00,21:00-03:00" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse("Sa,Su 00:00-04:00,18:00-24:00; Jan Mo-Tu off,Fr 10:00-20:00,21:00-24:00,Sa 00:00-03:00"))).to eql("Sa,Su 00:00-04:00,18:00-24:00; Jan Mo,Tu off; Jan Fr 10:00-20:00,21:00-24:00; Jan Sa 00:00-03:00")
   end
@@ -227,8 +223,6 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   it "2017 10:00-11:00 \"Salut\"; Jan 11:00-12:00" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse("2017 10:00-11:00 \"Salut\"; Jan 11:00-12:00"))).to eql("2017 10:00-11:00 \"Salut\"; Jan 11:00-12:00")
   end
-
-  # todo
   it "2017 PH 10:00-11:00" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse("2017 PH 10:00-11:00"))).to eql("2017 PH 10:00-11:00")
   end
@@ -373,9 +367,9 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse("2017 Dec 24-25 Mo 00:00-09:00,14:30-19:30 \"Pharmacie de garde\""))).to eql("2017 Dec 24-25 Mo 00:00-09:00,14:30-19:30 \"Pharmacie de garde\"")
   end
 
-  # it "Su 09:00-12:30, 14:30-19:30, 2017 Dec 24-25 Su 00:00-09:00 \"Pharmacie de garde\"" do
-  #   expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse("Su 09:00-12:30, 14:30-19:30, 2017 Dec 24-25 Su 00:00-09:00 \"Pharmacie de garde\""))).to eql("Su 09:00-12:30, 14:30-19:30, 2017 Dec 24-25 Su 00:00-09:00 \"Pharmacie de garde\"")
-  # end
+  it "Su 09:00-12:30, 14:30-19:30, 2017 Dec 24-25 Su 00:00-09:00 \"Pharmacie de garde\"" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse("Su 09:00-12:30, 14:30-19:30; 2017 Dec 24-25 Su 00:00-09:00 \"Pharmacie de garde\""))).to eql("Su 09:00-12:30,14:30-19:30; 2017 Dec 24-25 Su 00:00-09:00 \"Pharmacie de garde\"")
+  end
 
   it "Mo 10:00-20:00 \"Pharmacie de garde\"; Tu 11:00-20:00" do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse("Mo 10:00-20:00 \"Pharmacie de garde\"; Tu 11:00-20:00"))).to eql("Mo 10:00-20:00 \"Pharmacie de garde\"; Tu 11:00-20:00")
