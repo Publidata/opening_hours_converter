@@ -120,18 +120,14 @@ module OpeningHoursConverter
         end
       end
 
+
       result = ""
       if rules.length == 0
         date_ranges.each do |dr|
           result += "#{dr.wide_interval.get_time_selector} off"
         end
       else
-        rules.each_with_index do |rule, rule_index|
-          if rule_index > 0
-            result += "; "
-          end
-          result += rule.get
-        end
+        result += rules.map(&:get).join('; ')
       end
 
       return result.strip

@@ -18,69 +18,43 @@ module OpeningHoursConverter
             for day in 0..interval.day_end
               start_minute = 0
               end_minute = (day == interval.day_end) ? interval.end : MINUTES_MAX
-              if interval.is_off
-                if start_minute && end_minute
-                  for minute in 0..MINUTES_MAX
-                    minute_array[day][minute] = "off"
-                  end
-                end
-              else
-                if start_minute && end_minute
-                  if minute_array[day][0] == "off"
-                    minute_array[day] = Array.new(MINUTES_MAX + 1, false)
-                  end
-                  for minute in start_minute..end_minute
-                    minute_array[day][minute] = true
-                  end
-                end
-              end
+              set_minute_array_for_interval(interval, minute_array, start_minute, end_minute, day)
             end
             for day in interval.day_start..6
               start_minute = (day == interval.day_start) ? interval.start : 0
               end_minute = MINUTES_MAX
-              if interval.is_off
-                if start_minute && end_minute
-                  for minute in 0..MINUTES_MAX
-                    minute_array[day][minute] = "off"
-                  end
-                end
-              else
-                if start_minute && end_minute
-                  if minute_array[day][0] == "off"
-                    minute_array[day] = Array.new(MINUTES_MAX + 1, false)
-                  end
-                  for minute in start_minute..end_minute
-                    minute_array[day][minute] = true
-                  end
-                end
-              end
+              set_minute_array_for_interval(interval, minute_array, start_minute, end_minute, day)
             end
           else
             for day in interval.day_start..interval.day_end
               start_minute = (day == interval.day_start) ? interval.start : 0
               end_minute = (day == interval.day_end) ? interval.end : MINUTES_MAX
-              if interval.is_off
-                if start_minute && end_minute
-                  for minute in 0..MINUTES_MAX
-                    minute_array[day][minute] = "off"
-                  end
-                end
-              else
-                if start_minute && end_minute
-                  if minute_array[day][0] == "off"
-                    minute_array[day] = Array.new(MINUTES_MAX + 1, false)
-                  end
-                  for minute in start_minute..end_minute
-                    minute_array[day][minute] = true
-                  end
-                end
-              end
+              set_minute_array_for_interval(interval, minute_array, start_minute, end_minute, day)
             end
           end
         end
       end
 
       minute_array
+    end
+
+    def set_minute_array_for_interval(interval, minute_array, start_minute, end_minute, day)
+      if interval.is_off
+        if start_minute && end_minute
+          for minute in 0..MINUTES_MAX
+            minute_array[day][minute] = "off"
+          end
+        end
+      else
+        if start_minute && end_minute
+          if minute_array[day][0] == "off"
+            minute_array[day] = Array.new(MINUTES_MAX + 1, false)
+          end
+          for minute in start_minute..end_minute
+            minute_array[day][minute] = true
+          end
+        end
+      end
     end
 
     def get_intervals(clean=false)
@@ -166,7 +140,7 @@ module OpeningHoursConverter
               if day_start >= 0 && self_minutes_array[d][m]
                 intervals[:open] << OpeningHoursConverter::Interval.new(day_start, min_start, d, m, off)
               end
-            #  other days and minutes
+            # other days and minutes
             else
               # new interval
               if self_minutes_array[d][m] && day_start < 0
