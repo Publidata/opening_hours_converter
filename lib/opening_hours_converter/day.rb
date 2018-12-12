@@ -13,60 +13,46 @@ module OpeningHoursConverter
       minute_array = Array.new(MINUTES_MAX + 1, false)
 
       @intervals.each do |interval|
-        if !interval.nil?
-          start_minute = nil
-          end_minute = nil
-          off = interval.is_off
+        next if interval.nil?
 
-          if off
-            start_minute = 0
-            end_minute = MINUTES_MAX
-          elsif interval.day_start == interval.day_end || interval.day_end == DAYS_MAX && interval.end == MINUTES_MAX
-            start_minute = interval.start
-            end_minute = interval.end
-          elsif interval.day_end == interval.day_start + 1 && interval.end == 0
-            start_minute = interval.start
-            end_minute = MINUTES_MAX
-          end
+        off, start_minute, end_minute = handle_interval(interval)
 
-          unless start_minute.nil? && end_minute.nil?
-            for minute in start_minute..end_minute
-              minute_array[minute] = off ? "off" : true
-            end
-          else
-            raise "Invalid interval #{interval.inspect}"
-          end
+        raise "Invalid interval #{interval.inspect}" if start_minute.nil? && end_minute.nil?
+
+        (start_minute..end_minute).step do |minute|
+          minute_array[minute] = off ? 'off' : true
         end
       end
 
       minute_array
     end
 
-    def get_intervals(clean=false)
+    def handle_interval(interval)
+      off = interval.is_off
+
+      if off
+        start_minute = 0
+        end_minute = MINUTES_MAX
+      elsif interval.single_day? || interval.max?
+        start_minute = interval.start
+        end_minute = interval.end
+      elsif interval.single_day_end_at_midnight?
+        start_minute = interval.start
+        end_minute = MINUTES_MAX
+      end
+
+      [off, start_minute, end_minute]
+    end
+
+    def get_intervals(clean = false)
       if clean
         minute_array = get_as_minute_array
         intervals = []
         minute_start = -1
-        minute_end = nil
         off = false
 
         minute_array.each_with_index do |minute, i|
-          if i == 0 && minute
-            off = true if minute == "off"
-            minute_start = i
-          elsif i == minute_array.length - 1 && minute
-            intervals << OpeningHoursConverter::Interval.new(0, minute_start, 0, i - 1, off)
-            minute_start = -1
-            off = false
-          else
-            if minute && minute_start < 0
-              minute_start = i
-            elsif !minute && minute_start >= 0
-              intervals << OpeningHoursConverter::Interval.new(0, minute_start, 0, i - 1, off)
-              minute_start = -1
-              off = false
-            end
-          end
+          off, minute_start, intervals = handle_minute(minute, off, minute_start, intervals, i, minute_array)
         end
         intervals
       else
@@ -74,9 +60,29 @@ module OpeningHoursConverter
       end
     end
 
+    def handle_minute(minute, off, minute_start, intervals, i, minute_array)
+      if minute
+        if i == 0
+          off = true if minute == 'off'
+          minute_start = i
+        elsif minute_start < 0
+          minute_start = i
+        elsif i == minute_array.length - 1
+          intervals << OpeningHoursConverter::Interval.new(0, minute_start, 0, i - 1, off)
+          minute_start = -1
+          off = false
+        end
+      elsif minute_start >= 0
+        intervals << OpeningHoursConverter::Interval.new(0, minute_start, 0, i - 1, off)
+        minute_start = -1
+        off = false
+      end
+      [off, minute_start, intervals]
+    end
+
     def add_interval(interval)
       @intervals << interval
-      return @intervals.length - 1
+      @intervals.length - 1
     end
 
     def edit_interval(id, interval)
