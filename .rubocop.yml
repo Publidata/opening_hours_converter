@@ -18,3 +18,9 @@ Style/NumericPredicate:
 
 Naming/AccessorMethodName:
   Enabled: false
+
+Naming/PredicateName:
+  Enabled: false
+
+Style/NegatedIf:
+  Enabled: false
