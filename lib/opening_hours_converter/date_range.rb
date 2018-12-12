@@ -2,11 +2,11 @@ module OpeningHoursConverter
   class DateRange
     attr_accessor :wide_interval, :typical, :comment
 
-    def initialize(w=nil)
+    def initialize(wide_interval = nil)
       @wide_interval = nil
       @typical = nil
-      @comment = ""
-      update_range(w)
+      @comment = ''
+      update_range(wide_interval)
     end
 
     def defines_typical_day?
@@ -20,21 +20,21 @@ module OpeningHoursConverter
     def update_range(wide)
       @wide_interval = !wide.nil? ? wide : OpeningHoursConverter::WideInterval.new.always
 
-      if @typical.nil?
-        case @wide_interval.type
-        when "day"
-          if @wide_interval.end.nil?
-            @typical = OpeningHoursConverter::Day.new
-          else
-            @typical = OpeningHoursConverter::Week.new
-          end
-        else
-          @typical = OpeningHoursConverter::Week.new
-        end
-      end
+      return unless @typical.nil?
+
+      @typical = case @wide_interval.type
+                 when 'day'
+                   if @wide_interval.end.nil?
+                     OpeningHoursConverter::Day.new
+                   else
+                     OpeningHoursConverter::Week.new
+                   end
+                 else
+                   OpeningHoursConverter::Week.new
+                 end
     end
 
-    def add_comment(comment="")
+    def add_comment(comment = '')
       @comment += comment if comment
     end
 
@@ -47,8 +47,7 @@ module OpeningHoursConverter
     end
 
     def is_holiday?
-      result = false
-      result = @wide_interval.type == "holiday"
+      result = @wide_interval.type == 'holiday'
       if !result
         @typical.intervals.each do |i|
           if !i.nil?
