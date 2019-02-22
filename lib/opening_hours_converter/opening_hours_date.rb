@@ -4,15 +4,14 @@ module OpeningHoursConverter
   class OpeningHoursDate
     include Constants
     attr_accessor :weekdays, :weekdays_over
-    attr_reader :wide_type, :wide
+    attr_reader :wide_interval
 
-    def initialize(wide, wide_type, weekdays)
-      if wide.nil? || wide_type.nil? || weekdays.nil?
+    def initialize(wide_interval, weekdays)
+      if wide_interval.nil? || weekdays.nil? || !wide_interval.is_a?(OpeningHoursConverter::WideInterval)
         raise ArgumentError
       end
 
-      @wide = wide
-      @wide_type = wide_type
+      @wide_interval = wide_interval
       @weekdays = weekdays.sort
       @weekdays_over = []
     end
@@ -122,7 +121,7 @@ module OpeningHoursConverter
     end
 
     def same_kind_as?(date)
-      @wide_type == date.wide_type && date.same_weekdays?(@weekdays)
+      @wide_interval.type == date.wide_interval.type && date.same_weekdays?(@weekdays)
     end
 
     def same_weekdays?(weekdays)
@@ -130,7 +129,7 @@ module OpeningHoursConverter
     end
 
     def equals(o)
-      o.instance_of?(OpeningHoursConverter::OpeningHoursDate) && @wide_type == o.wide_type && @wide == o.wide && o.same_weekdays?(@weekdays)
+      o.instance_of?(OpeningHoursConverter::OpeningHoursDate) && @wide_interval.type == o.wide_interval.type && @wide_interval.equals(o.wide_interval) && o.same_weekdays?(@weekdays)
     end
   end
 end

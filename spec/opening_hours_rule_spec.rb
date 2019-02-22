@@ -9,7 +9,7 @@ end
 RSpec.describe OpeningHoursConverter::OpeningHoursRule, '#get' do
   it "simple" do
     ohr = OpeningHoursConverter::OpeningHoursRule.new
-    ohd = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.day(21,4,nil,22,8), "day", [0,1,2,4,5,6])
+    ohd = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.day(21,4,nil,22,8), [0,1,2,4,5,6])
     ohr.add_date(ohd)
     oht = OpeningHoursConverter::OpeningHoursTime.new(10, 60)
     ohr.add_time(oht)
@@ -18,8 +18,8 @@ RSpec.describe OpeningHoursConverter::OpeningHoursRule, '#get' do
   it "several date/time" do
     ohr = OpeningHoursConverter::OpeningHoursRule.new
 
-    ohr.add_date(OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(3), "month", [0,1,2,4,5,6]))
-    ohr.add_date(OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(7,nil,10), "month", [0,1,2,4,5,6]))
+    ohr.add_date(OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(3), [0,1,2,4,5,6]))
+    ohr.add_date(OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(7,nil,10), [0,1,2,4,5,6]))
 
     ohr.add_time(OpeningHoursConverter::OpeningHoursTime.new(0, 60))
     ohr.add_time(OpeningHoursConverter::OpeningHoursTime.new(3*60, 4*60))
@@ -28,15 +28,15 @@ RSpec.describe OpeningHoursConverter::OpeningHoursRule, '#get' do
   it "several date, nil time" do
     ohr = OpeningHoursConverter::OpeningHoursRule.new
 
-    ohr.add_date(OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(3), "month", [0,1,2,4,5,6]))
-    ohr.add_date(OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(7,nil,10), "month", [0,1,2,4,5,6]))
+    ohr.add_date(OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(3), [0,1,2,4,5,6]))
+    ohr.add_date(OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(7,nil,10), [0,1,2,4,5,6]))
 
     expect(ohr.get).to eql("Mar,Jul-Oct Fr-We off")
   end
   it "always, time" do
     ohr = OpeningHoursConverter::OpeningHoursRule.new
 
-    ohr.add_date(OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.always, "always", [0,1,2,4,5,6]))
+    ohr.add_date(OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.always, [0,1,2,4,5,6]))
     ohr.add_time(OpeningHoursConverter::OpeningHoursTime.new(0, 1*60))
     ohr.add_time(OpeningHoursConverter::OpeningHoursTime.new(3*60, 4*60))
 
@@ -49,8 +49,8 @@ RSpec.describe OpeningHoursConverter::OpeningHoursRule, '#same_time?' do
     or1 = OpeningHoursConverter::OpeningHoursRule.new
     or2 = OpeningHoursConverter::OpeningHoursRule.new
 
-    od1 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.always, "always", [0,1,2,3,4,5,6])
-    od2 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(6), "month", [3,4,5,6])
+    od1 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.always, [0,1,2,3,4,5,6])
+    od2 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(6), [3,4,5,6])
 
     or1.add_date(od1)
     or2.add_date(od2)
@@ -84,8 +84,8 @@ end
 RSpec.describe OpeningHoursConverter::OpeningHoursRule, '#add_date' do
   it "simple" do
     or1 = OpeningHoursConverter::OpeningHoursRule.new
-    od1 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(3), "month", [0,1,2,4,5,6])
-    od2 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(7,nil,10), "month", [0,1,2,4,5,6])
+    od1 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(3), [0,1,2,4,5,6])
+    od2 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(7,nil,10), [0,1,2,4,5,6])
 
     or1.add_date(od1)
     or1.add_date(od2)
@@ -101,8 +101,8 @@ RSpec.describe OpeningHoursConverter::OpeningHoursRule, '#add_date' do
   it "not same weekday" do
     or1 = OpeningHoursConverter::OpeningHoursRule.new
 
-    od1 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(3), "month", [0,1,2,4,5,6])
-    od2 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(7,nil,10), "month", [0,1])
+    od1 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(3), [0,1,2,4,5,6])
+    od2 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(7,nil,10), [0,1])
 
     or1.add_date(od1)
     expect{ or1.add_date(od2) }.to raise_error ArgumentError
@@ -110,8 +110,8 @@ RSpec.describe OpeningHoursConverter::OpeningHoursRule, '#add_date' do
   it "full year not same weekday" do
     or1 = OpeningHoursConverter::OpeningHoursRule.new
 
-    od1 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(3), "month", [0,1,2,4,5,6])
-    od2 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.always, "always", [0,1])
+    od1 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(3), [0,1,2,4,5,6])
+    od2 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.always, [0,1])
 
     or1.add_date(od1)
     expect{ or1.add_date(od2) }.to raise_error ArgumentError
@@ -167,8 +167,8 @@ RSpec.describe OpeningHoursConverter::OpeningHoursRule, '#add_weekday' do
     or1 = OpeningHoursConverter::OpeningHoursRule.new
     expect(or1.date.length).to eql(0)
 
-    od1 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(3), "month", [0,1])
-    od2 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(7,nil,10), "month", [0,1])
+    od1 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(3), [0,1])
+    od2 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(7,nil,10), [0,1])
     or1.add_date(od1)
     or1.add_date(od2)
 
@@ -185,8 +185,8 @@ RSpec.describe OpeningHoursConverter::OpeningHoursRule, '#add_weekday' do
     or1 = OpeningHoursConverter::OpeningHoursRule.new
     expect(or1.date.length).to eql(0)
 
-    od1 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(3), "month", [0,1])
-    od2 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(7,nil,10), "month", [0,1])
+    od1 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(3), [0,1])
+    od2 = OpeningHoursConverter::OpeningHoursDate.new(OpeningHoursConverter::WideInterval.new.month(7,nil,10), [0,1])
     or1.add_date(od1)
     or1.add_date(od2)
 

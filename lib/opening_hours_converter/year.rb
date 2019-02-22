@@ -82,25 +82,25 @@ module OpeningHoursConverter
     def self.build_day_array_from_dates(dates, get_iterator=false)
       years = {}
       dates.each do |date|
-        if !date.wide.start.nil? && !date.wide.start[:year].nil?
-          if date.wide.end.nil? || date.wide.end[:year].nil? || date.wide.start[:year] == date.wide.end[:year]
-            if !years[date.wide.start[:year]].nil?
-              years = process_single_year(date.wide, years)
+        if !date.wide_interval.start.nil? && !date.wide_interval.start[:year].nil?
+          if date.wide_interval.end.nil? || date.wide_interval.end[:year].nil? || date.wide_interval.start[:year] == date.wide_interval.end[:year]
+            if !years[date.wide_interval.start[:year]].nil?
+              years = process_single_year(date.wide_interval, years)
             else
-              years[date.wide.start[:year]] = Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
-              years = process_single_year(date.wide, years)
+              years[date.wide_interval.start[:year]] = Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
+              years = process_single_year(date.wide_interval, years)
             end
           else
-            for year in date.wide.start[:year]..date.wide.end[:year]
+            for year in date.wide_interval.start[:year]..date.wide_interval.end[:year]
               years[year] ||= Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
             end
-            process_multiple_years(date.wide, years)
+            process_multiple_years(date.wide_interval, years)
           end
         else
           unless get_iterator
             years["always"] ||= Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
           end
-          years = process_always(date.wide, years, get_iterator)
+          years = process_always(date.wide_interval, years, get_iterator)
         end
       end
       years
@@ -209,7 +209,7 @@ module OpeningHoursConverter
                 years[year][wide_interval.start[:month]-1][i] = true
               end
             else
-              for month in wide_interval.start[:month]-1..date.wide.end[:month]-1
+              for month in wide_interval.start[:month]-1..date.wide_interval.end[:month]-1
                 years[year][month].each_with_index do |day, i|
                   years[year][month][i] = true
                 end
