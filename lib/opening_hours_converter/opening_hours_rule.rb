@@ -53,14 +53,14 @@ module OpeningHoursConverter
     end
 
     def get_wide_selector
-      if @date.length == 1 && @date[0].wide.type == "holiday"
-        if @date[0].wide.start[:year].nil?
+      if @date.length == 1 && @date[0].wide_interval.type == "holiday"
+        if @date[0].wide_interval.start[:year].nil?
           return "PH"
         else
-          if @date[0].wide.end && @date[0].wide.end[:year]
-            return "#{@date[0].wide.start[:year]}-#{@date[0].wide.end[:year]} PH"
+          if @date[0].wide_interval.end && @date[0].wide_interval.end[:year]
+            return "#{@date[0].wide_interval.start[:year]}-#{@date[0].wide_interval.end[:year]} PH"
           else
-            return "#{@date[0].wide.start[:year]} PH"
+            return "#{@date[0].wide_interval.start[:year]} PH"
           end
         end
       end
@@ -269,7 +269,7 @@ module OpeningHoursConverter
         return false
       else
         @date.each_with_index do |d, i|
-          return false if !d.wide.equals(o.date[i].wide)
+          return false if !d.wide_interval.equals(o.date[i].wide_interval)
         end
         return true
       end

@@ -17,8 +17,8 @@ module OpeningHoursConverter
       @typical.instance_of?(OpeningHoursConverter::Week)
     end
 
-    def update_range(wide)
-      @wide_interval = !wide.nil? ? wide : OpeningHoursConverter::WideInterval.new.always
+    def update_range(wide_interval)
+      @wide_interval = !wide_interval.nil? ? wide_interval : OpeningHoursConverter::WideInterval.new.always
 
       return unless @typical.nil?
 
