@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require 'opening_hours_converter/constants'
 
 module OpeningHoursConverter
