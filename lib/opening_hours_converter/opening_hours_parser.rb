@@ -27,7 +27,7 @@ module OpeningHoursConverter
       result = []
       blocks = oh.split(';')
 
-      comment = ""
+      comment = ''
       time_selector = nil
       weekday_selector = nil
       wide_range_selector = nil
@@ -44,20 +44,19 @@ module OpeningHoursConverter
 
       blocks.each do |block|
         block.strip!
-        next if block.length == 0
+        next if block.empty?
 
         tokens = tokenize(block)
         @current_token = tokens.length - 1
 
         weekdays = {}
-        comment = ""
+        comment = ''
 
         # get comment
         if @current_token >= 0 && is_comment?(tokens[@current_token])
           comment = tokens[@current_token]
           @current_token -= 1
         end
-
 
         # get state and time associated with weekdays
         while @current_token >= 0 && (is_rule_modifier?(tokens[@current_token]) || is_time?(tokens[@current_token]))
@@ -67,10 +66,10 @@ module OpeningHoursConverter
             begin
               weekday_selector = tokens[@current_token]
               weekdays_and_holidays = get_weekdays(weekday_selector)
-            rescue
-              weekdays[[{from: 0, to: 6}]] ||= {}
-              weekdays[[{from: 0, to: 6}]][:modifiers] ||= []
-              weekdays[[{from: 0, to: 6}]][:modifiers] << local_modifier
+            rescue StandardError
+              weekdays[[{ from: 0, to: 6 }]] ||= {}
+              weekdays[[{ from: 0, to: 6 }]][:modifiers] ||= []
+              weekdays[[{ from: 0, to: 6 }]][:modifiers] << local_modifier
             else
               weekdays[weekdays_and_holidays] ||= {}
               weekdays[weekdays_and_holidays][:modifiers] ||= []
@@ -87,10 +86,10 @@ module OpeningHoursConverter
             begin
               weekday_selector = tokens[@current_token]
               weekdays_and_holidays = get_weekdays(weekday_selector)
-            rescue
-              weekdays[[{from: 0, to: 6}]] ||= {}
-              weekdays[[{from: 0, to: 6}]][:times] ||= []
-              weekdays[[{from: 0, to: 6}]][:times].concat(local_times)
+            rescue StandardError
+              weekdays[[{ from: 0, to: 6 }]] ||= {}
+              weekdays[[{ from: 0, to: 6 }]][:times] ||= []
+              weekdays[[{ from: 0, to: 6 }]][:times].concat(local_times)
             else
               weekdays[weekdays_and_holidays] ||= {}
               weekdays[weekdays_and_holidays][:times] ||= []
@@ -108,7 +107,7 @@ module OpeningHoursConverter
           for i in 1..@current_token
             wide_range_selector += " #{tokens[i]}"
           end
-          if wide_range_selector.length > 0
+          if !wide_range_selector.empty?
             wide_range_selector = wide_range_selector.strip
             wide_range_selector = wide_range_selector.split(',')
             wide_range_selector.each do |wrs|
@@ -129,56 +128,54 @@ module OpeningHoursConverter
           end
         end
 
-        if @current_token == tokens.length - 1
-          raise ArgumentError, "Unreadable string"
-        end
+        raise ArgumentError, 'Unreadable string' if @current_token == tokens.length - 1
 
         # puts "weekdays : #{weekdays}"
         # puts "months : #{months}"
         # puts "years : #{years}"
 
         date_ranges = []
-        if months.length > 0
+        if !months.empty?
           months.each do |month|
             if !month[:from_day].nil?
               if !month[:to_day].nil?
                 date_range = OpeningHoursConverter::WideInterval.new.day(month[:from_day][:day], month[:from_day][:month], month[:from_day][:year],
-                  month[:to_day][:day], month[:to_day][:month], month[:to_day][:year])
+                                                                         month[:to_day][:day], month[:to_day][:month], month[:to_day][:year])
               else
                 date_range = OpeningHoursConverter::WideInterval.new.day(month[:from_day][:day], month[:from_day][:month], month[:from_day][:year])
               end
               date_ranges << date_range
             else
-              if !month[:to].nil?
-                date_range = OpeningHoursConverter::WideInterval.new.month(month[:from], nil, month[:to])
-              else
-                date_range = OpeningHoursConverter::WideInterval.new.month(month[:from])
-              end
+              date_range = if !month[:to].nil?
+                             OpeningHoursConverter::WideInterval.new.month(month[:from], nil, month[:to])
+                           else
+                             OpeningHoursConverter::WideInterval.new.month(month[:from])
+                           end
               date_ranges << date_range
             end
           end
-        elsif years.length > 0
+        elsif !years.empty?
           years.each do |year|
             if !year[:from_day].nil?
               if !year[:to_day].nil?
                 date_range = OpeningHoursConverter::WideInterval.new.day(year[:from_day][:day], year[:from_day][:month], year[:from_day][:year],
-                  year[:to_day][:day], year[:to_day][:month], year[:to_day][:year])
+                                                                         year[:to_day][:day], year[:to_day][:month], year[:to_day][:year])
               else
                 date_range = OpeningHoursConverter::WideInterval.new.day(year[:from_day][:day], year[:from_day][:month], year[:from_day][:year])
               end
             elsif !year[:from_month].nil?
               if !year[:to_month].nil?
                 date_range = OpeningHoursConverter::WideInterval.new.month(year[:from_month][:month], year[:from_month][:year],
-                  year[:to_month][:month], year[:to_month][:year])
+                                                                           year[:to_month][:month], year[:to_month][:year])
               else
                 date_range = OpeningHoursConverter::WideInterval.new.month(year[:from_month][:month], year[:from_month][:year])
               end
             elsif !year[:from].nil?
-              if !year[:to].nil?
-                date_range = OpeningHoursConverter::WideInterval.new.year(year[:from], year[:to])
-              else
-                date_range = OpeningHoursConverter::WideInterval.new.year(year[:from])
-              end
+              date_range = if !year[:to].nil?
+                             OpeningHoursConverter::WideInterval.new.year(year[:from], year[:to])
+                           else
+                             OpeningHoursConverter::WideInterval.new.year(year[:from])
+                           end
             end
             date_ranges << date_range
           end
@@ -186,9 +183,9 @@ module OpeningHoursConverter
           date_ranges << OpeningHoursConverter::WideInterval.new.always
         end
 
-        if weekdays.length == 0
-          weekdays[[{from: 0, to: 6}]] = {}
-          weekdays[[{from: 0, to: 6}]][:times] = [{from: 0, to: 24*60}]
+        if weekdays.empty?
+          weekdays[[{ from: 0, to: 6 }]] = {}
+          weekdays[[{ from: 0, to: 6 }]][:times] = [{ from: 0, to: 24 * 60 }]
         end
 
         date_ranges.each do |dr|
@@ -206,19 +203,13 @@ module OpeningHoursConverter
             dr_obj = result[res_dr_id]
           else
             dr_obj = OpeningHoursConverter::DateRange.new(dr)
-            if !comment.nil?
-              dr_obj.add_comment(comment)
-            end
+            dr_obj.add_comment(comment) if !comment.nil?
 
             general = -1
             for res_dr_id in 0...result.length
-              if result[res_dr_id].is_general_for?(dr_obj)
-                general = res_dr_id
-              end
+              general = res_dr_id if result[res_dr_id].is_general_for?(dr_obj)
             end
-            if general >= 0
-              dr_obj.typical.copy_intervals(result[general].typical.intervals)
-            end
+            dr_obj.typical.copy_intervals(result[general].typical.intervals) if general >= 0
             result << dr_obj
           end
 
@@ -249,26 +240,24 @@ module OpeningHoursConverter
                 end
               end
 
-              if weekday_object[:modifiers]
-                weekday_object[:modifiers].each do |modifier|
-                  if modifier == "closed" || modifier == "off"
-                    remove_interval(dr_obj, weekday_range)
-                    add_off_interval(dr_obj, weekday_range)
-                  end
+              weekday_object[:modifiers]&.each do |modifier|
+                if modifier == 'closed' || modifier == 'off'
+                  remove_interval(dr_obj, weekday_range)
+                  add_off_interval(dr_obj, weekday_range)
                 end
               end
 
-              if weekday_object[:times]
-                weekday_object[:times].each do |time_range|
-                  add_interval(dr_obj.typical, weekday_range, time_range)
-                end
+              next unless weekday_object[:times]
+
+              weekday_object[:times]&.each do |time_range|
+                add_interval(dr_obj.typical, weekday_range, time_range)
               end
             end
           end
         end
       end
 
-      return result
+      result
     end
 
     def from_json(json)
@@ -276,25 +265,24 @@ module OpeningHoursConverter
       date_range = []
       parsed.each do |dr|
         wi = {}
-        start_day = DateTime.parse(dr["wide_interval"]["start"])
-        end_day = DateTime.parse(dr["wide_interval"]["end"])
-        case dr["wide_interval"]["type"]
-        when "always"
+        start_day = DateTime.parse(dr['wide_interval']['start'])
+        end_day = DateTime.parse(dr['wide_interval']['end'])
+        case dr['wide_interval']['type']
+        when 'always'
           wi = OpeningHoursConverter::WideInterval.new.day(start_day.day, start_day.month, nil, end_day.day, end_day.month)
         else
           wi = OpeningHoursConverter::WideInterval.new.day(start_day.day, start_day.month, start_day.year, end_day.day, end_day.month, end_day.year)
         end
         date_range << OpeningHoursConverter::DateRange.new(wi)
-        date_range.last.add_comment(dr["comment"])
-        dr["typical"]["intervals"].each do |interval|
-          if !interval.nil?
-            start_interval = DateTime.parse(interval["start"])
-            end_interval = DateTime.parse(interval["end"])
-            if end_interval.day == start_interval.day + 1 && end_interval.hour == 0 && end_interval.min == 0
-              end_interval -= (1/1440.0)
-            end
-            date_range.last.typical.add_interval(OpeningHoursConverter::Interval.new(((start_interval.wday + 6) % 7), (start_interval.hour * 60 + start_interval.min), ((end_interval.wday + 6) % 7), (end_interval.hour * 60 + end_interval.min)))
+        date_range.last.add_comment(dr['comment'])
+        dr['typical']['intervals'].each do |interval|
+          next unless !interval.nil?
+          start_interval = DateTime.parse(interval['start'])
+          end_interval = DateTime.parse(interval['end'])
+          if end_interval.day == start_interval.day + 1 && end_interval.hour == 0 && end_interval.min == 0
+            end_interval -= (1 / 1440.0)
           end
+          date_range.last.typical.add_interval(OpeningHoursConverter::Interval.new(((start_interval.wday + 6) % 7), (start_interval.hour * 60 + start_interval.min), ((end_interval.wday + 6) % 7), (end_interval.hour * 60 + end_interval.min)))
         end
       end
       date_range
@@ -303,15 +291,11 @@ module OpeningHoursConverter
     def get_year(wrs)
       single_year = wrs.gsub(/\:$/, '').split('-')
       year_from = single_year[0].to_i
-      if year_from < 1
-        raise ArgumentError, "Invalid year : #{single_year[0]}"
-      end
+      raise ArgumentError, "Invalid year : #{single_year[0]}" if year_from < 1
 
       if single_year.length > 1
         year_to = single_year[1].to_i
-        if year_to < 1
-          raise ArgumentError, "Invalid year : #{single_year[1]}"
-        end
+        raise ArgumentError, "Invalid year : #{single_year[1]}" if year_to < 1
       else
         year_to = nil
       end
@@ -321,19 +305,15 @@ module OpeningHoursConverter
     def get_month(wrs)
       single_month = wrs.gsub(/\:$/, '').split('-')
       month_from = OSM_MONTHS.find_index(single_month[0]) + 1
-      if month_from < 1
-        raise ArgumentError, "Invalid month : #{single_month[0]}"
-      end
+      raise ArgumentError, "Invalid month : #{single_month[0]}" if month_from < 1
 
       if single_month.length > 1
         month_to = OSM_MONTHS.find_index(single_month[1]) + 1
-        if month_to < 1
-          raise ArgumentError, "Invalid month : #{single_month[1]}"
-        end
+        raise ArgumentError, "Invalid month : #{single_month[1]}" if month_to < 1
       else
         month_to = month_from
       end
-      { from: month_from, to: month_to}
+      { from: month_from, to: month_to }
     end
 
     def get_month_day(wrs)
@@ -341,20 +321,16 @@ module OpeningHoursConverter
 
       month_from = single_month[0].split(' ')
       month_from = { day: month_from[1].to_i, month: OSM_MONTHS.find_index(month_from[0]) + 1 }
-      if month_from[:month] < 1
-        raise ArgumentError, "Invalid month : #{month_from.inspect}"
-      end
+      raise ArgumentError, "Invalid month : #{month_from.inspect}" if month_from[:month] < 1
 
       if single_month.length > 1
         month_to = single_month[1].split(' ')
-        if month_to.length > 1
-          month_to = { day: month_to[1].to_i, month: OSM_MONTHS.find_index(month_to[0]) + 1 }
-        else
-          month_to = { day: month_to[0].to_i, month: month_from[:month] }
-        end
-        if month_to[:month] < 1
-          raise ArgumentError, "Invalid month : #{month_to.inspect}"
-        end
+        month_to = if month_to.length > 1
+                     { day: month_to[1].to_i, month: OSM_MONTHS.find_index(month_to[0]) + 1 }
+                   else
+                     { day: month_to[0].to_i, month: month_from[:month] }
+                   end
+        raise ArgumentError, "Invalid month : #{month_to.inspect}" if month_to[:month] < 1
       else
         month_to = nil
       end
@@ -365,7 +341,7 @@ module OpeningHoursConverter
       single_year_month = wrs.gsub(/\:$/, '').split('-')
       year_month_from = single_year_month[0].split(' ')
       year_month_from = { month: OSM_MONTHS.find_index(year_month_from[1]) + 1, year: year_month_from[0].to_i }
-      if year_month_from.length < 1
+      if year_month_from.empty?
         raise ArgumentError, "Invalid year_month : #{year_month_from.inspect}"
       end
       if single_year_month.length > 1
@@ -375,9 +351,7 @@ module OpeningHoursConverter
         elsif year_month_to.length == 1
           year_month_to = { month: OSM_MONTHS.find_index(year_month_to[0]) + 1, year: year_month_from[:year] }
         end
-        if year_month_to.length < 1
-          raise ArgumentError, "Invalid year_month : #{year_month_to.inspect}"
-        end
+        raise ArgumentError, "Invalid year_month : #{year_month_to.inspect}" if year_month_to.empty?
       else
         year_month_to = nil
       end
@@ -399,27 +373,27 @@ module OpeningHoursConverter
       single_year_month_day = wrs.gsub(/\:$/, '').split('-')
       year_month_day_from = single_year_month_day[0].split(' ')
       year_month_day_from = { day: year_month_day_from[2].to_i,
-        month: OSM_MONTHS.find_index(year_month_day_from[1]) + 1,
-        year: year_month_day_from[0].to_i }
-      if year_month_day_from.length < 1
+                              month: OSM_MONTHS.find_index(year_month_day_from[1]) + 1,
+                              year: year_month_day_from[0].to_i }
+      if year_month_day_from.empty?
         raise ArgumentError, "Invalid year_month_day : #{year_month_day_from.inspect}"
       end
       if single_year_month_day.length > 1
         year_month_day_to = single_year_month_day[1].split(' ')
         if year_month_day_to.length == 3
           year_month_day_to = { day: year_month_day_to[2].to_i,
-            month: OSM_MONTHS.find_index(year_month_day_to[1]) + 1,
-            year: year_month_day_to[0].to_i }
+                                month: OSM_MONTHS.find_index(year_month_day_to[1]) + 1,
+                                year: year_month_day_to[0].to_i }
         elsif year_month_day_to.length == 2
           year_month_day_to = { day: year_month_day_to[1].to_i,
-            month: OSM_MONTHS.find_index(year_month_day_to[0]) + 1,
-            year: year_month_day_from[:year] }
+                                month: OSM_MONTHS.find_index(year_month_day_to[0]) + 1,
+                                year: year_month_day_from[:year] }
         elsif year_month_day_to.length == 1
           year_month_day_to = { day: year_month_day_to[0].to_i,
-            month: year_month_day_from[:month],
-            year: year_month_day_from[:year] }
+                                month: year_month_day_from[:month],
+                                year: year_month_day_from[:year] }
         end
-        if year_month_day_to.length < 1
+        if year_month_day_to.empty?
           raise ArgumentError, "Invalid year_month_day : #{year_month_day_to.inspect}"
         end
       else
@@ -433,19 +407,19 @@ module OpeningHoursConverter
       times = []
       from = nil
       to = nil
-      if time_selector == "24/7"
-        times << {from: 0, to: 24*60}
+      if time_selector == '24/7'
+        times << { from: 0, to: 24 * 60 }
       else
         time_selector = time_selector.split(',')
         time_selector.each do |ts|
           single_time = ts.split('-')
           from = as_minutes(single_time[0])
-          if single_time.length > 1
-            to = as_minutes(single_time[1])
-          else
-            to = from
-          end
-          times << {from: from, to: to}
+          to = if single_time.length > 1
+                 as_minutes(single_time[1])
+               else
+                 from
+               end
+          times << { from: from, to: to }
         end
       end
       times
@@ -459,18 +433,18 @@ module OpeningHoursConverter
       weekday_selector = weekday_selector.split(',')
       weekday_selector.each do |wd|
         if !(@RGX_HOLIDAY =~ wd).nil?
-          weekdays << {from: -2, to: -2}
+          weekdays << { from: -2, to: -2 }
         elsif !(@RGX_WD =~ wd).nil?
           single_weekday = wd.split('-')
 
           wd_from = OSM_DAYS.find_index(single_weekday[0])
-          if single_weekday.length > 1
-            wd_to = OSM_DAYS.find_index(single_weekday[1])
-          else
-            wd_to = wd_from
-          end
+          wd_to = if single_weekday.length > 1
+                    OSM_DAYS.find_index(single_weekday[1])
+                  else
+                    wd_from
+                  end
 
-          weekdays << {from: wd_from, to: wd_to}
+          weekdays << { from: wd_from, to: wd_to }
         else
           raise ArgumentError, "Invalid weekday interval : #{wd}"
         end
@@ -503,9 +477,9 @@ module OpeningHoursConverter
         typical.remove_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd, times[:to]))
       else
         if wd < 6
-          typical.remove_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd+1, times[:to]))
+          typical.remove_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd + 1, times[:to]))
         else
-          typical.remove_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd+1, 24*60))
+          typical.remove_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd + 1, 24 * 60))
           typical.remove_interval(OpeningHoursConverter::Interval.new(0, 0, 0, times[:to]))
         end
       end
@@ -513,14 +487,14 @@ module OpeningHoursConverter
 
     def add_interval(typical, weekdays, times)
       if typical.instance_of?(OpeningHoursConverter::Day)
-        if weekdays[:from] != 0 || (weekdays[:to] !=0 && times[:from] <= times[:to])
+        if weekdays[:from] != 0 || (weekdays[:to] != 0 && times[:from] <= times[:to])
           weekdays = weekdays.dup
           weekdays[:from] = 0
-          if times[:from] <= times[:to]
-            weekdays[:to] = 0
-          else
-            weekdays[:to] = 1
-          end
+          weekdays[:to] = if times[:from] <= times[:to]
+                            0
+                          else
+                            1
+                          end
         end
       end
 
@@ -549,14 +523,14 @@ module OpeningHoursConverter
 
       if weekdays[:from] <= weekdays[:to]
         for wd in weekdays[:from]..weekdays[:to]
-          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24*60, true))
+          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true))
         end
       else
         for wd in weekdays[:from]..6
-          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24*60, true))
+          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true))
         end
         for wd in 0..weekdays[:to]
-          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24*60, true))
+          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true))
         end
       end
     end
@@ -566,9 +540,9 @@ module OpeningHoursConverter
         typical.add_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd, times[:to]))
       else
         if wd < 6
-          typical.add_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd+1, times[:to]))
+          typical.add_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd + 1, times[:to]))
         else
-          typical.add_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd, 24*60))
+          typical.add_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd, 24 * 60))
           typical.add_interval(OpeningHoursConverter::Interval.new(0, 0, 0, times[:to]))
         end
       end
@@ -634,7 +608,7 @@ module OpeningHoursConverter
     def is_part_of_wide_interval?(string)
       is_wide_interval = false
       string.split('-').each do |str|
-        if ((!(@RGX_YEAR =~ str).nil? || !(@RGX_YEAR_MONTH =~ str).nil? || !(@RGX_YEAR_MONTH_DAY =~ str).nil? || !(@RGX_DAY =~ str).nil? || !(@RGX_MONTHDAY =~ str).nil? || !(@RGX_MONTH =~ str).nil?) && ((@RGX_TIME =~ str).nil? && (@RGX_WEEKDAY =~ str).nil?))
+        if (!(@RGX_YEAR =~ str).nil? || !(@RGX_YEAR_MONTH =~ str).nil? || !(@RGX_YEAR_MONTH_DAY =~ str).nil? || !(@RGX_DAY =~ str).nil? || !(@RGX_MONTHDAY =~ str).nil? || !(@RGX_MONTH =~ str).nil?) && ((@RGX_TIME =~ str).nil? && (@RGX_WEEKDAY =~ str).nil?)
           is_wide_interval = true
         else
           return false
@@ -646,18 +620,23 @@ module OpeningHoursConverter
     def is_comment?(token)
       !(@RGX_COMMENT =~ token).nil?
     end
+
     def is_holiday?(token)
       !(@RGX_HOLIDAY =~ token).nil?
     end
+
     def is_rule_modifier?(token)
       !(@RGX_RULE_MODIFIER =~ token).nil?
     end
+
     def is_time?(token)
       !(@RGX_TIME =~ token).nil?
     end
+
     def is_weekday?(token)
       !(@RGX_WEEKDAY =~ token).nil?
     end
+
     def is_year?(token)
       !(@RGX_YEAR =~ token).nil?
     end
