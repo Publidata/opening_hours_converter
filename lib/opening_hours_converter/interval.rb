@@ -5,7 +5,7 @@ module OpeningHoursConverter
     include Constants
     attr_reader :day_start, :day_end, :start, :end, :is_off
 
-    def initialize(day_start, min_start, day_end=0, min_end=0, is_off=false)
+    def initialize(day_start, min_start, day_end = 0, min_end = 0, is_off = false)
       @day_start = day_start
       @day_end = day_end
       @start = min_start
