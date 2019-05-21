@@ -17,23 +17,22 @@ module OpeningHoursConverter
     end
 
     def get_weekdays
-      result = ""
-      wd = @weekdays.concat(@weekdays_over).sort.uniq
+      result = ''
+      weekdays = @weekdays.concat(@weekdays_over).sort.uniq
 
-      if wd.length > 0 && wd[0] == -2
-        result = "PH"
-        wd.shift
+      if !weekdays.empty? && weekdays[0] == -2
+        result = 'PH'
+        weekdays.shift
       end
 
-
-      if wd.length > 0 && wd.include?(6) && wd.include?(0) && (wd.include?(5) || wd.include?(1))
-        start_we = 6
-        i = wd.length - 2
+      if !weekdays.empty? && weekdays.include?(6) && weekdays.include?(0) && (weekdays.include?(5) || weekdays.include?(1))
+        start_week_end = 6
+        i = weekdays.length - 2
         stop_looking = false
 
         while !stop_looking && i >= 0
-          if wd[i] == wd[i+1] - 1
-            start_we = wd[i]
+          if weekdays[i] == weekdays[i + 1] - 1
+            start_week_end = weekdays[i]
             i -= 1
           else
             stop_looking = true
@@ -42,71 +41,67 @@ module OpeningHoursConverter
 
         i = 1
         stop_looking = false
-        end_we = 0
+        end_week_end = 0
 
-        while !stop_looking && i < wd.length
-          if wd[i-1] == wd[i] - 1
-            end_we = wd[i]
+        while !stop_looking && i < weekdays.length
+          if weekdays[i - 1] == weekdays[i] - 1
+            end_week_end = weekdays[i]
             i += 1
           else
             stop_looking = true
           end
         end
 
-        length = 7 - start_we + end_we + 1
+        length = 7 - start_week_end + end_week_end + 1
 
-        if length >= 3 && start_we > end_we
-          if result.length > 0
-            result += ","
-          end
-          result += "#{OSM_DAYS[start_we]}-#{OSM_DAYS[end_we]}"
+        if length >= 3 && start_week_end > end_week_end
+          result += ',' if !result.empty?
+          result += "#{OSM_DAYS[start_week_end]}-#{OSM_DAYS[end_week_end]}"
 
-          j=0
-          while j < wd.length
-            if wd[j] <= end_we || wd[j] >= start_we
-              wd.slice!(j, 1)
+          j = 0
+          while j < weekdays.length
+            if weekdays[j] <= end_week_end || weekdays[j] >= start_week_end
+              weekdays.slice!(j, 1)
             else
-              j+=1
+              j += 1
             end
           end
         end
       end
 
-      if wd.length > 1 || (wd.length == 1 && wd[0] != -1)
-        result += result.length > 0 ? ",#{OSM_DAYS[wd[0]]}" : OSM_DAYS[wd[0]]
-        first_in_row = wd[0]
-        for i in 1...wd.length
-          if wd[i-1] != wd[i] - 1
-            if first_in_row != wd[i-1]
-              if wd[i-1] - first_in_row == 1
-                result += ",#{OSM_DAYS[wd[i-1]]}"
-              else
-                result += "-#{OSM_DAYS[wd[i-1]]}"
-              end
+      if weekdays.length > 1 || (weekdays.length == 1 && weekdays[0] != -1)
+        result += !result.empty? ? ",#{OSM_DAYS[weekdays[0]]}" : OSM_DAYS[weekdays[0]]
+        first_in_row = weekdays[0]
+        for i in 1...weekdays.length
+          if weekdays[i - 1] != weekdays[i] - 1
+            if first_in_row != weekdays[i - 1]
+              result += if weekdays[i - 1] - first_in_row == 1
+                          ",#{OSM_DAYS[weekdays[i - 1]]}"
+                        else
+                          "-#{OSM_DAYS[weekdays[i - 1]]}"
+                        end
             end
-            result += ",#{OSM_DAYS[wd[i]]}"
-            first_in_row = wd[i]
-          elsif i == wd.length - 1
-            if wd[i] - first_in_row == 1
-              result += ",#{OSM_DAYS[wd[i]]}"
-            else
-              result += "-#{OSM_DAYS[wd[i]]}"
-            end
+            result += ",#{OSM_DAYS[weekdays[i]]}"
+            first_in_row = weekdays[i]
+          elsif i == weekdays.length - 1
+            result += if weekdays[i] - first_in_row == 1
+                        ",#{OSM_DAYS[weekdays[i]]}"
+                      else
+                        "-#{OSM_DAYS[weekdays[i]]}"
+                      end
           end
         end
       end
 
-      if result == "Mo-Su"
-        result = ""
-      end
-      return result
+      result = '' if result == 'Mo-Su'
+      result
     end
 
     def add_weekday(weekday)
-      if !@weekdays.include?(weekday) && !@weekdays_over.include?(weekday)
-        @weekdays << weekday
-        @weekdays.sort!
-      end
+      return if @weekdays.include?(weekday) || @weekdays_over.include?(weekday)
+
+      @weekdays << weekday
+      @weekdays.sort!
     end
 
     def add_ph_weekday
@@ -114,10 +109,10 @@ module OpeningHoursConverter
     end
 
     def add_overwritten_weekday(weekday)
-      unless @weekdays_over.include?(weekday) && @weekdays_over.include?(weekday)
-        @weekdays_over << weekday
-        @weekdays_over.sort!
-      end
+      return if @weekdays_over.include?(weekday) && @weekdays_over.include?(weekday)
+
+      @weekdays_over << weekday
+      @weekdays_over.sort!
     end
 
     def same_kind_as?(date)
