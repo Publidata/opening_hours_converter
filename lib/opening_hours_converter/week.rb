@@ -17,18 +17,18 @@ module OpeningHoursConverter
           if interval.day_start > interval.day_end
             for day in 0..interval.day_end
               start_minute = 0
-              end_minute = (day == interval.day_end) ? interval.end : MINUTES_MAX
+              end_minute = day == interval.day_end ? interval.end : MINUTES_MAX
               set_minute_array_for_interval(interval, minute_array, start_minute, end_minute, day)
             end
             for day in interval.day_start..6
-              start_minute = (day == interval.day_start) ? interval.start : 0
+              start_minute = day == interval.day_start ? interval.start : 0
               end_minute = MINUTES_MAX
               set_minute_array_for_interval(interval, minute_array, start_minute, end_minute, day)
             end
           else
             for day in interval.day_start..interval.day_end
-              start_minute = (day == interval.day_start) ? interval.start : 0
-              end_minute = (day == interval.day_end) ? interval.end : MINUTES_MAX
+              start_minute = day == interval.day_start ? interval.start : 0
+              end_minute = day == interval.day_end ? interval.end : MINUTES_MAX
               set_minute_array_for_interval(interval, minute_array, start_minute, end_minute, day)
             end
           end
@@ -42,14 +42,12 @@ module OpeningHoursConverter
       if interval.is_off
         if start_minute && end_minute
           for minute in 0..MINUTES_MAX
-            minute_array[day][minute] = "off"
+            minute_array[day][minute] = 'off'
           end
         end
       else
         if start_minute && end_minute
-          if minute_array[day][0] == "off"
-            minute_array[day] = Array.new(MINUTES_MAX + 1, false)
-          end
+          minute_array[day] = Array.new(MINUTES_MAX + 1, false) if minute_array[day][0] == 'off'
           for minute in start_minute..end_minute
             minute_array[day][minute] = true
           end
@@ -57,7 +55,7 @@ module OpeningHoursConverter
       end
     end
 
-    def get_intervals(clean=false)
+    def get_intervals(clean = false)
       if clean
         minute_array = get_as_minute_array
         intervals = []
@@ -69,12 +67,12 @@ module OpeningHoursConverter
           day.each_with_index do |minute, minute_index|
             if day_index == 0 && minute_index == 0
               if minute
-                off = minute == "off"
+                off = minute == 'off'
                 day_start = day_index
                 minute_start = minute_index
               end
             elsif minute && day_index == DAYS_MAX && minute_index == day.length - 1
-              off = minute == "off"
+              off = minute == 'off'
               if day_start >= 0
                 intervals << OpeningHoursConverter::Interval.new(day_start, minute_start, day_index, minute_index, off)
               else
@@ -82,10 +80,10 @@ module OpeningHoursConverter
               end
             else
               if minute && day_start < 0
-                off = minute == "off"
+                off = minute == 'off'
                 day_start = day_index
                 minute_start = minute_index
-              elsif off && minute != "off"
+              elsif off && minute != 'off'
                 intervals << OpeningHoursConverter::Interval.new(day_start, minute_start, day_index - 1, MINUTES_MAX, off)
                 off = false
                 day_start = minute ? day_index : -1
@@ -104,16 +102,15 @@ module OpeningHoursConverter
           end
         end
 
-        return intervals
+        intervals
       else
-        return @intervals
+        @intervals
       end
     end
 
     def get_intervals_diff(week)
       self_minutes_array = get_as_minute_array
       other_minutes_array = week.get_as_minute_array
-
 
       intervals = { open: [], closed: [] }
       day_start = -1
@@ -125,7 +122,7 @@ module OpeningHoursConverter
         off = false
         intervals_length = intervals[:open].length
         while m <= MINUTES_MAX
-          off = self_minutes_array[d][m] == "off"
+          off = self_minutes_array[d][m] == 'off'
           break if off
           # Copy entire day
           if diff_day
@@ -160,11 +157,11 @@ module OpeningHoursConverter
             m += 1
           # check diff
           else
-            if !self_minutes_array[d][m]
-              diff_day = other_minutes_array[d][m] != "off" && other_minutes_array[d][m]
-            else
-              diff_day = other_minutes_array[d][m] == "off" || !other_minutes_array[d][m]
-            end
+            diff_day = if !self_minutes_array[d][m]
+                         other_minutes_array[d][m] != 'off' && other_minutes_array[d][m]
+                       else
+                         other_minutes_array[d][m] == 'off' || !other_minutes_array[d][m]
+                       end
 
             if diff_day
               m = 0
@@ -174,12 +171,12 @@ module OpeningHoursConverter
           end
         end
         if !diff_day && day_start > -1 && !off
-          intervals[:open] << OpeningHoursConverter::Interval.new(day_start, min_start, d-1, MINUTES_MAX, off)
+          intervals[:open] << OpeningHoursConverter::Interval.new(day_start, min_start, d - 1, MINUTES_MAX, off)
           day_start = -1
           min_start = -1
         end
         if diff_day && day_start == -1 && intervals_length == intervals[:open].length || off
-          if intervals[:closed].length > 0 && intervals[:closed][intervals[:closed].length - 1].day_end == d - 1
+          if !intervals[:closed].empty? && intervals[:closed][intervals[:closed].length - 1].day_end == d - 1
             intervals[:closed][-1] = OpeningHoursConverter::Interval.new(intervals[:closed].last.day_start, 0, d, MINUTES_MAX, off)
           else
             intervals[:closed] << OpeningHoursConverter::Interval.new(d, 0, d, MINUTES_MAX, off)
@@ -187,12 +184,12 @@ module OpeningHoursConverter
         end
       end
 
-      return intervals
+      intervals
     end
 
     def add_interval(interval)
       @intervals << interval
-      return @intervals.length - 1
+      @intervals.length - 1
     end
 
     def edit_interval(id, interval)
@@ -205,23 +202,20 @@ module OpeningHoursConverter
 
     def remove_intervals_during_day(day)
       @intervals.each_with_index do |interval, i|
-        unless interval.nil?
-          if interval.day_start <= day && interval.day_end >= day
-            day_diff = interval.day_end - interval.day_start
+        next if interval.nil?
+        next unless interval.day_start <= day && interval.day_end >= day
+        day_diff = interval.day_end - interval.day_start
 
-            if day_diff > 1 || day_diff == 0 || interval.day_start == day || interval.start <= interval.end
-              if interval.day_end - interval.day_start >= 1 && interval.start <= interval.end
-                if interval.day_start < day
-                  add_interval(OpeningHoursConverter::Interval.new(interval.day_start, interval.start, day - 1, 24*60, interval.is_off))
-                end
-                if interval.day_end > day
-                  add_interval(OpeningHoursConverter::Interval.new(day + 1, 0, interval.day_end, interval.end, interval.is_off))
-                end
-              end
-              remove_interval(i)
-            end
+        next unless day_diff > 1 || day_diff == 0 || interval.day_start == day || interval.start <= interval.end
+        if interval.day_end - interval.day_start >= 1 && interval.start <= interval.end
+          if interval.day_start < day
+            add_interval(OpeningHoursConverter::Interval.new(interval.day_start, interval.start, day - 1, 24 * 60, interval.is_off))
+          end
+          if interval.day_end > day
+            add_interval(OpeningHoursConverter::Interval.new(day + 1, 0, interval.day_end, interval.end, interval.is_off))
           end
         end
+        remove_interval(i)
       end
     end
 
@@ -233,9 +227,7 @@ module OpeningHoursConverter
       @intervals = []
 
       intervals.each do |interval|
-        if !interval.nil? && !interval.is_off
-          @intervals << interval.dup
-        end
+        @intervals << interval.dup if !interval.nil? && !interval.is_off
       end
     end
 
