@@ -31,7 +31,6 @@ module OpeningHoursConverter
       time_selector = nil
       weekday_selector = nil
       wide_range_selector = nil
-      month_selector = nil
 
       weekdays = nil
       months = nil
@@ -144,15 +143,14 @@ module OpeningHoursConverter
               else
                 date_range = OpeningHoursConverter::WideInterval.new.day(month[:from_day][:day], month[:from_day][:month], month[:from_day][:year])
               end
-              date_ranges << date_range
             else
               date_range = if !month[:to].nil?
                              OpeningHoursConverter::WideInterval.new.month(month[:from], nil, month[:to])
                            else
                              OpeningHoursConverter::WideInterval.new.month(month[:from])
                            end
-              date_ranges << date_range
             end
+            date_ranges << date_range
           end
         elsif !years.empty?
           years.each do |year|
