@@ -10,7 +10,7 @@ module OpeningHoursConverter
     end
 
     def add_days_to_time(time, days)
-      time + days
+      time + days * seconds_in_day
     end
 
     def day_difference(from, to)
@@ -18,7 +18,7 @@ module OpeningHoursConverter
     end
 
     def week_difference(from, to)
-      day_diff = day_difference(from, to)
+      day_diff = to - from
       day_diff -= (day_diff % 7)
       (day_diff / 7).to_i
     end

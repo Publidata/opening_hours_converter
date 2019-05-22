@@ -28,8 +28,8 @@ module OpeningHoursConverter
 
     def self.add_offset_to_week(week, offset)
       {
-        from: add_days_to_time(week[:from], offset),
-        to: add_days_to_time(week[:to], offset)
+        from: week[:from] + offset,
+        to: week[:to] + offset
       }
     end
 
@@ -37,14 +37,14 @@ module OpeningHoursConverter
       start_day = first_day_of_first_week(year)
       {
         from: start_day,
-        to: add_days_to_time(start_day, 6)
+        to: start_day + 6
       }
     end
 
     def self.last_week(year = Time.now.year)
       end_day = last_day_of_last_week(year)
       {
-        from: add_days_to_time(end_day, -6),
+        from: end_day - 6,
         to: end_day
       }
     end
