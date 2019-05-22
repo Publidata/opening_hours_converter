@@ -1,10 +1,11 @@
 require 'opening_hours_converter/constants'
+require 'opening_hours_converter/utils'
 require 'json'
 
 module OpeningHoursConverter
   class OpeningHoursParser
     include Constants
-
+    extend Utils
     def initialize
       @RGX_RULE_MODIFIER = /^(open|closed|off)$/i
       @RGX_WEEK_KEY = /^week$/
@@ -280,7 +281,14 @@ module OpeningHoursConverter
           if end_interval.day == start_interval.day + 1 && end_interval.hour == 0 && end_interval.min == 0
             end_interval -= (1 / 1440.0)
           end
-          date_range.last.typical.add_interval(OpeningHoursConverter::Interval.new(((start_interval.wday + 6) % 7), (start_interval.hour * 60 + start_interval.min), ((end_interval.wday + 6) % 7), (end_interval.hour * 60 + end_interval.min)))
+          date_range.last.typical.add_interval(
+            OpeningHoursConverter::Interval.new(
+              reindex_sunday_week_to_monday_week(start_interval.wday),
+              (start_interval.hour * 60 + start_interval.min),
+              reindex_sunday_week_to_monday_week(end_interval.wday),
+              (end_interval.hour * 60 + end_interval.min)
+            )
+          )
         end
       end
       date_range
