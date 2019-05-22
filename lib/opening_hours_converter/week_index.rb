@@ -1,6 +1,5 @@
 require 'opening_hours_converter/constants'
 require 'opening_hours_converter/utils'
-require 'pry'
 
 module OpeningHoursConverter
   class WeekIndex
@@ -51,21 +50,21 @@ module OpeningHoursConverter
     end
 
     def self.last_day_of_last_week(year = Time.now.year)
-      last_day_of_year = Time.new(year, 12, 31)
+      last_day_of_year = Date.new(year, 12, 31)
       last_wday_of_year = reindex_sunday_week_to_monday_week(last_day_of_year.wday)
 
       return last_day_of_year if last_wday_of_year == 6
-      return Time.new(year + 1, 1, 7 - last_wday_of_year - 1) if last_wday_of_year >= 3
-      return Time.new(year, 12, 31 - last_wday_of_year - 1)
+      return Date.new(year + 1, 1, 7 - last_wday_of_year - 1) if last_wday_of_year >= 3
+      return Date.new(year, 12, 31 - last_wday_of_year - 1)
     end
 
     def self.first_day_of_first_week(year = Time.now.year)
-      first_day_of_year = Time.new(year, 1, 1)
+      first_day_of_year = Date.new(year, 1, 1)
       first_wday_of_year = reindex_sunday_week_to_monday_week(first_day_of_year.wday)
 
       return first_day_of_year if first_wday_of_year == 0
-      return Time.new(year - 1, 12, 31 - first_wday_of_year + 1) if first_wday_of_year < 4 # first day of year is friday saturday or sunday
-      return Time.new(year, 1, 7 - first_wday_of_year + 1)
+      return Date.new(year - 1, 12, 31 - first_wday_of_year + 1) if first_wday_of_year < 4 # first day of year is friday saturday or sunday
+      return Date.new(year, 1, 7 - first_wday_of_year + 1)
     end
   end
 end

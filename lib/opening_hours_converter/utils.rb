@@ -9,14 +9,12 @@ module OpeningHoursConverter
       values[0].to_i * 60 + values[1].to_i
     end
 
-    def add_days_to_time(time, day)
-      time + day * seconds_in_day
+    def add_days_to_time(time, days)
+      time + days
     end
 
     def day_difference(from, to)
-      diff = to - from
-      diff -= diff % seconds_in_day
-      (diff / seconds_in_day).to_i
+      to - from
     end
 
     def week_difference(from, to)
