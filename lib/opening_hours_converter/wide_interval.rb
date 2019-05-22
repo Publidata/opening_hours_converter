@@ -87,13 +87,11 @@ module OpeningHoursConverter
                      'jours fériés'
                    else
                      "les jours fériés de #{@start[:year]} à #{@end[:year]}"
-                            end
+                   end
+                 elsif !@start[:year]
+                   'jours fériés'
                  else
-                   if !@start[:year]
-                     'jours fériés'
-                   else
-                     "les jours fériés de #{@start[:year]}"
-                            end
+                   "les jours fériés de #{@start[:year]}"
                  end
       when 'always'
         result = 'tout le temps'
