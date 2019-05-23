@@ -109,13 +109,13 @@ module OpeningHoursConverter
           last_day_of_month
         elsif wday > last_wday_of_month
           # last day of the month is before (in the week) than the weekday we are looking for
-          # so we look in the current week
+          # so we look in the previous week
 
           previous_week_monday = last_day_of_month - last_wday_of_month - 7
           previous_week_monday + wday
         else
           # last day of the month is after (in the week) than the weekday we are looking for
-          # so we look in the previous week
+          # so we look in the current week
 
           first_day_of_the_week = last_day_of_month - last_wday_of_month
           first_day_of_the_week + wday
