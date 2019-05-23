@@ -3,7 +3,7 @@ require 'opening_hours_converter/constants'
 module OpeningHoursConverter
   class Iterator
     include Constants
-    extend Utils
+    include Utils
 
     def get_iterator(date_ranges)
       date_ranges_array = []

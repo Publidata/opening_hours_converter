@@ -3,12 +3,13 @@ require 'opening_hours_converter/constants'
 module OpeningHoursConverter
   class WideInterval
     include Constants
-    attr_accessor :start, :end, :type
+    attr_accessor :start, :end, :type, :modifier
 
     def initialize
       @start = nil
       @end = nil
       @type = nil
+      @modifier = nil
     end
 
     def get_time_selector
@@ -130,6 +131,17 @@ module OpeningHoursConverter
         @end = { month: end_month, year: end_year }
       end
       @type = 'month'
+      self
+    end
+
+    def week(start_week, start_year = nil, end_week = nil, end_year = nil, modifier = nil)
+      raise(ArgumentError, 'start_week is required') if start_week.nil?
+      @start = { week: start_week, year: start_year }
+      if !end_week.nil? && (end_week != start_week || (!start_year.nil? && !end_year.nil? && end_year != start_year))
+        @end = { week: end_week, year: end_year }
+      end
+      @type = 'week'
+      @modifier = modifier
       self
     end
 

@@ -5,17 +5,23 @@ require 'json'
 module OpeningHoursConverter
   class OpeningHoursParser
     include Constants
-    extend Utils
+    include Utils
+
     def initialize
       @RGX_RULE_MODIFIER = /^(open|closed|off)$/i
       @RGX_WEEK_KEY = /^week$/
       @RGX_WEEK_VAL = /^([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?(,([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?)*\:?$/
+      @RGX_WEEK_WITH_MODIFIER = /^week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))\/(5[0123]|[01234]?[0-9])$/
+      @RGX_WEEK_VAL_WITH_MODIFIER = /^([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))\/(5[0123]|[01234]?[0-9])$/
+      # @RGX_YEAR_WEEK_WITH_MODIFIER = /^([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))\/(5[0123]|[01234]?[0-9])$/ todo
+      # @RGX_YEAR_WEEK = /^([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))\/(5[0123]|[01234]?[0-9])$/ todo
       @RGX_MONTH = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\-(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))?\:?$/
       @RGX_MONTHDAY = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([012]?[0-9]|3[01])(\-((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) )?([012]?[0-9]|3[01]))?\:?$/
       @RGX_TIME = /^((([01]?[0-9]|2[01234])\:[012345][0-9](\-([01]?[0-9]|2[01234])\:[012345][0-9])?(,([01]?[0-9]|2[01234])\:[012345][0-9](\-([01]?[0-9]|2[01234])\:[012345][0-9])?)*)|(24\/7))$/
       @RGX_WEEKDAY = /^(((Mo|Tu|We|Th|Fr|Sa|Su)(\-(Mo|Tu|We|Th|Fr|Sa|Su))?)|(PH))(,(((Mo|Tu|We|Th|Fr|Sa|Su)(\-(Mo|Tu|We|Th|Fr|Sa|Su))?)|(PH)))*$/
       @RGX_HOLIDAY = /^(PH|SH|easter)$/
       @RGX_WD = /^(Mo|Tu|We|Th|Fr|Sa|Su)(\-(Mo|Tu|We|Th|Fr|Sa|Su))?$/
+      @RGX_WD_WITH_MODIFIER = /^(Mo|Tu|We|Th|Fr|Sa|Su)\[([1-5]|\-1)\]$/
       @RGX_DAY = /^([012]?[0-9]|3[01])(\-[012]?[0-9]|3[01])?$/
       @RGX_YEAR = /^(\d{4})(\-(\d{4}))?$/
       @RGX_YEAR_PH = /^(\d{4})( PH|(\-(\d{4}) PH))\:?$/
@@ -67,9 +73,9 @@ module OpeningHoursConverter
               weekday_selector = tokens[@current_token]
               weekdays_and_holidays = get_weekdays(weekday_selector)
             rescue StandardError
-              weekdays[[{ from: 0, to: 6 }]] ||= {}
-              weekdays[[{ from: 0, to: 6 }]][:modifiers] ||= []
-              weekdays[[{ from: 0, to: 6 }]][:modifiers] << local_modifier
+              weekdays[[{ from: 0, to: 6, index: nil }]] ||= {}
+              weekdays[[{ from: 0, to: 6, index: nil }]][:modifiers] ||= []
+              weekdays[[{ from: 0, to: 6, index: nil }]][:modifiers] << local_modifier
             else
               weekdays[weekdays_and_holidays] ||= {}
               weekdays[weekdays_and_holidays][:modifiers] ||= []
@@ -87,9 +93,9 @@ module OpeningHoursConverter
               weekday_selector = tokens[@current_token]
               weekdays_and_holidays = get_weekdays(weekday_selector)
             rescue StandardError
-              weekdays[[{ from: 0, to: 6 }]] ||= {}
-              weekdays[[{ from: 0, to: 6 }]][:times] ||= []
-              weekdays[[{ from: 0, to: 6 }]][:times].concat(local_times)
+              weekdays[[{ from: 0, to: 6, index: nil }]] ||= {}
+              weekdays[[{ from: 0, to: 6, index: nil }]][:times] ||= []
+              weekdays[[{ from: 0, to: 6, index: nil }]][:times].concat(local_times)
             else
               weekdays[weekdays_and_holidays] ||= {}
               weekdays[weekdays_and_holidays][:times] ||= []
@@ -98,7 +104,8 @@ module OpeningHoursConverter
             end
           end
         end
-
+        puts weekdays
+        weeks = []
         months = []
         years = []
         holidays = []
@@ -121,6 +128,10 @@ module OpeningHoursConverter
                 months << get_month(wrs)
               elsif !(@RGX_YEAR =~ wrs).nil?
                 years << get_year(wrs)
+              elsif !(@RGX_WEEK_WITH_MODIFIER =~ wrs).nil?
+                weeks << get_week_with_modifier(wrs)
+              elsif !(@RGX_WEEK =~ wrs).nil?
+                weeks << get_week(wrs)
               else
                 raise ArgumentError, "Unsupported selector #{wrs}"
               end
@@ -130,9 +141,11 @@ module OpeningHoursConverter
 
         raise ArgumentError, 'Unreadable string' if @current_token == tokens.length - 1
 
-        # puts "weekdays : #{weekdays}"
-        # puts "months : #{months}"
-        # puts "years : #{years}"
+        puts "weekdays : #{weekdays}"
+        puts "weeks : #{weeks}"
+        puts "months : #{months}"
+        puts "years : #{years}"
+
 
         date_ranges = []
         if !months.empty?
@@ -153,6 +166,12 @@ module OpeningHoursConverter
             end
             date_ranges << date_range
           end
+        elsif !weeks.empty?
+
+          weeks.each do |week|
+            date_ranges << OpeningHoursConverter::WideInterval.new.week(week[:from], week[:from_year], week[:to], week[:to_year], week[:modifier])
+          end
+
         elsif !years.empty?
           years.each do |year|
             if !year[:from_day].nil?
@@ -183,8 +202,8 @@ module OpeningHoursConverter
         end
 
         if weekdays.empty?
-          weekdays[[{ from: 0, to: 6 }]] = {}
-          weekdays[[{ from: 0, to: 6 }]][:times] = [{ from: 0, to: 24 * 60 }]
+          weekdays[[{ from: 0, to: 6, index: nil }]] = {}
+          weekdays[[{ from: 0, to: 6, index: nil }]][:times] = [{ from: 0, to: 24 * 60 }]
         end
 
         date_ranges.each do |dr|
@@ -306,6 +325,22 @@ module OpeningHoursConverter
         year_to = nil
       end
       { from: year_from, to: year_to }
+    end
+
+    def get_week_with_modifier(wrs)
+      weeks, modifier = wrs.gsub(/\:$/, '').split('/')
+      weeks = weeks.split('-')
+
+      week_from = weeks[0].gsub('week ', '').to_i
+      raise ArgumentError, "Invalid week : #{week_from}" if week_from < 1 || week_from > 53
+
+      if weeks.length > 1
+        week_to = weeks[1].to_i
+        raise ArgumentError, "Invalid week : #{week_to}" if week_to < 1 || week_to > 53
+      else
+        week_to = week_from
+      end
+      { from: week_from, to: week_to, modifier: modifier.to_i }
     end
 
     def get_month(wrs)
@@ -439,7 +474,7 @@ module OpeningHoursConverter
       weekday_selector = weekday_selector.split(',')
       weekday_selector.each do |wd|
         if !(@RGX_HOLIDAY =~ wd).nil?
-          weekdays << { from: -2, to: -2 }
+          weekdays << { from: -2, to: -2, index: nil }
         elsif !(@RGX_WD =~ wd).nil?
           single_weekday = wd.split('-')
 
@@ -450,7 +485,14 @@ module OpeningHoursConverter
                     wd_from
                   end
 
-          weekdays << { from: wd_from, to: wd_to }
+          weekdays << { from: wd_from, to: wd_to, index: nil }
+        elsif !(@RGX_WD_WITH_MODIFIER =~ wd).nil?
+          single_weekday = wd[0...wd.index('[')]
+          index = wd[wd.index('[') + 1...wd.index(']')]
+
+          wd_from = OSM_DAYS.find_index(single_weekday[0])
+
+          weekdays << { from: wd_from, to: wd_from, index: index }
         else
           raise ArgumentError, "Invalid weekday interval : #{wd}"
         end
@@ -572,6 +614,7 @@ module OpeningHoursConverter
       weekday_merge = []
       wide_interval_merge = []
       merged_wide_interval = []
+
       groups.each_with_index do |group, group_index|
         if !wide_interval_merge.empty?
           merged_wide_interval += [wide_interval_merge.join(' ')]
@@ -583,7 +626,7 @@ module OpeningHoursConverter
             wide_interval_merge = []
             new_tokens << merged_wide_interval.join(',')
           end
-          if is_weekday?(token)
+          if is_weekday?(token) || is_weekday_with_modifier?(token)
             weekday_merge << token
             if token_index == group.length - 1 && group_index == groups.length - 1
               new_tokens << weekday_merge.join(',')
@@ -614,7 +657,10 @@ module OpeningHoursConverter
     def is_part_of_wide_interval?(string)
       is_wide_interval = false
       string.split('-').each do |str|
-        if (!(@RGX_YEAR =~ str).nil? || !(@RGX_YEAR_MONTH =~ str).nil? || !(@RGX_YEAR_MONTH_DAY =~ str).nil? || !(@RGX_DAY =~ str).nil? || !(@RGX_MONTHDAY =~ str).nil? || !(@RGX_MONTH =~ str).nil?) && ((@RGX_TIME =~ str).nil? && (@RGX_WEEKDAY =~ str).nil?)
+        if (!(@RGX_YEAR =~ str).nil? || !(@RGX_YEAR_MONTH =~ str).nil? || !(@RGX_YEAR_MONTH_DAY =~ str).nil? ||
+            !(@RGX_DAY =~ str).nil? || !(@RGX_MONTHDAY =~ str).nil? || !(@RGX_MONTH =~ str).nil? ||
+            !(@RGX_WEEK_KEY =~ str).nil? || !(@RGX_WEEK_VAL =~ str).nil? || !(@RGX_WEEK_VAL_WITH_MODIFIER =~ str).nil?) &&
+            ((@RGX_TIME =~ str).nil? && (@RGX_WEEKDAY =~ str).nil?)
           is_wide_interval = true
         else
           return false
@@ -643,8 +689,28 @@ module OpeningHoursConverter
       !(@RGX_WEEKDAY =~ token).nil?
     end
 
+    def is_weekday_with_modifier?(token)
+      !(@RGX_WD_WITH_MODIFIER =~ token).nil?
+    end
+
     def is_year?(token)
       !(@RGX_YEAR =~ token).nil?
+    end
+
+    def is_week_key?(token)
+      !(@RGX_WEEK_KEY =~ token).nil?
+    end
+
+    def is_week_val?(token)
+      !(@RGX_WEEK_VAL =~ token).nil?
+    end
+
+    def is_week_with_modifier?(token)
+      !(@RGX_WEEK_WITH_MODIFIER =~ token).nil?
+    end
+
+    def is_week_val_with_modifier?(token)
+      !(@RGX_WEEK_VAL_WITH_MODIFIER =~ token).nil?
     end
   end
 end
