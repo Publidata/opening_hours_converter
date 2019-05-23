@@ -3,6 +3,7 @@ require 'opening_hours_converter/constants'
 module OpeningHoursConverter
   class Iterator
     include Constants
+    extend Utils
 
     def get_iterator(date_ranges)
       date_ranges_array = []
@@ -78,7 +79,7 @@ module OpeningHoursConverter
             end
             date_ranges[index].typical.intervals.each do |i|
               next unless !i.nil? && !i.is_off
-              next unless (i.day_start..i.day_end).cover?(fix_datetime_wday(day.wday)) || (is_ph && year_ph.include?(Time.new(day.year, day.month, day.day)))
+              next unless (i.day_start..i.day_end).cover?(reindex_sunday_week_to_monday_week(day.wday)) || (is_ph && year_ph.include?(Time.new(day.year, day.month, day.day)))
               itr = { start: Time.new(day.year, day.month, day.day, i.start / 60, i.start % 60),
                       end: Time.new(day.year, day.month, day.day, i.end / 60, i.end % 60) }
               datetime_result << itr unless datetime_result.include?(itr)
@@ -98,7 +99,7 @@ module OpeningHoursConverter
         result.each do |interval|
           (interval[:start]..interval[:end]).each do |day|
             date_ranges[index].typical.intervals.each do |i|
-              if (i.day_start..i.day_end).cover?(fix_datetime_wday(day.wday))
+              if (i.day_start..i.day_end).cover?(reindex_sunday_week_to_monday_week(day.wday))
                 datetime_result << { start: DateTime.new(day.year, day.month, day.day, i.start / 60, i.start % 60),
                                      end: DateTime.new(day.year, day.month, day.day, i.end / 60, i.end % 60) }
               end
@@ -108,10 +109,6 @@ module OpeningHoursConverter
       end
 
       datetime_result.sort_by { |a| a[:start] }
-    end
-
-    def fix_datetime_wday(d)
-      d == 0 ? 6 : d - 1
     end
 
     # A partir d'une string OH et d'une DateTime (= now par défaut), renvoyer le current state (début / fin / commentaire)
@@ -153,14 +150,6 @@ module OpeningHoursConverter
         return true if interval[:start] <= time && interval[:end] >= time
       end
       false
-    end
-
-    def datetime_to_time(datetime)
-      Time.new(datetime.year, datetime.month, datetime.day, datetime.hour, datetime.min, datetime.sec, datetime.zone)
-    end
-
-    def time_to_datetime(time)
-      DateTime.new(time.year, time.month, time.day, time.hour, time.min, time.sec, Rational(time.gmt_offset / 3600, 24))
     end
   end
 end
