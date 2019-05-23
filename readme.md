@@ -12,24 +12,30 @@ This gem was made to make data migration from date range to opening hours easy. 
 
 ```ruby
 builder = OpeningHoursConverter::OpeningHoursBuilder.new
-Schedule.find_each do |s|
-  dr = OpeningHoursConverter::DateRange.new
+Schedule.find_each do |schedule|
+  date_range = OpeningHoursConverter::DateRange.new
   # Assuming dates are instance of Date.
-  dr.wide_interval = OpeningHoursConverter::WideInterval.new.day(
-    s.starting_date.day,
-    s.starting_date.month,
-    s.starting_date.year,
-    s.ending_date.day,
-    s.ending_date.month,
-    s.ending_date.year)
+  date_range.wide_interval = OpeningHoursConverter::WideInterval.new.day(
+    schedule.starting_date.day,
+    schedule.starting_date.month,
+    schedule.starting_date.year,
+    schedule.ending_date.day,
+    schedule.ending_date.month,
+    schedule.ending_date.year
+  )
 
   # Assuming days are weekdays and week start is monday (0 is monday, 6 is sunday).
   # Assuming times are expressed in minutes from midnight (600 is 10:00, 1200 is 20:00)
-  s.opening_hours.find_each do |oh|
-    dr.typical.add_interval(oh.day_start, oh.time_start, oh.day_end, oh.time_end)
+  schedule.opening_hours.find_each do |opening_hours|
+    date_range.typical.add_interval(
+      opening_hours.day_start, 
+      opening_hours.time_start, 
+      opening_hours.day_end, 
+      opening_hours.time_end
+    )
   end
-  s.opening_hours_string = builder.build([dr])
-  s.save
+  schedule.opening_hours_string = builder.build([date_range])
+  schedule.save
 end
 ```
 And you can now remove start_date, end_date from schedule and drop the opening_hours table. To get your opening hours in a ruby object, you can now do :
