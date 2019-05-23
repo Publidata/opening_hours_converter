@@ -30,5 +30,18 @@ module OpeningHoursConverter
     def leap_year?(year = Time.now.year)
       year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
     end
+
+    def last_day_of_month(month, year)
+      return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month] unless leap_year?(year) && month == 1
+      return 29
+    end
+
+    def time_to_datetime(time)
+      DateTime.new(time.year, time.month, time.day, time.hour, time.min, time.sec, Rational(time.gmt_offset / 3600, 24))
+    end
+
+    def datetime_to_time(datetime)
+      Time.new(datetime.year, datetime.month, datetime.day, datetime.hour, datetime.min, datetime.sec, datetime.zone)
+    end
   end
 end

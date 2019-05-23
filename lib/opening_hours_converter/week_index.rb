@@ -66,5 +66,63 @@ module OpeningHoursConverter
       return Date.new(year - 1, 12, 31 - first_wday_of_year + 1) if first_wday_of_year < 4 # first day of year is tuesday wednesday or thursday
       return Date.new(year, 1, 7 - first_wday_of_year + 1) # first day of year is friday saturday or sunday
     end
+
+    def self.nth_wday_of_month(n, wday, month, year = Time.now.year)
+      return last_wday_of_month(wday, month, year) if n == -1
+
+      first_day_of_month = Date.new(year, month, 1)
+      first_wday_of_month = reindex_sunday_week_to_monday_week(first_day_of_month.wday)
+
+      date =
+        if wday == first_wday_of_month
+          # first day of the month is the weekday we are looking for
+
+          first_day_of_month + (n - 1) * 7
+        elsif wday < first_wday_of_month
+          # first day of the month is after (in the week) than the weekday we are looking for
+          # so we look in the next week
+
+          last_monday_of_previous_month = first_day_of_month - first_wday_of_month
+          first_monday_of_the_month = last_monday_of_previous_month + 7
+
+          first_monday_of_the_month + wday + (n - 1) * 7
+        else
+          # first day of the month is before (in the week) than the weekday we are looking for
+          # so we look in the current week
+
+          first_day_of_the_week = first_day_of_month - first_wday_of_month
+          first_day_of_the_week + wday + (n - 1) * 7
+        end
+      raise 'Out of bound' unless date.month == month
+
+      date
+    end
+
+    def self.last_wday_of_month(wday, month, year = Time.now.year)
+      last_day_of_month = Date.new(year, month, last_day_of_month(month - 1, year))
+      last_wday_of_month = reindex_sunday_week_to_monday_week(last_day_of_month.wday)
+
+      date =
+        if wday == last_wday_of_month
+          # last day of the month is the weekday we are looking for
+
+          last_day_of_month
+        elsif wday > last_wday_of_month
+          # last day of the month is before (in the week) than the weekday we are looking for
+          # so we look in the current week
+
+          previous_week_monday = last_day_of_month - last_wday_of_month - 7
+          previous_week_monday + wday
+        else
+          # last day of the month is after (in the week) than the weekday we are looking for
+          # so we look in the previous week
+
+          first_day_of_the_week = last_day_of_month - last_wday_of_month
+          first_day_of_the_week + wday
+        end
+      raise 'Out of bound' unless date.month == month
+
+      date
+    end
   end
 end
