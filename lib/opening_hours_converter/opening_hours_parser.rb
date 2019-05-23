@@ -10,11 +10,10 @@ module OpeningHoursConverter
     def initialize
       @RGX_RULE_MODIFIER = /^(open|closed|off)$/i
       @RGX_WEEK_KEY = /^week$/
-      @RGX_WEEK_VAL = /^([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?(,([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?)*\:?$/
+      @RGX_WEEK = /^week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?)*$/
+      @RGX_WEEK_VAL = /^([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?)*\:?$/
       @RGX_WEEK_WITH_MODIFIER = /^week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))\/(5[0123]|[01234]?[0-9])$/
       @RGX_WEEK_VAL_WITH_MODIFIER = /^([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))\/(5[0123]|[01234]?[0-9])$/
-      # @RGX_YEAR_WEEK_WITH_MODIFIER = /^([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))\/(5[0123]|[01234]?[0-9])$/ todo
-      # @RGX_YEAR_WEEK = /^([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))\/(5[0123]|[01234]?[0-9])$/ todo
       @RGX_MONTH = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\-(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))?\:?$/
       @RGX_MONTHDAY = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([012]?[0-9]|3[01])(\-((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) )?([012]?[0-9]|3[01]))?\:?$/
       @RGX_TIME = /^((([01]?[0-9]|2[01234])\:[012345][0-9](\-([01]?[0-9]|2[01234])\:[012345][0-9])?(,([01]?[0-9]|2[01234])\:[012345][0-9](\-([01]?[0-9]|2[01234])\:[012345][0-9])?)*)|(24\/7))$/
@@ -25,6 +24,8 @@ module OpeningHoursConverter
       @RGX_DAY = /^([012]?[0-9]|3[01])(\-[012]?[0-9]|3[01])?$/
       @RGX_YEAR = /^(\d{4})(\-(\d{4}))?$/
       @RGX_YEAR_PH = /^(\d{4})( PH|(\-(\d{4}) PH))\:?$/
+      @RGX_YEAR_WEEK = /^(\d{4})(\-(\d{4}))? week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?)*))\:?$/
+      @RGX_YEAR_WEEK_WITH_MODIFIER = /^(\d{4})(\-(\d{4}))? week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))\/(5[0123]|[01234]?[0-9])$/
       @RGX_YEAR_MONTH_DAY = /^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([012]?[0-9]|3[01])(\-((\d{4}) )?((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) )?([012]?[0-9]|3[01]))?\:?$/
       @RGX_YEAR_MONTH = /^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\-((\d{4}) )?((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)))?\:?$/
       @RGX_COMMENT = /^\"[^\"]*\"$/
@@ -104,7 +105,7 @@ module OpeningHoursConverter
             end
           end
         end
-        puts weekdays
+
         weeks = []
         months = []
         years = []
@@ -141,10 +142,10 @@ module OpeningHoursConverter
 
         raise ArgumentError, 'Unreadable string' if @current_token == tokens.length - 1
 
-        puts "weekdays : #{weekdays}"
-        puts "weeks : #{weeks}"
-        puts "months : #{months}"
-        puts "years : #{years}"
+        # puts "weekdays : #{weekdays}"
+        # puts "weeks : #{weeks}"
+        # puts "months : #{months}"
+        # puts "years : #{years}"
 
 
         date_ranges = []
@@ -712,5 +713,15 @@ module OpeningHoursConverter
     def is_week_val_with_modifier?(token)
       !(@RGX_WEEK_VAL_WITH_MODIFIER =~ token).nil?
     end
+
+    def is_year_week?(token)
+      !(@RGX_YEAR_WEEK =~ token).nil?
+    end
+
+    def is_year_week_with_modifier?(token)
+      !(@RGX_YEAR_WEEK_WITH_MODIFIER =~ token).nil?
+    end
   end
 end
+
+
