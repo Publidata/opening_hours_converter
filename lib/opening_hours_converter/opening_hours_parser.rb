@@ -24,7 +24,7 @@ module OpeningHoursConverter
       @RGX_DAY = /^([012]?[0-9]|3[01])(\-[012]?[0-9]|3[01])?$/
       @RGX_YEAR = /^(\d{4})(\-(\d{4}))?$/
       @RGX_YEAR_PH = /^(\d{4})( PH|(\-(\d{4}) PH))\:?$/
-      @RGX_YEAR_WEEK = /^(\d{4})(\-(\d{4}))? week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?)*))\:?$/
+      @RGX_YEAR_WEEK = /^(\d{4})(\-(\d{4}))? week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?)*\:?$/
       @RGX_YEAR_WEEK_WITH_MODIFIER = /^(\d{4})(\-(\d{4}))? week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))\/(5[0123]|[01234]?[0-9])$/
       @RGX_YEAR_MONTH_DAY = /^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([012]?[0-9]|3[01])(\-((\d{4}) )?((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) )?([012]?[0-9]|3[01]))?\:?$/
       @RGX_YEAR_MONTH = /^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\-((\d{4}) )?((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)))?\:?$/
@@ -129,6 +129,10 @@ module OpeningHoursConverter
                 months << get_month(wrs)
               elsif !(@RGX_YEAR =~ wrs).nil?
                 years << get_year(wrs)
+              elsif !(@RGX_YEAR_WEEK_WITH_MODIFIER =~ wrs).nil?
+                weeks << get_year_week_with_modifier(wrs)
+              elsif !(@RGX_YEAR_WEEK =~ wrs).nil?
+                weeks << get_year_week(wrs)
               elsif !(@RGX_WEEK_WITH_MODIFIER =~ wrs).nil?
                 weeks << get_week_with_modifier(wrs)
               elsif !(@RGX_WEEK =~ wrs).nil?
@@ -328,6 +332,32 @@ module OpeningHoursConverter
       { from: year_from, to: year_to }
     end
 
+    def get_year_week_with_modifier(wrs)
+      year, week = wrs.gsub(/\:$/, '').split(' week ')
+      # does not handle 2018,2019
+      years = year.split('-')
+      # does not handle week 1,2,3
+      weeks = week.split('-')
+      week_to, modifier = weeks[1].split('/')
+
+      { year_from: years[0].to_i, week_from: weeks[0].to_i, week_to: week_to.to_i, modifier: modifier.to_i }.tap do |hsh|
+        hsh[:year_to] = years.length > 1 ? years[1].to_i : nil
+      end
+    end
+
+    def get_year_week(wrs)
+      year, week = wrs.gsub(/\:$/, '').split(' week ')
+      # does not handle 2018,2019
+      years = year.split('-')
+      # does not handle week 1,2,3
+      weeks = week.split('-')
+
+      { year_from: year[0].to_i, week_from: weeks[0].to_i }.tap do |hsh|
+        hsh[:year_to] = years.length > 1 ? year[1].to_i : nil
+        hsh[:week_to] = weeks.length > 1 ? weeks[1].to_i : nil
+      end
+    end
+
     def get_week_with_modifier(wrs)
       weeks, modifier = wrs.gsub(/\:$/, '').split('/')
       weeks = weeks.split('-')
@@ -343,6 +373,14 @@ module OpeningHoursConverter
       end
       { from: week_from, to: week_to, modifier: modifier.to_i }
     end
+
+    def get_week(wrs)
+      week = wrs.gsub(/\:$/, '').gsub('week ', '')
+      weeks = week.split('-')
+
+      { from: weeks[0].to_i, to: weeks[1].to_i }
+    end
+
 
     def get_month(wrs)
       single_month = wrs.gsub(/\:$/, '').split('-')
