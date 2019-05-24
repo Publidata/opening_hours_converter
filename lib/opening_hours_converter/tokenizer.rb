@@ -1,5 +1,9 @@
+require 'opening_hours_converter/constants'
+
 module OpeningHoursConverter
   class Tokenizer
+    include Constants
+
     attr_reader :tokens
 
     def initialize(opening_hours_string)
@@ -11,9 +15,9 @@ module OpeningHoursConverter
 
     def tokenize
       puts "tokenizing #{@opening_hours_string}"
-      xd = 0
+      counter = 0
       while @index < @opening_hours_string.length
-        binding.pry if xd > 200
+        binding.pry if counter > 200
         skip_white_spaces
         @tokens << handle_string if string?
 
@@ -36,8 +40,11 @@ module OpeningHoursConverter
         @tokens << handle_colon if colon?
 
         skip_white_spaces
+        @tokens << handle_comma if comma?
+
+        skip_white_spaces
         @tokens << handle_hyphen if hyphen?
-        xd += 1
+        counter += 1
       end
     end
 
@@ -127,6 +134,16 @@ module OpeningHoursConverter
       token(value, type, start_index)
     end
 
+    def handle_comma
+      type = :comma
+      start_index = @index
+
+      value = current_character
+      @index += 1
+
+      token(value, type, start_index)
+    end
+
     def handle_hyphen
       type = :hyphen
       start_index = @index
@@ -138,25 +155,13 @@ module OpeningHoursConverter
     end
 
     def token(value, type, start_index)
-      {
-        value: value,
-        type: type,
-        start_index: start_index
-      }
+      OpeningHoursConverter::Token.new(value, type, start_index)
     end
 
     def skip_white_spaces
       until current_character.nil? || !white_space?
         @index += 1
       end
-    end
-
-    def token(value, type, start_index)
-      {
-        value: value,
-        type: type,
-        start_index: start_index
-      }
     end
 
     def integer?
