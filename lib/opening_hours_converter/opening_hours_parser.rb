@@ -151,7 +151,6 @@ module OpeningHoursConverter
         # puts "months : #{months}"
         # puts "years : #{years}"
 
-
         date_ranges = []
         if !months.empty?
           months.each do |month|
@@ -174,7 +173,7 @@ module OpeningHoursConverter
         elsif !weeks.empty?
 
           weeks.each do |week|
-            date_ranges << OpeningHoursConverter::WideInterval.new.week(week[:from], week[:from_year], week[:to], week[:to_year], week[:modifier])
+            date_ranges << OpeningHoursConverter::WideInterval.new.week(week[:week_from], week[:year_from], week[:week_to], week[:year_to], week[:modifier])
           end
 
         elsif !years.empty?
@@ -371,14 +370,14 @@ module OpeningHoursConverter
       else
         week_to = week_from
       end
-      { from: week_from, to: week_to, modifier: modifier.to_i }
+      { week_from: week_from, week_to: week_to, modifier: modifier.to_i }
     end
 
     def get_week(wrs)
       week = wrs.gsub(/\:$/, '').gsub('week ', '')
       weeks = week.split('-')
 
-      { from: weeks[0].to_i, to: weeks[1].to_i }
+      { week_from: weeks[0].to_i, week_to: weeks[1].to_i }
     end
 
 
