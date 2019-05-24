@@ -53,7 +53,10 @@ module OpeningHoursConverter
         block.strip!
         next if block.empty?
 
-        tokens = tokenize(block)
+        tokenizer = OpeningHoursConverter::Tokenizer.new(block)
+        tokenizer.tokenize
+
+        tokens = tokenizer.token_array
         @current_token = tokens.length - 1
 
         weekdays = {}
