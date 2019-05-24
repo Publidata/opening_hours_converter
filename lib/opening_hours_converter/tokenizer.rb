@@ -11,6 +11,8 @@ module OpeningHoursConverter
       @index = 0
       @tokens = []
       tokenize
+      @tokens_handler = OpeningHoursConverter::TokensHandler.new(@tokens)
+      @tokens = @tokens_handler.tokens.map(&:value)
     end
 
     def tokenize
