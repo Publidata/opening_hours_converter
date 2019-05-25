@@ -246,7 +246,29 @@ module OpeningHoursConverter
     end
 
     def handle_week
+      type = { week: true }
+      start_index = current_token.start_index
+      value = current_token.value
+      made_from = [current_token]
+      @index += 1
+      while current_token?
+        break if current_token.weekday?
 
+        if current_token.hyphen? || current_token.comma?
+          type[:multi_week] = true
+          value = add_current_token_value_to(value)
+          made_from << current_token
+          @index += 1
+          next
+        end
+
+        if current_token.week_index?
+          value = add_current_token_value_to(value)
+          made_from << current_token
+          @index += 1
+          next
+        end
+      end
     end
 
     def handle_weekday
