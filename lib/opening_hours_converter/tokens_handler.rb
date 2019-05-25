@@ -133,7 +133,6 @@ module OpeningHoursConverter
 
         if current_token.integer?
           break if current_token_is_time? # we don't want time range in the wide interval token
-          break if current_token.weekday? # nor weekdays
           break if current_token_is_all_time? # nor 24/7
 
           if type[:week]
