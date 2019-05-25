@@ -16,7 +16,6 @@ module OpeningHoursConverter
     end
 
     def tokenize
-      puts "tokenizing #{@opening_hours_string}"
       counter = 0
       while @index < @opening_hours_string.length
         binding.pry if counter > 200

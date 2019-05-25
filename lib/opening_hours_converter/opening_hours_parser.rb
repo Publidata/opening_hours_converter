@@ -53,8 +53,6 @@ module OpeningHoursConverter
         block.strip!
         next if block.empty?
 
-        puts block if block[0].to_i != 0
-
         tokenizer = OpeningHoursConverter::Tokenizer.new(block)
         tokens = tokenizer.tokens
         # tokens = tokenize(block)
