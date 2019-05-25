@@ -30,10 +30,6 @@ module OpeningHoursConverter
       string? && @value == 'week'
     end
 
-    def week?
-      string? && @value == 'week'
-    end
-
     def week_index?
       # Nécessaire mais pas suffisant : 10 de 10:00 retourne true il faudra check le previous/next token pour décider ou garder le state week
       integer? && @value.to_i <= 53 && @value.to_i >= 1
