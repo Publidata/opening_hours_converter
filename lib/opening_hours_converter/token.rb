@@ -15,34 +15,46 @@ module OpeningHoursConverter
     end
 
     def year?
-      @type == :year || integer? && @value.length == 4
+      integer? && @value.length == 4
     end
 
     def weekday?
-      @type == :weekday || string? && OSM_DAYS.any? { |day| day == @value }
+      string? && OSM_DAYS.any? { |day| day == @value }
     end
 
     def month?
-      @type == :month || string? && OSM_MONTHS.any? { |day| day == @value }
+      string? && OSM_MONTHS.any? { |day| day == @value }
     end
 
     def week?
-      @type == :week || string? && @value == 'week'
+      string? && @value == 'week'
+    end
+
+    def week?
+      string? && @value == 'week'
     end
 
     def week_index?
       # Nécessaire mais pas suffisant : 10 de 10:00 retourne true il faudra check le previous/next token pour décider ou garder le state week
-      @type == :week_index || (integer? && @value.to_i <= 53 && @value.to_i >= 1)
+      integer? && @value.to_i <= 53 && @value.to_i >= 1
     end
 
     def monthday?
       # Nécessaire mais pas suffisant : 10 de 10:00 retourne true il faudra check le previous/next token pour décider
-      @type == :monthday || (integer? && @value.to_i <= 31 && @value.to_i >= 1)
+      integer? && @value.to_i <= 31 && @value.to_i >= 1
     end
 
     def time?
       # Nécessaire mais pas suffisant : 10 de Jan 10 retourne true il faudra check le previous/next token pour décider
-      @type == :time || (integer? && @value.length == 2 && @value.to_i < 60 && @value.to_i >= 0)
+      integer? && @value.to_i < 60 && @value.to_i >= 0
+    end
+
+    def public_holiday?
+      string? && @value.downcase == 'ph'
+    end
+
+    def off?
+      string? && @value.downcase == 'off'
     end
 
     def string?

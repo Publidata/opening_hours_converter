@@ -38,12 +38,6 @@ module OpeningHoursConverter
 
         if current_token_is_time?
           @tokens << handle_time
-
-          while current_token? && current_token.comma?
-            @index += 1
-            @tokens << handle_time
-          end
-
           next
         end
 
@@ -59,6 +53,17 @@ module OpeningHoursConverter
 
         if current_token.off?
           @tokens << handle_off
+          next
+        end
+
+        if current_token.quote?
+          @tokens << handle_quote
+          next
+        end
+
+        if current_token.comma?
+          # catches "Mo off, Tu 10:00-20:00"
+          @index += 1
           next
         end
 
@@ -99,6 +104,8 @@ module OpeningHoursConverter
         end
 
         if current_token.string?
+          break if current_token.weekday?
+
           if current_token.week?
             type[:week] = true
             value = add_current_token_value_to(value, ' ')
@@ -127,6 +134,7 @@ module OpeningHoursConverter
         if current_token.integer?
           break if current_token_is_time? # we don't want time range in the wide interval token
           break if current_token.weekday? # nor weekdays
+          break if current_token_is_all_time? # nor 24/7
 
           if type[:week]
             if current_token.week_index?
@@ -174,22 +182,7 @@ module OpeningHoursConverter
         break
       end
 
-      t = token(value, type, start_index, made_from)
-
-      # 2019
-      # 2019-2020
-      # 2019-2020, 2021
-      # 2019, 2020
-      # 2019 week 10
-      # 2019 week 10,11
-      # 2019 week 10,11-12
-      # 2019 Jan 10
-      # 2019 Jan 10-20
-      # 2019 Jan-Feb
-      # 2019 Jan 10-Feb 20
-      # 2019 Jan-2020 Feb
-      # 2019 Jan 10-2020 Feb 20
-
+      token(value, type, start_index, made_from)
     end
 
     def token(value, type, start_index, made_from)
@@ -204,7 +197,10 @@ module OpeningHoursConverter
       @index += 1
 
       while current_token?
-        if current_token.hyphen? || current_token.comma?  || current_token.slash?
+        break if current_token_is_all_time?
+        break if current_token_is_time?
+
+        if current_token.hyphen? || current_token.comma? || current_token.slash?
           value = add_current_token_value_to(value)
           made_from << current_token
           @index += 1
@@ -245,6 +241,8 @@ module OpeningHoursConverter
 
         break
       end
+
+      token(value, type, start_index, made_from)
     end
 
     def handle_week
@@ -259,6 +257,8 @@ module OpeningHoursConverter
       @index += 1
 
       while current_token?
+        break if current_token.integer?
+
         if current_token.hyphen? || current_token.comma?
           type[:multi_weekday] = true
           value = add_current_token_value_to(value)
@@ -269,6 +269,14 @@ module OpeningHoursConverter
 
         if current_token.weekday?
           type[:multi_weekday] = true
+          value = add_current_token_value_to(value)
+          made_from << current_token
+          @index += 1
+          next
+        end
+
+        if current_token.public_holiday?
+          type[:public_holiday] = true
           value = add_current_token_value_to(value)
           made_from << current_token
           @index += 1
@@ -302,6 +310,8 @@ module OpeningHoursConverter
 
         break
       end
+
+      token(value, type, start_index, made_from)
     end
 
     def handle_time
@@ -312,7 +322,7 @@ module OpeningHoursConverter
       made_from = [current_token]
       @index += 1
 
-      raise unless current_token.colon?
+      binding.pry unless current_token.colon?
       value = add_current_token_value_to(value)
       made_from << current_token
       @index += 1
@@ -354,6 +364,15 @@ module OpeningHoursConverter
       made_from = [current_token]
       @index += 1
 
+      if current_token.comma?
+        value = add_current_token_value_to(value)
+        made_from << current_token
+        @index += 1
+
+        weekdays_token = handle_weekday
+        value += weekdays_token.value
+      end
+
       token(value, type, start_index, made_from)
     end
 
@@ -365,7 +384,7 @@ module OpeningHoursConverter
       made_from = [current_token]
       @index += 1
 
-      raise unless current_token.slash?
+      binding.pry unless current_token.slash?
       value = add_current_token_value_to(value)
       made_from << current_token
       @index += 1
@@ -378,23 +397,46 @@ module OpeningHoursConverter
       token(value, type, start_index, made_from)
     end
 
+    def handle_off
+      type = { off: true }
+      start_index = current_token.start_index
+
+      value = current_token.value
+      made_from = [current_token]
+      @index += 1
+
+      token(value, type, start_index, made_from)
+    end
+
+    def handle_quote
+      type = { comment: true }
+      start_index = current_token.start_index
+
+      value = current_token.value
+      made_from = [current_token]
+      @index += 1
+
+      token(value, type, start_index, made_from)
+    end
+
     def current_token_is_time?
-      current_token? &&
+      return false unless current_token?
 
-      # check if current token is either 12 or 34 in 12:34
-      (current_token.integer? && current_token.value.length == 2 &&
-        (previous_token? && previous_token.colon?) ||
-        (next_token? && next_token.colon?)) ||
+      if current_token.time?
+        if previous_token.hyphen?
+          return false unless next_token? && next_token.colon?
+          return true
+        end
+        if next_token? && next_token.hyphen?
+          return false unless previous_token.colon?
+          return true
+        end
 
-      # check if current token is : in 12:34
-      (current_token.colon? &&
-        previous_token? && previous_token.time? &&
-        next_token? && next_token.time?) ||
+        return false unless previous_token.colon? || next_token? && next_token.colon?
+        return true
+      end
 
-      # check if current token is - in 12:34-56:78s
-      (current_token.hyphen? &&
-        previous_token? && previous_token.time? &&
-        next_token? && next_token.time?)
+      return false
     end
 
     def current_token_is_week_modifier?
