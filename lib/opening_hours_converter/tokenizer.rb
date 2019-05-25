@@ -93,6 +93,17 @@ module OpeningHoursConverter
       value = current_character
       @index += 1
 
+      while current_character?
+        if quote?
+          value << current_character
+          @index += 1
+          break
+        else
+          value << current_character
+          @index += 1
+        end
+      end
+
       token(value, type, start_index)
     end
 
