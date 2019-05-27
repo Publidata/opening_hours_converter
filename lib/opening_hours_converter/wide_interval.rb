@@ -402,10 +402,33 @@ module OpeningHoursConverter
           o.start[:day] >= my.start[:day]))
     end
 
+    def sort_days_array(days_array, by = :start)
+      if days_array.all? { |day| day.start && !day.start[:year].nil? }
+        days_array.sort_by { |day| [day.send(by)[:year], day.send(by)[:month], day.send(by)[:day]] }
+      else
+        days_array.sort_by { |day| [day.send(by)[:month], day.send(by)[:day]] }
+      end
+
+    end
+
     def has_superior_or_equal_start_day?(my, o)
       result = false
       if has_start_year?(o) && has_start_year?(my)
-        result = o.start[:year] > my.start[:year] || (o.start[:year] == my.start[:year] && has_superior_start_month?(my, o))
+        if o.is_a?(Array)
+          if my.is_a?(Array)
+            o = sort_days_array o
+            my = sort_days_array my
+            has_superior_or_equal_start_day?(my.first, o.first)
+          else
+            o = sort_days_array o
+            has_superior_or_equal_start_day?(my, o.first)
+          end
+        elsif my.is_a?(Array)
+          my = sort_days_array my
+          has_superior_or_equal_start_day?(my.first, o)
+        else
+          result = o.start[:year] > my.start[:year] || (o.start[:year] == my.start[:year] && has_superior_start_month?(my, o))
+        end
       elsif !has_start_year?(my)
         result = has_superior_start_month?(my, o)
       end
@@ -445,7 +468,11 @@ module OpeningHoursConverter
     end
 
     def has_start_year?(date)
-      !date.start[:year].nil?
+      if date.is_a?(Array)
+        date.all? { |d| !d.start[:year].nil? }
+      else
+        !date.start[:year].nil?
+      end
     end
 
     def has_end_year?(date)
@@ -462,6 +489,8 @@ module OpeningHoursConverter
       return false if @type == 'always'
       self_to_day = to_day
       o_to_day = o.to_day
+      return false if self_to_day.is_a?(Array) != o_to_day.is_a?(Array)
+
       (self_to_day.start[:year] == o_to_day.start[:year] &&
         self_to_day.start[:month] == o_to_day.start[:month] &&
         self_to_day.start[:day] == o_to_day.start[:day]) &&
@@ -573,7 +602,52 @@ module OpeningHoursConverter
         else
           OpeningHoursConverter::WideInterval.new.day(1, 1, @start[:year], 31, 12, @end[:year])
         end
+      when 'week'
+        if @start && @start[:year]
+          if @end && @end[:year]
+            weeks = []
+            (@start[:year]..@end[:year]).each do |year|
+              weeks += get_weeks_for_year(year)
+            end
+            weeks
+          else
+            get_weeks_for_year(@start[:year])
+          end
+        else
+          get_weeks_for_year
+        end
       end
+    end
+
+    def get_weeks_for_year(year = Time.now.year)
+      weeks_as_days = []
+      @indexes.each do |week_index|
+        if week_index.is_a?(Integer)
+          week = OpeningHoursConverter::WeekIndex.week_from_index(week_index, year)
+          weeks_as_days << OpeningHoursConverter::WideInterval.new.day(week[:from].day, week[:from].month, week[:from].year,
+                week[:to].day, week[:to].month, week[:to].year)
+        else
+          if week_index.key?(:modifier)
+            i = 0
+            (week_index[:from]..week_index[:to]).map do |index|
+              if i % week_index[:modifier] == 0
+                week = OpeningHoursConverter::WeekIndex.week_from_index(index, year)
+                weeks_as_days << OpeningHoursConverter::WideInterval.new.day(week[:from].day, week[:from].month, week[:from].year,
+                  week[:to].day, week[:to].month, week[:to].year)
+              end
+              i += 1
+            end
+          else
+            (week_index[:from]..week_index[:to]).map do |index|
+              week = OpeningHoursConverter::WeekIndex.week_from_index(index, year)
+              weeks_as_days << OpeningHoursConverter::WideInterval.new.day(week[:from].day, week[:from].month, week[:from].year,
+                week[:to].day, week[:to].month, week[:to].year)
+            end
+          end
+        end
+      end
+
+      weeks_as_days
     end
   end
 end
