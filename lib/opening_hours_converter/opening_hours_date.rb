@@ -109,7 +109,7 @@ module OpeningHoursConverter
     end
 
     def add_overwritten_weekday(weekday)
-      return if @weekdays_over.include?(weekday) && @weekdays_over.include?(weekday)
+      return if @weekdays_over.include?(weekday)
 
       @weekdays_over << weekday
       @weekdays_over.sort!

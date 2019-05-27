@@ -82,7 +82,59 @@ module OpeningHoursConverter
     def self.build_day_array_from_dates(dates, get_iterator=false)
       years = {}
       dates.each do |date|
-        if !date.wide_interval.start.nil? && !date.wide_interval.start[:year].nil?
+
+        if date.wide_interval.type == 'week'
+          if date.wide_interval.start.nil? || date.wide_interval.start[:year].nil?
+            date.wide_interval.indexes.each do |week_index|
+              if week_index.is_a? Integer
+                years["always"] ||= []
+                years["always"] << { start: { week: week_index }, end: { week: week_index } }
+              elsif week_index.is_a?(Hash) && week_index.key?(:modifier)
+                # week range with modifier
+                years["always"] ||= []
+                years["always"] << { start: { week: week_index[:from] }, end: { week: week_index[:to] }, modifier: week_index[:modifier] }
+              else
+                # week range
+                years["always"] ||= []
+                years["always"] << { start: { week: week_index[:from] }, end: { week: week_index[:to] } }
+              end
+            end
+          else
+            if date.wide_interval.end.nil? || date.wide_interval.end[:year].nil?
+              date.wide_interval.indexes.each do |week_index|
+                if week_index.is_a? Integer
+                  years[date.wide_interval.start[:year]] ||= []
+                  years[date.wide_interval.start[:year]] << { start: { week: week_index }, end: { week: week_index } }
+                elsif week_index.is_a?(Hash) && week_index.key?(:modifier)
+                  # week range with modifier
+                  years[date.wide_interval.start[:year]] ||= []
+                  years[date.wide_interval.start[:year]] << { start: { week: week_index[:from] }, end: { week: week_index[:to] }, modifier: week_index[:modifier] }
+                else
+                  # week range
+                  years[date.wide_interval.start[:year]] ||= []
+                  years[date.wide_interval.start[:year]] << { start: { week: week_index[:from] }, end: { week: week_index[:to] } }
+                end
+              end
+            else
+              date.wide_interval.start[:year].upto(date.wide_interval.end[:year]) do |year|
+                date.wide_interval.indexes.each do |week_index|
+                  if week_index.is_a? Integer
+                    years[year] ||= []
+                    years[year] << { start: { week: week_index }, end: { week: week_index } }
+                  elsif week_index.is_a?(Hash) && week_index.key?(:modifier)
+                    # week range with modifier
+                    years[year] ||= []
+                    years[year] << { start: { week: week_index[:from] }, end: { week: week_index[:to] }, modifier: week_index[:modifier] }
+                  else
+                    # week range
+                    years[year] ||= []
+                    years[year] << { start: { week: week_index[:from] }, end: { week: week_index[:to] } }
+                  end
+                end
+              end
+            end
+          end
+        elsif !date.wide_interval.start.nil? && !date.wide_interval.start[:year].nil?
           if date.wide_interval.end.nil? || date.wide_interval.end[:year].nil? || date.wide_interval.start[:year] == date.wide_interval.end[:year]
             if !years[date.wide_interval.start[:year]].nil?
               years = process_single_year(date.wide_interval, years)

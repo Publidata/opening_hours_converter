@@ -3,13 +3,13 @@ require 'opening_hours_converter/constants'
 module OpeningHoursConverter
   class WideInterval
     include Constants
-    attr_accessor :start, :end, :type, :modifier
+    attr_accessor :start, :end, :type, :indexes
 
     def initialize
       @start = nil
       @end = nil
+      @indexes = nil
       @type = nil
-      @modifier = nil
     end
 
     def get_time_selector
@@ -134,14 +134,14 @@ module OpeningHoursConverter
       self
     end
 
-    def week(start_week, start_year = nil, end_week = nil, end_year = nil, modifier = nil)
-      raise(ArgumentError, 'start_week is required') if start_week.nil?
-      @start = { week: start_week, year: start_year }
-      if !end_week.nil? && (end_week != start_week || (!start_year.nil? && !end_year.nil? && end_year != start_year))
-        @end = { week: end_week, year: end_year }
+    def week(week_indexes, start_year = nil, end_year = nil)
+      raise(ArgumentError, 'weeks are required (array of ints)') if week_indexes.nil? || !week_indexes.is_a?(Array)
+      @start = { year: start_year }
+      @indexes = week_indexes
+      if !start_year.nil? && !end_year.nil? && end_year != start_year
+        @end = { year: end_year }
       end
       @type = 'week'
-      @modifier = modifier
       self
     end
 
@@ -236,7 +236,9 @@ module OpeningHoursConverter
       else
         my = to_day
         o = o.to_day
-
+# solution poour les weeks, on peut convertir un wide interval week en array de wide interval days et comparer les wide interval week
+  # un par un (long si deux wide interval multiweek)
+# problem : comment calculer les weeks always ? comparer sur l'année en cours si o est always, les années de o sinon
         result = ((my_start_is_before_o_end?(my, o) && my_start_is_after_o_start?(my, o)) ||
           (my_end_is_before_o_end?(my, o) && my_end_is_after_o_start?(my, o))) ||
                  ((my_start_is_before_o_end?(o, my) && my_start_is_after_o_start?(o, my)) ||
@@ -551,6 +553,7 @@ module OpeningHoursConverter
     end
 
     def to_day
+      #  les semaines rentrent en opposition avec cette maniere de faire : il n'y a pas un debut et une fin il y en a plusieurs (1-53/2)
       case @type
       when 'day'
         if @end.nil?
