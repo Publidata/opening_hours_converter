@@ -11,9 +11,9 @@ module OpeningHoursConverter
       @RGX_RULE_MODIFIER = /^(open|closed|off)$/i
       @RGX_WEEK_KEY = /^week$/
       @RGX_WEEK = /^week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?)*$/
-      @RGX_WEEK_VAL = /^([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?)*\:?$/
-      @RGX_WEEK_WITH_MODIFIER = /^week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))\/(5[0123]|[01234]?[0-9])$/
-      @RGX_WEEK_VAL_WITH_MODIFIER = /^([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))\/(5[0123]|[01234]?[0-9])$/
+      @RGX_WEEK_VAL = /^([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?)*$/
+      @RGX_WEEK_WITH_MODIFIER = /^week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123])(\/[1-9])?)?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123])(\/[1-9])?)?)*$/
+      @RGX_WEEK_VAL_WITH_MODIFIER = /^([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123])(\/[1-9])?)?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123])(\/[1-9])?)?)*$/
       @RGX_MONTH = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\-(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))?\:?$/
       @RGX_MONTHDAY = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([012]?[0-9]|3[01])(\-((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) )?([012]?[0-9]|3[01]))?\:?$/
       @RGX_TIME = /^((([01]?[0-9]|2[01234])\:[012345][0-9](\-([01]?[0-9]|2[01234])\:[012345][0-9])?(,([01]?[0-9]|2[01234])\:[012345][0-9](\-([01]?[0-9]|2[01234])\:[012345][0-9])?)*)|(24\/7))$/
@@ -25,7 +25,7 @@ module OpeningHoursConverter
       @RGX_YEAR = /^(\d{4})(\-(\d{4}))?$/
       @RGX_YEAR_PH = /^(\d{4})( PH|(\-(\d{4}) PH))\:?$/
       @RGX_YEAR_WEEK = /^(\d{4})(\-(\d{4}))? week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?)*\:?$/
-      @RGX_YEAR_WEEK_WITH_MODIFIER = /^(\d{4})(\-(\d{4}))? week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))\/(5[0123]|[01234]?[0-9])$/
+      @RGX_YEAR_WEEK_WITH_MODIFIER = /^(\d{4})(\-(\d{4}))? week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123])(\/[1-9])?)?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123])(\/[1-9])?)?)*$/
       @RGX_YEAR_MONTH_DAY = /^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([012]?[0-9]|3[01])(\-((\d{4}) )?((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) )?([012]?[0-9]|3[01]))?\:?$/
       @RGX_YEAR_MONTH = /^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\-((\d{4}) )?((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)))?\:?$/
       @RGX_COMMENT = /^\"[^\"]*\"$/
@@ -119,29 +119,27 @@ module OpeningHoursConverter
           end
           if !wide_range_selector.empty?
             wide_range_selector = wide_range_selector.strip
-            wide_range_selector = wide_range_selector.split(',')
-            wide_range_selector.each do |wrs|
-              if !(@RGX_YEAR_MONTH_DAY =~ wrs).nil?
-                years << get_year_month_day(wrs)
-              elsif !(@RGX_YEAR_MONTH =~ wrs).nil?
-                years << get_year_month(wrs)
-              elsif !(@RGX_MONTHDAY =~ wrs).nil?
-                months << get_month_day(wrs)
-              elsif !(@RGX_MONTH =~ wrs).nil?
-                months << get_month(wrs)
-              elsif !(@RGX_YEAR =~ wrs).nil?
-                years << get_year(wrs)
-              elsif !(@RGX_YEAR_WEEK_WITH_MODIFIER =~ wrs).nil?
-                weeks << get_year_week_with_modifier(wrs)
-              elsif !(@RGX_YEAR_WEEK =~ wrs).nil?
-                weeks << get_year_week(wrs)
-              elsif !(@RGX_WEEK_WITH_MODIFIER =~ wrs).nil?
-                weeks << get_week_with_modifier(wrs)
-              elsif !(@RGX_WEEK =~ wrs).nil?
-                weeks << get_week(wrs)
-              else
-                raise ArgumentError, "Unsupported selector #{wrs}"
-              end
+            # wide_range_selector = wide_range_selector.split(',')
+            if !(@RGX_YEAR_MONTH_DAY =~ wide_range_selector).nil?
+              years << get_year_month_day(wide_range_selector)
+            elsif !(@RGX_YEAR_MONTH =~ wide_range_selector).nil?
+              years << get_year_month(wide_range_selector)
+            elsif !(@RGX_MONTHDAY =~ wide_range_selector).nil?
+              months << get_month_day(wide_range_selector)
+            elsif !(@RGX_MONTH =~ wide_range_selector).nil?
+              months << get_month(wide_range_selector)
+            elsif !(@RGX_YEAR =~ wide_range_selector).nil?
+              years << get_year(wide_range_selector)
+            elsif !(@RGX_YEAR_WEEK_WITH_MODIFIER =~ wide_range_selector).nil?
+              weeks << get_year_week_with_modifier(wide_range_selector)
+            elsif !(@RGX_YEAR_WEEK =~ wide_range_selector).nil?
+              weeks << get_year_week(wide_range_selector)
+            elsif !(@RGX_WEEK_WITH_MODIFIER =~ wide_range_selector).nil?
+              weeks << get_week_with_modifier(wide_range_selector)
+            elsif !(@RGX_WEEK =~ wide_range_selector).nil?
+              weeks << get_week(wide_range_selector)
+            else
+              raise ArgumentError, "Unsupported selector #{wide_range_selector}"
             end
           end
         end
@@ -175,7 +173,7 @@ module OpeningHoursConverter
         elsif !weeks.empty?
 
           weeks.each do |week|
-            date_ranges << OpeningHoursConverter::WideInterval.new.week(week[:week_from], week[:year_from], week[:week_to], week[:year_to], week[:modifier])
+            date_ranges << OpeningHoursConverter::WideInterval.new.week(week[:week_indexes], week[:year_from], week[:year_to])
           end
 
         elsif !years.empty?
@@ -334,52 +332,82 @@ module OpeningHoursConverter
     end
 
     def get_year_week_with_modifier(wrs)
-      year, week = wrs.gsub(/\:$/, '').split(' week ')
-      # does not handle 2018,2019
+      year, weeks = wrs.split(' week ')
       years = year.split('-')
-      # does not handle week 1,2,3
-      weeks = week.split('-')
-      week_to, modifier = weeks[1].split('/')
 
-      { year_from: years[0].to_i, week_from: weeks[0].to_i, week_to: week_to.to_i, modifier: modifier.to_i }.tap do |hsh|
+      indexes = weeks.map { |week_index|
+        if week_index.include?('-')
+          if week_index.include?('/')
+            from, to = week_index.split('-')
+            to, modifier = to.split('/')
+            { from: from.to_i, to: to.to_i, modifier: modifier.to_i }
+          else
+            from, to = week_index.split('-').map(&:to_i)
+            { from: from, to: to }
+          end
+        else
+          week_index.to_i
+        end
+      }
+
+      { year_from: years[0].to_i, week_indexes: indexes }.tap do |hsh|
         hsh[:year_to] = years.length > 1 ? years[1].to_i : nil
       end
     end
 
     def get_year_week(wrs)
-      year, week = wrs.gsub(/\:$/, '').split(' week ')
+      year, weeks = wrs.split(' week ')
       # does not handle 2018,2019
       years = year.split('-')
       # does not handle week 1,2,3
-      weeks = week.split('-')
+      indexes = weeks.split(',').map { |week_index|
+        if week_index.include?('-')
+          from, to = week_index.split('-').map(&:to_i)
+          { from: from, to: to }
+        else
+          week_index.to_i
+        end
+      }
 
-      { year_from: year[0].to_i, week_from: weeks[0].to_i }.tap do |hsh|
+      { week_indexes: indexes, year_from: year[0].to_i }.tap do |hsh|
         hsh[:year_to] = years.length > 1 ? year[1].to_i : nil
-        hsh[:week_to] = weeks.length > 1 ? weeks[1].to_i : nil
       end
     end
 
     def get_week_with_modifier(wrs)
-      weeks, modifier = wrs.gsub(/\:$/, '').split('/')
-      weeks = weeks.split('-')
+      weeks = wrs.gsub('week ', '').split(',')
 
-      week_from = weeks[0].gsub('week ', '').to_i
-      raise ArgumentError, "Invalid week : #{week_from}" if week_from < 1 || week_from > 53
+      indexes = weeks.map { |week_index|
+        if week_index.include?('-')
+          if week_index.include?('/')
+            from, to = week_index.split('-')
+            to, modifier = to.split('/')
+            { from: from.to_i, to: to.to_i, modifier: modifier.to_i }
+          else
+            from, to = week_index.split('-').map(&:to_i)
+            { from: from, to: to }
+          end
+        else
+          week_index.to_i
+        end
+      }
 
-      if weeks.length > 1
-        week_to = weeks[1].to_i
-        raise ArgumentError, "Invalid week : #{week_to}" if week_to < 1 || week_to > 53
-      else
-        week_to = week_from
-      end
-      { week_from: week_from, week_to: week_to, modifier: modifier.to_i }
+      { week_indexes: indexes }
     end
 
     def get_week(wrs)
-      week = wrs.gsub(/\:$/, '').gsub('week ', '')
-      weeks = week.split('-')
+      weeks = wrs.gsub('week ', '').split(',')
 
-      { week_from: weeks[0].to_i, week_to: weeks[1].to_i }
+      indexes = weeks.map { |week_index|
+        if week_index.include?('-')
+          from, to = week_index.split('-').map(&:to_i)
+          { from: from, to: to }
+        else
+          week_index.to_i
+        end
+      }
+
+      { week_indexes: indexes }
     end
 
 
