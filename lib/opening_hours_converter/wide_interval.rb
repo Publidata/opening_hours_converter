@@ -10,7 +10,6 @@ module OpeningHoursConverter
       @end = nil
       @indexes = nil
       @type = nil
-      @modifier = nil
     end
 
     def get_time_selector
