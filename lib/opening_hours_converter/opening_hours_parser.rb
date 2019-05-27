@@ -335,7 +335,7 @@ module OpeningHoursConverter
       year, weeks = wrs.split(' week ')
       years = year.split('-')
 
-      indexes = weeks.map { |week_index|
+      indexes = weeks.split(',').map { |week_index|
         if week_index.include?('-')
           if week_index.include?('/')
             from, to = week_index.split('-')
