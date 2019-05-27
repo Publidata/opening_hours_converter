@@ -67,7 +67,7 @@ module OpeningHoursConverter
           next
         end
 
-        binding.pry
+        raise "can't read current token #{current_token}"
       end
     end
 
@@ -75,6 +75,15 @@ module OpeningHoursConverter
 
     def add_current_token_value_to(value, leading = '', trailing = '')
       "#{value}#{leading}#{current_token.value}#{trailing}"
+    end
+
+    def add_current_token_to(base_value, base_type, made_from, type = nil, leading = '', trailing = '')
+      base_type[type] = true unless type.nil? || type.length.zero?
+      value = add_current_token_value_to(base_value, leading, trailing)
+      made_from << current_token
+      @index += 1
+
+      [value, made_from, base_type]
     end
 
     def handle_year
@@ -86,18 +95,14 @@ module OpeningHoursConverter
 
       while current_token?
         if current_token.hyphen? || current_token.comma?  || current_token.slash?
-          value = add_current_token_value_to(value)
-          made_from << current_token
-          @index += 1
+          value, made_from, type = add_current_token_to(value, type, made_from)
           next
         end
 
         if current_token.year?
           type[:multi_year] = true
           if previous_token.hyphen? || previous_token.comma?
-            value = add_current_token_value_to(value)
-            made_from << current_token
-            @index += 1
+            value, made_from, type = add_current_token_to(value, type, made_from)
             next
           end
           raise "you can\'t have two years with just space between them previous token: #{previous_token}, current token: #{current_token}"
@@ -107,25 +112,16 @@ module OpeningHoursConverter
           break if current_token.weekday?
 
           if current_token.week?
-            type[:week] = true
-            value = add_current_token_value_to(value, ' ')
-            made_from << current_token
-            @index += 1
+            value, made_from, type = add_current_token_to(value, type, made_from, :week, ' ')
             next
           end
 
           if current_token.month?
             if previous_token.hyphen? || previous_token.comma?
-              type[:multi_month] = true
-              value = add_current_token_value_to(value)
-              made_from << current_token
-              @index += 1
+              value, made_from, type = add_current_token_to(value, type, made_from, :multi_month)
               next
             else
-              type[:month] = true
-              value = add_current_token_value_to(value, ' ')
-              made_from << current_token
-              @index += 1
+              value, made_from, type = add_current_token_to(value, type, made_from, :month, ' ')
               next
             end
           end
@@ -138,23 +134,14 @@ module OpeningHoursConverter
           if type[:week]
             if current_token.week_index?
               if previous_token.comma? || previous_token.hyphen?
-                type[:multi_week] = true
-                value = add_current_token_value_to(value)
-                made_from << current_token
-                @index += 1
+                value, made_from, type = add_current_token_to(value, type, made_from, :multi_week)
                 next
               else
-                type[:week] = true
-                value = add_current_token_value_to(value, ' ')
-                made_from << current_token
-                @index += 1
+                value, made_from, type = add_current_token_to(value, type, made_from, :week, ' ')
                 next
               end
               if current_token_is_week_modifier?
-                type[:modified_week] = true
-                value = add_current_token_value_to(value)
-                made_from << current_token
-                @index += 1
+                value, made_from, type = add_current_token_to(value, type, made_from, :modified_week)
                 next
               end
             end
@@ -162,16 +149,10 @@ module OpeningHoursConverter
           elsif type[:month]
             if current_token_monthday?
               if previous_token.comma? || previous_token.hyphen?
-                type[:multi_month] = true
-                value = add_current_token_value_to(value)
-                made_from << current_token
-                @index += 1
+                value, made_from, type = add_current_token_to(value, type, made_from, :multi_month)
                 next
               else
-                type[:month] = true
-                value = add_current_token_value_to(value, ' ')
-                made_from << current_token
-                @index += 1
+                value, made_from, type = add_current_token_to(value, type, made_from, :month, ' ')
                 next
               end
             end
@@ -200,40 +181,26 @@ module OpeningHoursConverter
         break if current_token_is_time?
 
         if current_token.hyphen? || current_token.comma? || current_token.slash?
-          value = add_current_token_value_to(value)
-          made_from << current_token
-          @index += 1
+          value, made_from, type = add_current_token_to(value, type, made_from)
           next
         end
 
         if current_token_monthday?
           if previous_token.comma? || previous_token.hyphen?
-            type[:multi_monthday] = true
-            value = add_current_token_value_to(value)
-            made_from << current_token
-            @index += 1
+            value, made_from, type = add_current_token_to(value, type, made_from, :multi_monthday)
             next
           else
-            type[:monthday] = true
-            value = add_current_token_value_to(value, ' ')
-            made_from << current_token
-            @index += 1
+            value, made_from, type = add_current_token_to(value, type, made_from, :monthday, ' ')
             next
           end
         end
 
         if current_token.month?
           if previous_token.hyphen? || previous_token.comma?
-            type[:multi_month] = true
-            value = add_current_token_value_to(value)
-            made_from << current_token
-            @index += 1
+            value, made_from, type = add_current_token_to(value, type, made_from, :multi_month)
             next
           else
-            type[:month] = true
-            value = add_current_token_value_to(value, ' ')
-            made_from << current_token
-            @index += 1
+            value, made_from, type = add_current_token_to(value, type, made_from, :month, ' ')
             next
           end
         end
@@ -256,18 +223,12 @@ module OpeningHoursConverter
         break if current_token_is_time?
 
         if current_token.hyphen? || current_token.comma?
-          type[:multi_week] = true
-          value = add_current_token_value_to(value)
-          made_from << current_token
-          @index += 1
+          value, made_from, type = add_current_token_to(value, type, made_from, :multi_week)
           next
         end
 
         if current_token.slash?
-          type[:modified_week] = true
-          value = add_current_token_value_to(value)
-          made_from << current_token
-          @index += 1
+          value, made_from, type = add_current_token_to(value, type, made_from, :modified_week)
           next
         end
 
@@ -299,47 +260,31 @@ module OpeningHoursConverter
         break if current_token.integer?
 
         if current_token.hyphen? || current_token.comma?
-          type[:multi_weekday] = true
-          value = add_current_token_value_to(value)
-          made_from << current_token
-          @index += 1
+          value, made_from, type = add_current_token_to(value, type, made_from, :multi_weekday)
           next
         end
 
         if current_token.weekday?
-          type[:multi_weekday] = true
-          value = add_current_token_value_to(value)
-          made_from << current_token
-          @index += 1
+          value, made_from, type = add_current_token_to(value, type, made_from, :multi_weekday)
           next
         end
 
         if current_token.public_holiday?
-          type[:public_holiday] = true
-          value = add_current_token_value_to(value)
-          made_from << current_token
-          @index += 1
+          value, made_from, type = add_current_token_to(value, type, made_from, :public_holiday)
           next
         end
 
         if current_token.opening_square_bracket?
-          type[:modified_weekday] = true
-          value = add_current_token_value_to(value)
-          made_from << current_token
-          @index += 1
+          value, made_from, type = add_current_token_to(value, type, made_from, :modified_weekday)
 
           while current_token?
             if current_token.closing_square_bracket?
-              value = add_current_token_value_to(value)
-              made_from << current_token
-              @index += 1
+              value, made_from, type = add_current_token_to(value, type, made_from)
               break
             end
 
             if current_token.hyphen? || current_token.weekday_modifier?
-              value = add_current_token_value_to(value)
-              made_from << current_token
-              @index += 1
+              value, made_from, type = add_current_token_to(value, type, made_from)
               next
             end
           end
@@ -361,36 +306,24 @@ module OpeningHoursConverter
       made_from = [current_token]
       @index += 1
 
-      binding.pry unless current_token.colon?
-      value = add_current_token_value_to(value)
-      made_from << current_token
-      @index += 1
+      raise unless current_token.colon?
+      value, made_from, type = add_current_token_to(value, type, made_from)
 
       raise unless current_token.time?
-      value = add_current_token_value_to(value)
-      made_from << current_token
-      @index += 1
+      value, made_from, type = add_current_token_to(value, type, made_from)
 
       raise unless current_token.hyphen?
-      value = add_current_token_value_to(value)
-      made_from << current_token
-      @index += 1
+      value, made_from, type = add_current_token_to(value, type, made_from)
 
       # second part of time range
       raise unless current_token.time?
-      value = add_current_token_value_to(value)
-      made_from << current_token
-      @index += 1
+      value, made_from, type = add_current_token_to(value, type, made_from)
 
       raise unless current_token.colon?
-      value = add_current_token_value_to(value)
-      made_from << current_token
-      @index += 1
+      value, made_from, type = add_current_token_to(value, type, made_from)
 
       raise unless current_token.time?
-      value = add_current_token_value_to(value)
-      made_from << current_token
-      @index += 1
+      value, made_from, type = add_current_token_to(value, type, made_from)
 
       token(value, type, start_index, made_from)
     end
@@ -404,9 +337,7 @@ module OpeningHoursConverter
       @index += 1
 
       if current_token.comma?
-        value = add_current_token_value_to(value)
-        made_from << current_token
-        @index += 1
+        value, made_from, type = add_current_token_to(value, type, made_from)
 
         weekdays_token = handle_weekday
         value += weekdays_token.value
@@ -423,15 +354,11 @@ module OpeningHoursConverter
       made_from = [current_token]
       @index += 1
 
-      binding.pry unless current_token.slash?
-      value = add_current_token_value_to(value)
-      made_from << current_token
-      @index += 1
+      raise unless current_token.slash?
+      value, made_from, type = add_current_token_to(value, type, made_from)
 
       raise unless current_token.value == '7'
-      value = add_current_token_value_to(value)
-      made_from << current_token
-      @index += 1
+      value, made_from, type = add_current_token_to(value, type, made_from)
 
       token(value, type, start_index, made_from)
     end
