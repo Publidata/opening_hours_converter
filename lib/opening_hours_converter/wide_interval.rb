@@ -3,7 +3,7 @@ require 'opening_hours_converter/constants'
 module OpeningHoursConverter
   class WideInterval
     include Constants
-    attr_accessor :start, :end, :type, :indexes
+    attr_accessor :start, :end, :type, :indexes, :start_year_defined, :end_year_defined
 
     def initialize
       @start = nil
@@ -222,6 +222,17 @@ module OpeningHoursConverter
       else
         my = to_day
         o = o.to_day
+
+        if my.is_a?(Array)
+          if o.is_a?(Array)
+            return false
+          else
+            return my.all? { |day| day.contains?(o) }
+          end
+        elsif o.is_a?(Array)
+          return o.all? { |day| contains?(day) }
+        end
+
         result = has_superior_or_equal_start_day?(my, o) && has_inferior_or_equal_end_day?(my, o)
       end
       result
@@ -236,6 +247,20 @@ module OpeningHoursConverter
       else
         my = to_day
         o = o.to_day
+
+        if my.is_a?(Array)
+          if o.is_a?(Array)
+            return my.any? do |day|
+              o.any? do |o_day|
+                day.touch?(o_day)
+              end
+            end
+          else
+            return my.any? { |day| day.touch?(o) }
+          end
+        elsif o.is_a?(Array)
+          return o.any? { |day| day.touch?(my) }
+        end
 # solution poour les weeks, on peut convertir un wide interval week en array de wide interval days et comparer les wide interval week
   # un par un (long si deux wide interval multiweek)
 # problem : comment calculer les weeks always ? comparer sur l'année en cours si o est always, les années de o sinon
@@ -491,6 +516,21 @@ module OpeningHoursConverter
       o_to_day = o.to_day
       return false if self_to_day.is_a?(Array) != o_to_day.is_a?(Array)
 
+      if self_to_day.is_a?(Array)
+        if o_to_day.is_a?(Array)
+          return false unless o_to_day.length == self_to_day.length
+          return self_to_day.all? do |self_day|
+            o_to_day.any? do |o_day|
+              self_day.equals(o_day)
+            end
+          end
+        else
+          return self_to_day.all? { |day| self_to_day.equals(o_to_day) }
+        end
+      elsif o_to_day.is_a?(Array)
+        return o_to_day.all? { |day| equals(day) }
+      end
+
       (self_to_day.start[:year] == o_to_day.start[:year] &&
         self_to_day.start[:month] == o_to_day.start[:month] &&
         self_to_day.start[:day] == o_to_day.start[:day]) &&
@@ -502,8 +542,11 @@ module OpeningHoursConverter
 
     def width
       return Float::INFINITY if @type == 'always'
+
       in_day = to_day
       days_count = 0
+      return in_day.map(&:width).sum if in_day.is_a?(Array)
+
       if in_day.end
         if in_day.start[:year] && in_day.end[:year]
           if in_day.start[:year] != in_day.end[:year]
