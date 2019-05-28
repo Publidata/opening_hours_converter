@@ -3,7 +3,7 @@ require 'opening_hours_converter/constants'
 module OpeningHoursConverter
   class WideInterval
     include Constants
-    attr_accessor :start, :end, :type, :indexes, :start_year_defined, :end_year_defined
+    attr_accessor :start, :end, :type, :indexes
 
     def initialize
       @start = nil
