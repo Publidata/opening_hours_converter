@@ -645,6 +645,20 @@ module OpeningHoursConverter
         else
           OpeningHoursConverter::WideInterval.new.day(1, 1, @start[:year], 31, 12, @end[:year])
         end
+      when 'holiday'
+        if @start && @start[:year]
+          if @end && @end[:year]
+            weeks = []
+            (@start[:year]..@end[:year]).each do |year|
+              weeks += get_public_holidays_for_year(year)
+            end
+            weeks
+          else
+            get_public_holidays_for_year(@start[:year])
+          end
+        else
+          get_public_holidays_for_year
+        end
       when 'week'
         if @start && @start[:year]
           if @end && @end[:year]
@@ -691,6 +705,11 @@ module OpeningHoursConverter
       end
 
       weeks_as_days
+    end
+    def get_public_holidays_for_year(year = Time.now.year)
+      OpeningHoursConverter::PublicHoliday.ph_for_year(year).map do |holiday|
+        OpeningHoursConverter::WideInterval.new.day(holiday.day, holiday.month, holiday.year)
+      end
     end
   end
 end
