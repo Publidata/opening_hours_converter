@@ -1639,383 +1639,383 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   it 'week 1,3,10-30/2,50 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('week 1,3,10-30/2,50 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('week 1,3,10-30/2,50 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
   end
-  it '2030 Jan 10:00-20:00' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 10:00-20:00'))).to eql('2030 Jan 10:00-20:00')
+  it '2030 Jan 01-31 10:00-20:00' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 10:00-20:00'))).to eql('2030 Jan 01-31 10:00-20:00')
   end
-  it '2030 Jan 10:00-20:00 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 10:00-20:00 "commentaire"'))).to eql('2030 Jan 10:00-20:00 "commentaire"')
+  it '2030 Jan 01-31 10:00-20:00 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 10:00-20:00 "commentaire"'))).to eql('2030 Jan 01-31 10:00-20:00 "commentaire"')
   end
-  it '2030 Jan 10:00-20:00 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan 10:00-20:00 "commentaire avec des espaces"')
+  it '2030 Jan 01-31 10:00-20:00 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan 01-31 10:00-20:00 "commentaire avec des espaces"')
   end
-  it '2030 Jan off' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan off'))).to eql('2030 Jan off')
+  it '2030 Jan 01-31 off' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 off'))).to eql('2030 Jan 01-31 off')
   end
-  it '2030 Jan off "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan off "commentaire"'))).to eql('2030 Jan off "commentaire"')
+  it '2030 Jan 01-31 off "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 off "commentaire"'))).to eql('2030 Jan 01-31 off "commentaire"')
   end
-  it '2030 Jan off "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan off "commentaire avec des espaces"'))).to eql('2030 Jan off "commentaire avec des espaces"')
+  it '2030 Jan 01-31 off "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 off "commentaire avec des espaces"'))).to eql('2030 Jan 01-31 off "commentaire avec des espaces"')
   end
-  it '2030 Jan 09:00-12:30,14:00-18:30' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 09:00-12:30,14:00-18:30'))).to eql('2030 Jan 09:00-12:30,14:00-18:30')
+  it '2030 Jan 01-31 09:00-12:30,14:00-18:30' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 09:00-12:30,14:00-18:30'))).to eql('2030 Jan 01-31 09:00-12:30,14:00-18:30')
   end
-  it '2030 Jan 09:00-12:30,14:00-18:30 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan 09:00-12:30,14:00-18:30 "commentaire"')
+  it '2030 Jan 01-31 09:00-12:30,14:00-18:30 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan 01-31 09:00-12:30,14:00-18:30 "commentaire"')
   end
-  it '2030 Jan 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
+  it '2030 Jan 01-31 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan 01-31 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
   end
-  it '2030 Jan Mo 10:00-20:00' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo 10:00-20:00'))).to eql('2030 Jan Mo 10:00-20:00')
+  it '2030 Jan 01-31 Mo 10:00-20:00' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo 10:00-20:00'))).to eql('2030 Jan 01-31 Mo 10:00-20:00')
   end
-  it '2030 Jan Mo 10:00-20:00 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo 10:00-20:00 "commentaire"'))).to eql('2030 Jan Mo 10:00-20:00 "commentaire"')
+  it '2030 Jan 01-31 Mo 10:00-20:00 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo 10:00-20:00 "commentaire"'))).to eql('2030 Jan 01-31 Mo 10:00-20:00 "commentaire"')
   end
-  it '2030 Jan Mo 10:00-20:00 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan Mo 10:00-20:00 "commentaire avec des espaces"')
+  it '2030 Jan 01-31 Mo 10:00-20:00 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan 01-31 Mo 10:00-20:00 "commentaire avec des espaces"')
   end
-  it '2030 Jan Mo off' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo off'))).to eql('2030 Jan Mo off')
+  it '2030 Jan 01-31 Mo off' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo off'))).to eql('2030 Jan 01-31 Mo off')
   end
-  it '2030 Jan Mo off "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo off "commentaire"'))).to eql('2030 Jan Mo off "commentaire"')
+  it '2030 Jan 01-31 Mo off "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo off "commentaire"'))).to eql('2030 Jan 01-31 Mo off "commentaire"')
   end
-  it '2030 Jan Mo off "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo off "commentaire avec des espaces"'))).to eql('2030 Jan Mo off "commentaire avec des espaces"')
+  it '2030 Jan 01-31 Mo off "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo off "commentaire avec des espaces"'))).to eql('2030 Jan 01-31 Mo off "commentaire avec des espaces"')
   end
-  it '2030 Jan Mo 09:00-12:30,14:00-18:30' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo 09:00-12:30,14:00-18:30'))).to eql('2030 Jan Mo 09:00-12:30,14:00-18:30')
+  it '2030 Jan 01-31 Mo 09:00-12:30,14:00-18:30' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo 09:00-12:30,14:00-18:30'))).to eql('2030 Jan 01-31 Mo 09:00-12:30,14:00-18:30')
   end
-  it '2030 Jan Mo 09:00-12:30,14:00-18:30 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan Mo 09:00-12:30,14:00-18:30 "commentaire"')
+  it '2030 Jan 01-31 Mo 09:00-12:30,14:00-18:30 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan 01-31 Mo 09:00-12:30,14:00-18:30 "commentaire"')
   end
-  it '2030 Jan Mo 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan Mo 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
+  it '2030 Jan 01-31 Mo 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan 01-31 Mo 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
   end
-  it '2030 Jan Mo,We-Fr,Su 10:00-20:00' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo,We-Fr,Su 10:00-20:00'))).to eql('2030 Jan Mo,We-Fr,Su 10:00-20:00')
+  it '2030 Jan 01-31 Mo,We-Fr,Su 10:00-20:00' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo,We-Fr,Su 10:00-20:00'))).to eql('2030 Jan 01-31 Mo,We-Fr,Su 10:00-20:00')
   end
-  it '2030 Jan Mo,We-Fr,Su 10:00-20:00 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo,We-Fr,Su 10:00-20:00 "commentaire"'))).to eql('2030 Jan Mo,We-Fr,Su 10:00-20:00 "commentaire"')
+  it '2030 Jan 01-31 Mo,We-Fr,Su 10:00-20:00 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo,We-Fr,Su 10:00-20:00 "commentaire"'))).to eql('2030 Jan 01-31 Mo,We-Fr,Su 10:00-20:00 "commentaire"')
   end
-  it '2030 Jan Mo,We-Fr,Su 10:00-20:00 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo,We-Fr,Su 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan Mo,We-Fr,Su 10:00-20:00 "commentaire avec des espaces"')
+  it '2030 Jan 01-31 Mo,We-Fr,Su 10:00-20:00 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo,We-Fr,Su 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan 01-31 Mo,We-Fr,Su 10:00-20:00 "commentaire avec des espaces"')
   end
-  it '2030 Jan Mo,We-Fr,Su off' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo,We-Fr,Su off'))).to eql('2030 Jan Mo,We-Fr,Su off')
+  it '2030 Jan 01-31 Mo,We-Fr,Su off' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo,We-Fr,Su off'))).to eql('2030 Jan 01-31 Mo,We-Fr,Su off')
   end
-  it '2030 Jan Mo,We-Fr,Su off "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo,We-Fr,Su off "commentaire"'))).to eql('2030 Jan Mo,We-Fr,Su off "commentaire"')
+  it '2030 Jan 01-31 Mo,We-Fr,Su off "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo,We-Fr,Su off "commentaire"'))).to eql('2030 Jan 01-31 Mo,We-Fr,Su off "commentaire"')
   end
-  it '2030 Jan Mo,We-Fr,Su off "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo,We-Fr,Su off "commentaire avec des espaces"'))).to eql('2030 Jan Mo,We-Fr,Su off "commentaire avec des espaces"')
+  it '2030 Jan 01-31 Mo,We-Fr,Su off "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo,We-Fr,Su off "commentaire avec des espaces"'))).to eql('2030 Jan 01-31 Mo,We-Fr,Su off "commentaire avec des espaces"')
   end
-  it '2030 Jan Mo,We-Fr,Su 09:00-12:30,14:00-18:30' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo,We-Fr,Su 09:00-12:30,14:00-18:30'))).to eql('2030 Jan Mo,We-Fr,Su 09:00-12:30,14:00-18:30')
+  it '2030 Jan 01-31 Mo,We-Fr,Su 09:00-12:30,14:00-18:30' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo,We-Fr,Su 09:00-12:30,14:00-18:30'))).to eql('2030 Jan 01-31 Mo,We-Fr,Su 09:00-12:30,14:00-18:30')
   end
-  it '2030 Jan Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire"')
+  it '2030 Jan 01-31 Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan 01-31 Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire"')
   end
-  it '2030 Jan Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
+  it '2030 Jan 01-31 Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan 01-31 Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
   end
-  it '2030 Jan Mo-We,Fr,Sa 10:00-20:00' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo-We,Fr,Sa 10:00-20:00'))).to eql('2030 Jan Mo-We,Fr,Sa 10:00-20:00')
+  it '2030 Jan 01-31 Mo-We,Fr,Sa 10:00-20:00' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo-We,Fr,Sa 10:00-20:00'))).to eql('2030 Jan 01-31 Mo-We,Fr,Sa 10:00-20:00')
   end
-  it '2030 Jan Mo-We,Fr,Sa 10:00-20:00 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo-We,Fr,Sa 10:00-20:00 "commentaire"'))).to eql('2030 Jan Mo-We,Fr,Sa 10:00-20:00 "commentaire"')
+  it '2030 Jan 01-31 Mo-We,Fr,Sa 10:00-20:00 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo-We,Fr,Sa 10:00-20:00 "commentaire"'))).to eql('2030 Jan 01-31 Mo-We,Fr,Sa 10:00-20:00 "commentaire"')
   end
-  it '2030 Jan Mo-We,Fr,Sa 10:00-20:00 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo-We,Fr,Sa 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan Mo-We,Fr,Sa 10:00-20:00 "commentaire avec des espaces"')
+  it '2030 Jan 01-31 Mo-We,Fr,Sa 10:00-20:00 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo-We,Fr,Sa 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan 01-31 Mo-We,Fr,Sa 10:00-20:00 "commentaire avec des espaces"')
   end
-  it '2030 Jan Mo-We,Fr,Sa off' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo-We,Fr,Sa off'))).to eql('2030 Jan Mo-We,Fr,Sa off')
+  it '2030 Jan 01-31 Mo-We,Fr,Sa off' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo-We,Fr,Sa off'))).to eql('2030 Jan 01-31 Mo-We,Fr,Sa off')
   end
-  it '2030 Jan Mo-We,Fr,Sa off "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo-We,Fr,Sa off "commentaire"'))).to eql('2030 Jan Mo-We,Fr,Sa off "commentaire"')
+  it '2030 Jan 01-31 Mo-We,Fr,Sa off "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo-We,Fr,Sa off "commentaire"'))).to eql('2030 Jan 01-31 Mo-We,Fr,Sa off "commentaire"')
   end
-  it '2030 Jan Mo-We,Fr,Sa off "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo-We,Fr,Sa off "commentaire avec des espaces"'))).to eql('2030 Jan Mo-We,Fr,Sa off "commentaire avec des espaces"')
+  it '2030 Jan 01-31 Mo-We,Fr,Sa off "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo-We,Fr,Sa off "commentaire avec des espaces"'))).to eql('2030 Jan 01-31 Mo-We,Fr,Sa off "commentaire avec des espaces"')
   end
-  it '2030 Jan Mo-We,Fr,Sa 09:00-12:30,14:00-18:30' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo-We,Fr,Sa 09:00-12:30,14:00-18:30'))).to eql('2030 Jan Mo-We,Fr,Sa 09:00-12:30,14:00-18:30')
+  it '2030 Jan 01-31 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30'))).to eql('2030 Jan 01-31 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30')
   end
-  it '2030 Jan Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire"')
+  it '2030 Jan 01-31 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan 01-31 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire"')
   end
-  it '2030 Jan Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
+  it '2030 Jan 01-31 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan 01-31 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
   end
-  it '2030 Jan PH,Mo,We-Fr 10:00-20:00' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan PH,Mo,We-Fr 10:00-20:00'))).to eql('2030 Jan PH,Mo,We-Fr 10:00-20:00')
+  it '2030 Jan 01-31 PH,Mo,We-Fr 10:00-20:00' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 PH,Mo,We-Fr 10:00-20:00'))).to eql('2030 Jan 01-31 PH,Mo,We-Fr 10:00-20:00')
   end
-  it '2030 Jan PH,Mo,We-Fr 10:00-20:00 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan PH,Mo,We-Fr 10:00-20:00 "commentaire"'))).to eql('2030 Jan PH,Mo,We-Fr 10:00-20:00 "commentaire"')
+  it '2030 Jan 01-31 PH,Mo,We-Fr 10:00-20:00 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 PH,Mo,We-Fr 10:00-20:00 "commentaire"'))).to eql('2030 Jan 01-31 PH,Mo,We-Fr 10:00-20:00 "commentaire"')
   end
-  it '2030 Jan PH,Mo,We-Fr 10:00-20:00 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan PH,Mo,We-Fr 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan PH,Mo,We-Fr 10:00-20:00 "commentaire avec des espaces"')
+  it '2030 Jan 01-31 PH,Mo,We-Fr 10:00-20:00 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 PH,Mo,We-Fr 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan 01-31 PH,Mo,We-Fr 10:00-20:00 "commentaire avec des espaces"')
   end
-  it '2030 Jan PH,Mo,We-Fr 09:00-12:30,14:00-18:30' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan PH,Mo,We-Fr 09:00-12:30,14:00-18:30'))).to eql('2030 Jan PH,Mo,We-Fr 09:00-12:30,14:00-18:30')
+  it '2030 Jan 01-31 PH,Mo,We-Fr 09:00-12:30,14:00-18:30' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 PH,Mo,We-Fr 09:00-12:30,14:00-18:30'))).to eql('2030 Jan 01-31 PH,Mo,We-Fr 09:00-12:30,14:00-18:30')
   end
-  it '2030 Jan PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire"')
+  it '2030 Jan 01-31 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan 01-31 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire"')
   end
-  it '2030 Jan PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
+  it '2030 Jan 01-31 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-31 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan 01-31 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
   end
-  it '2030 Jan-Jun 10:00-20:00' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun 10:00-20:00'))).to eql('2030 Jan-Jun 10:00-20:00')
+  it '2030 Jan 01-2030 Jun 30 10:00-20:00' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 10:00-20:00'))).to eql('2030 Jan 01-2030 Jun 30 10:00-20:00')
   end
-  it '2030 Jan-Jun 10:00-20:00 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun 10:00-20:00 "commentaire"'))).to eql('2030 Jan-Jun 10:00-20:00 "commentaire"')
+  it '2030 Jan 01-2030 Jun 30 10:00-20:00 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 10:00-20:00 "commentaire"'))).to eql('2030 Jan 01-2030 Jun 30 10:00-20:00 "commentaire"')
   end
-  it '2030 Jan-Jun 10:00-20:00 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan-Jun 10:00-20:00 "commentaire avec des espaces"')
+  it '2030 Jan 01-2030 Jun 30 10:00-20:00 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan 01-2030 Jun 30 10:00-20:00 "commentaire avec des espaces"')
   end
-  it '2030 Jan-Jun off' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun off'))).to eql('2030 Jan-Jun off')
+  it '2030 Jan 01-2030 Jun 30 off' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 off'))).to eql('2030 Jan 01-2030 Jun 30 off')
   end
-  it '2030 Jan-Jun off "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun off "commentaire"'))).to eql('2030 Jan-Jun off "commentaire"')
+  it '2030 Jan 01-2030 Jun 30 off "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 off "commentaire"'))).to eql('2030 Jan 01-2030 Jun 30 off "commentaire"')
   end
-  it '2030 Jan-Jun off "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun off "commentaire avec des espaces"'))).to eql('2030 Jan-Jun off "commentaire avec des espaces"')
+  it '2030 Jan 01-2030 Jun 30 off "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 off "commentaire avec des espaces"'))).to eql('2030 Jan 01-2030 Jun 30 off "commentaire avec des espaces"')
   end
-  it '2030 Jan-Jun 09:00-12:30,14:00-18:30' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun 09:00-12:30,14:00-18:30'))).to eql('2030 Jan-Jun 09:00-12:30,14:00-18:30')
+  it '2030 Jan 01-2030 Jun 30 09:00-12:30,14:00-18:30' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 09:00-12:30,14:00-18:30'))).to eql('2030 Jan 01-2030 Jun 30 09:00-12:30,14:00-18:30')
   end
-  it '2030 Jan-Jun 09:00-12:30,14:00-18:30 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan-Jun 09:00-12:30,14:00-18:30 "commentaire"')
+  it '2030 Jan 01-2030 Jun 30 09:00-12:30,14:00-18:30 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan 01-2030 Jun 30 09:00-12:30,14:00-18:30 "commentaire"')
   end
-  it '2030 Jan-Jun 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan-Jun 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
+  it '2030 Jan 01-2030 Jun 30 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan 01-2030 Jun 30 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
   end
-  it '2030 Jan-Jun Mo 10:00-20:00' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo 10:00-20:00'))).to eql('2030 Jan-Jun Mo 10:00-20:00')
+  it '2030 Jan 01-2030 Jun 30 Mo 10:00-20:00' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo 10:00-20:00'))).to eql('2030 Jan 01-2030 Jun 30 Mo 10:00-20:00')
   end
-  it '2030 Jan-Jun Mo 10:00-20:00 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo 10:00-20:00 "commentaire"'))).to eql('2030 Jan-Jun Mo 10:00-20:00 "commentaire"')
+  it '2030 Jan 01-2030 Jun 30 Mo 10:00-20:00 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo 10:00-20:00 "commentaire"'))).to eql('2030 Jan 01-2030 Jun 30 Mo 10:00-20:00 "commentaire"')
   end
-  it '2030 Jan-Jun Mo 10:00-20:00 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan-Jun Mo 10:00-20:00 "commentaire avec des espaces"')
+  it '2030 Jan 01-2030 Jun 30 Mo 10:00-20:00 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan 01-2030 Jun 30 Mo 10:00-20:00 "commentaire avec des espaces"')
   end
-  it '2030 Jan-Jun Mo off' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo off'))).to eql('2030 Jan-Jun Mo off')
+  it '2030 Jan 01-2030 Jun 30 Mo off' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo off'))).to eql('2030 Jan 01-2030 Jun 30 Mo off')
   end
-  it '2030 Jan-Jun Mo off "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo off "commentaire"'))).to eql('2030 Jan-Jun Mo off "commentaire"')
+  it '2030 Jan 01-2030 Jun 30 Mo off "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo off "commentaire"'))).to eql('2030 Jan 01-2030 Jun 30 Mo off "commentaire"')
   end
-  it '2030 Jan-Jun Mo off "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo off "commentaire avec des espaces"'))).to eql('2030 Jan-Jun Mo off "commentaire avec des espaces"')
+  it '2030 Jan 01-2030 Jun 30 Mo off "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo off "commentaire avec des espaces"'))).to eql('2030 Jan 01-2030 Jun 30 Mo off "commentaire avec des espaces"')
   end
-  it '2030 Jan-Jun Mo 09:00-12:30,14:00-18:30' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo 09:00-12:30,14:00-18:30'))).to eql('2030 Jan-Jun Mo 09:00-12:30,14:00-18:30')
+  it '2030 Jan 01-2030 Jun 30 Mo 09:00-12:30,14:00-18:30' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo 09:00-12:30,14:00-18:30'))).to eql('2030 Jan 01-2030 Jun 30 Mo 09:00-12:30,14:00-18:30')
   end
-  it '2030 Jan-Jun Mo 09:00-12:30,14:00-18:30 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan-Jun Mo 09:00-12:30,14:00-18:30 "commentaire"')
+  it '2030 Jan 01-2030 Jun 30 Mo 09:00-12:30,14:00-18:30 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan 01-2030 Jun 30 Mo 09:00-12:30,14:00-18:30 "commentaire"')
   end
-  it '2030 Jan-Jun Mo 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan-Jun Mo 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
+  it '2030 Jan 01-2030 Jun 30 Mo 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan 01-2030 Jun 30 Mo 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
   end
-  it '2030 Jan-Jun Mo,We-Fr,Su 10:00-20:00' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo,We-Fr,Su 10:00-20:00'))).to eql('2030 Jan-Jun Mo,We-Fr,Su 10:00-20:00')
+  it '2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su 10:00-20:00' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su 10:00-20:00'))).to eql('2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su 10:00-20:00')
   end
-  it '2030 Jan-Jun Mo,We-Fr,Su 10:00-20:00 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo,We-Fr,Su 10:00-20:00 "commentaire"'))).to eql('2030 Jan-Jun Mo,We-Fr,Su 10:00-20:00 "commentaire"')
+  it '2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su 10:00-20:00 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su 10:00-20:00 "commentaire"'))).to eql('2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su 10:00-20:00 "commentaire"')
   end
-  it '2030 Jan-Jun Mo,We-Fr,Su 10:00-20:00 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo,We-Fr,Su 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan-Jun Mo,We-Fr,Su 10:00-20:00 "commentaire avec des espaces"')
+  it '2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su 10:00-20:00 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su 10:00-20:00 "commentaire avec des espaces"')
   end
-  it '2030 Jan-Jun Mo,We-Fr,Su off' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo,We-Fr,Su off'))).to eql('2030 Jan-Jun Mo,We-Fr,Su off')
+  it '2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su off' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su off'))).to eql('2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su off')
   end
-  it '2030 Jan-Jun Mo,We-Fr,Su off "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo,We-Fr,Su off "commentaire"'))).to eql('2030 Jan-Jun Mo,We-Fr,Su off "commentaire"')
+  it '2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su off "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su off "commentaire"'))).to eql('2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su off "commentaire"')
   end
-  it '2030 Jan-Jun Mo,We-Fr,Su off "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo,We-Fr,Su off "commentaire avec des espaces"'))).to eql('2030 Jan-Jun Mo,We-Fr,Su off "commentaire avec des espaces"')
+  it '2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su off "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su off "commentaire avec des espaces"'))).to eql('2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su off "commentaire avec des espaces"')
   end
-  it '2030 Jan-Jun Mo,We-Fr,Su 09:00-12:30,14:00-18:30' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo,We-Fr,Su 09:00-12:30,14:00-18:30'))).to eql('2030 Jan-Jun Mo,We-Fr,Su 09:00-12:30,14:00-18:30')
+  it '2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su 09:00-12:30,14:00-18:30' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su 09:00-12:30,14:00-18:30'))).to eql('2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su 09:00-12:30,14:00-18:30')
   end
-  it '2030 Jan-Jun Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan-Jun Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire"')
+  it '2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire"')
   end
-  it '2030 Jan-Jun Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan-Jun Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
+  it '2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan 01-2030 Jun 30 Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
   end
-  it '2030 Jan-Jun Mo-We,Fr,Sa 10:00-20:00' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo-We,Fr,Sa 10:00-20:00'))).to eql('2030 Jan-Jun Mo-We,Fr,Sa 10:00-20:00')
+  it '2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa 10:00-20:00' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa 10:00-20:00'))).to eql('2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa 10:00-20:00')
   end
-  it '2030 Jan-Jun Mo-We,Fr,Sa 10:00-20:00 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo-We,Fr,Sa 10:00-20:00 "commentaire"'))).to eql('2030 Jan-Jun Mo-We,Fr,Sa 10:00-20:00 "commentaire"')
+  it '2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa 10:00-20:00 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa 10:00-20:00 "commentaire"'))).to eql('2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa 10:00-20:00 "commentaire"')
   end
-  it '2030 Jan-Jun Mo-We,Fr,Sa 10:00-20:00 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo-We,Fr,Sa 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan-Jun Mo-We,Fr,Sa 10:00-20:00 "commentaire avec des espaces"')
+  it '2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa 10:00-20:00 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa 10:00-20:00 "commentaire avec des espaces"')
   end
-  it '2030 Jan-Jun Mo-We,Fr,Sa off' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo-We,Fr,Sa off'))).to eql('2030 Jan-Jun Mo-We,Fr,Sa off')
+  it '2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa off' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa off'))).to eql('2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa off')
   end
-  it '2030 Jan-Jun Mo-We,Fr,Sa off "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo-We,Fr,Sa off "commentaire"'))).to eql('2030 Jan-Jun Mo-We,Fr,Sa off "commentaire"')
+  it '2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa off "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa off "commentaire"'))).to eql('2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa off "commentaire"')
   end
-  it '2030 Jan-Jun Mo-We,Fr,Sa off "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo-We,Fr,Sa off "commentaire avec des espaces"'))).to eql('2030 Jan-Jun Mo-We,Fr,Sa off "commentaire avec des espaces"')
+  it '2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa off "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa off "commentaire avec des espaces"'))).to eql('2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa off "commentaire avec des espaces"')
   end
-  it '2030 Jan-Jun Mo-We,Fr,Sa 09:00-12:30,14:00-18:30' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo-We,Fr,Sa 09:00-12:30,14:00-18:30'))).to eql('2030 Jan-Jun Mo-We,Fr,Sa 09:00-12:30,14:00-18:30')
+  it '2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30'))).to eql('2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30')
   end
-  it '2030 Jan-Jun Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan-Jun Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire"')
+  it '2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire"')
   end
-  it '2030 Jan-Jun Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan-Jun Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
+  it '2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan 01-2030 Jun 30 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
   end
-  it '2030 Jan-Jun PH,Mo,We-Fr 10:00-20:00' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun PH,Mo,We-Fr 10:00-20:00'))).to eql('2030 Jan-Jun PH,Mo,We-Fr 10:00-20:00')
+  it '2030 Jan 01-2030 Jun 30 PH,Mo,We-Fr 10:00-20:00' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 PH,Mo,We-Fr 10:00-20:00'))).to eql('2030 Jan 01-2030 Jun 30 PH,Mo,We-Fr 10:00-20:00')
   end
-  it '2030 Jan-Jun PH,Mo,We-Fr 10:00-20:00 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun PH,Mo,We-Fr 10:00-20:00 "commentaire"'))).to eql('2030 Jan-Jun PH,Mo,We-Fr 10:00-20:00 "commentaire"')
+  it '2030 Jan 01-2030 Jun 30 PH,Mo,We-Fr 10:00-20:00 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 PH,Mo,We-Fr 10:00-20:00 "commentaire"'))).to eql('2030 Jan 01-2030 Jun 30 PH,Mo,We-Fr 10:00-20:00 "commentaire"')
   end
-  it '2030 Jan-Jun PH,Mo,We-Fr 10:00-20:00 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun PH,Mo,We-Fr 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan-Jun PH,Mo,We-Fr 10:00-20:00 "commentaire avec des espaces"')
+  it '2030 Jan 01-2030 Jun 30 PH,Mo,We-Fr 10:00-20:00 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 PH,Mo,We-Fr 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan 01-2030 Jun 30 PH,Mo,We-Fr 10:00-20:00 "commentaire avec des espaces"')
   end
-  it '2030 Jan-Jun PH,Mo,We-Fr 09:00-12:30,14:00-18:30' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun PH,Mo,We-Fr 09:00-12:30,14:00-18:30'))).to eql('2030 Jan-Jun PH,Mo,We-Fr 09:00-12:30,14:00-18:30')
+  it '2030 Jan 01-2030 Jun 30 PH,Mo,We-Fr 09:00-12:30,14:00-18:30' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 PH,Mo,We-Fr 09:00-12:30,14:00-18:30'))).to eql('2030 Jan 01-2030 Jun 30 PH,Mo,We-Fr 09:00-12:30,14:00-18:30')
   end
-  it '2030 Jan-Jun PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan-Jun PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire"')
+  it '2030 Jan 01-2030 Jun 30 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan 01-2030 Jun 30 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire"')
   end
-  it '2030 Jan-Jun PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-Jun PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan-Jun PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
+  it '2030 Jan 01-2030 Jun 30 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2030 Jun 30 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan 01-2030 Jun 30 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
   end
-  it '2030 Jan-2050 Jun 10:00-20:00' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun 10:00-20:00'))).to eql('2030 Jan-2050 Jun 10:00-20:00')
+  it '2030 Jan 01-2050 Jun 30 10:00-20:00' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 10:00-20:00'))).to eql('2030 Jan 01-2050 Jun 30 10:00-20:00')
   end
-  it '2030 Jan-2050 Jun 10:00-20:00 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun 10:00-20:00 "commentaire"'))).to eql('2030 Jan-2050 Jun 10:00-20:00 "commentaire"')
+  it '2030 Jan 01-2050 Jun 30 10:00-20:00 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 10:00-20:00 "commentaire"'))).to eql('2030 Jan 01-2050 Jun 30 10:00-20:00 "commentaire"')
   end
-  it '2030 Jan-2050 Jun 10:00-20:00 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan-2050 Jun 10:00-20:00 "commentaire avec des espaces"')
+  it '2030 Jan 01-2050 Jun 30 10:00-20:00 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan 01-2050 Jun 30 10:00-20:00 "commentaire avec des espaces"')
   end
-  it '2030 Jan-2050 Jun off' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun off'))).to eql('2030 Jan-2050 Jun off')
+  it '2030 Jan 01-2050 Jun 30 off' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 off'))).to eql('2030 Jan 01-2050 Jun 30 off')
   end
-  it '2030 Jan-2050 Jun off "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun off "commentaire"'))).to eql('2030 Jan-2050 Jun off "commentaire"')
+  it '2030 Jan 01-2050 Jun 30 off "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 off "commentaire"'))).to eql('2030 Jan 01-2050 Jun 30 off "commentaire"')
   end
-  it '2030 Jan-2050 Jun off "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun off "commentaire avec des espaces"'))).to eql('2030 Jan-2050 Jun off "commentaire avec des espaces"')
+  it '2030 Jan 01-2050 Jun 30 off "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 off "commentaire avec des espaces"'))).to eql('2030 Jan 01-2050 Jun 30 off "commentaire avec des espaces"')
   end
-  it '2030 Jan-2050 Jun 09:00-12:30,14:00-18:30' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun 09:00-12:30,14:00-18:30'))).to eql('2030 Jan-2050 Jun 09:00-12:30,14:00-18:30')
+  it '2030 Jan 01-2050 Jun 30 09:00-12:30,14:00-18:30' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 09:00-12:30,14:00-18:30'))).to eql('2030 Jan 01-2050 Jun 30 09:00-12:30,14:00-18:30')
   end
-  it '2030 Jan-2050 Jun 09:00-12:30,14:00-18:30 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan-2050 Jun 09:00-12:30,14:00-18:30 "commentaire"')
+  it '2030 Jan 01-2050 Jun 30 09:00-12:30,14:00-18:30 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan 01-2050 Jun 30 09:00-12:30,14:00-18:30 "commentaire"')
   end
-  it '2030 Jan-2050 Jun 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan-2050 Jun 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
+  it '2030 Jan 01-2050 Jun 30 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan 01-2050 Jun 30 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
   end
-  it '2030 Jan-2050 Jun Mo 10:00-20:00' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo 10:00-20:00'))).to eql('2030 Jan-2050 Jun Mo 10:00-20:00')
+  it '2030 Jan 01-2050 Jun 30 Mo 10:00-20:00' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo 10:00-20:00'))).to eql('2030 Jan 01-2050 Jun 30 Mo 10:00-20:00')
   end
-  it '2030 Jan-2050 Jun Mo 10:00-20:00 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo 10:00-20:00 "commentaire"'))).to eql('2030 Jan-2050 Jun Mo 10:00-20:00 "commentaire"')
+  it '2030 Jan 01-2050 Jun 30 Mo 10:00-20:00 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo 10:00-20:00 "commentaire"'))).to eql('2030 Jan 01-2050 Jun 30 Mo 10:00-20:00 "commentaire"')
   end
-  it '2030 Jan-2050 Jun Mo 10:00-20:00 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan-2050 Jun Mo 10:00-20:00 "commentaire avec des espaces"')
+  it '2030 Jan 01-2050 Jun 30 Mo 10:00-20:00 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan 01-2050 Jun 30 Mo 10:00-20:00 "commentaire avec des espaces"')
   end
-  it '2030 Jan-2050 Jun Mo off' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo off'))).to eql('2030 Jan-2050 Jun Mo off')
+  it '2030 Jan 01-2050 Jun 30 Mo off' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo off'))).to eql('2030 Jan 01-2050 Jun 30 Mo off')
   end
-  it '2030 Jan-2050 Jun Mo off "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo off "commentaire"'))).to eql('2030 Jan-2050 Jun Mo off "commentaire"')
+  it '2030 Jan 01-2050 Jun 30 Mo off "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo off "commentaire"'))).to eql('2030 Jan 01-2050 Jun 30 Mo off "commentaire"')
   end
-  it '2030 Jan-2050 Jun Mo off "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo off "commentaire avec des espaces"'))).to eql('2030 Jan-2050 Jun Mo off "commentaire avec des espaces"')
+  it '2030 Jan 01-2050 Jun 30 Mo off "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo off "commentaire avec des espaces"'))).to eql('2030 Jan 01-2050 Jun 30 Mo off "commentaire avec des espaces"')
   end
-  it '2030 Jan-2050 Jun Mo 09:00-12:30,14:00-18:30' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo 09:00-12:30,14:00-18:30'))).to eql('2030 Jan-2050 Jun Mo 09:00-12:30,14:00-18:30')
+  it '2030 Jan 01-2050 Jun 30 Mo 09:00-12:30,14:00-18:30' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo 09:00-12:30,14:00-18:30'))).to eql('2030 Jan 01-2050 Jun 30 Mo 09:00-12:30,14:00-18:30')
   end
-  it '2030 Jan-2050 Jun Mo 09:00-12:30,14:00-18:30 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan-2050 Jun Mo 09:00-12:30,14:00-18:30 "commentaire"')
+  it '2030 Jan 01-2050 Jun 30 Mo 09:00-12:30,14:00-18:30 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan 01-2050 Jun 30 Mo 09:00-12:30,14:00-18:30 "commentaire"')
   end
-  it '2030 Jan-2050 Jun Mo 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan-2050 Jun Mo 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
+  it '2030 Jan 01-2050 Jun 30 Mo 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan 01-2050 Jun 30 Mo 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
   end
-  it '2030 Jan-2050 Jun Mo,We-Fr,Su 10:00-20:00' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo,We-Fr,Su 10:00-20:00'))).to eql('2030 Jan-2050 Jun Mo,We-Fr,Su 10:00-20:00')
+  it '2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su 10:00-20:00' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su 10:00-20:00'))).to eql('2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su 10:00-20:00')
   end
-  it '2030 Jan-2050 Jun Mo,We-Fr,Su 10:00-20:00 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo,We-Fr,Su 10:00-20:00 "commentaire"'))).to eql('2030 Jan-2050 Jun Mo,We-Fr,Su 10:00-20:00 "commentaire"')
+  it '2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su 10:00-20:00 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su 10:00-20:00 "commentaire"'))).to eql('2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su 10:00-20:00 "commentaire"')
   end
-  it '2030 Jan-2050 Jun Mo,We-Fr,Su 10:00-20:00 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo,We-Fr,Su 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan-2050 Jun Mo,We-Fr,Su 10:00-20:00 "commentaire avec des espaces"')
+  it '2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su 10:00-20:00 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su 10:00-20:00 "commentaire avec des espaces"')
   end
-  it '2030 Jan-2050 Jun Mo,We-Fr,Su off' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo,We-Fr,Su off'))).to eql('2030 Jan-2050 Jun Mo,We-Fr,Su off')
+  it '2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su off' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su off'))).to eql('2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su off')
   end
-  it '2030 Jan-2050 Jun Mo,We-Fr,Su off "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo,We-Fr,Su off "commentaire"'))).to eql('2030 Jan-2050 Jun Mo,We-Fr,Su off "commentaire"')
+  it '2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su off "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su off "commentaire"'))).to eql('2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su off "commentaire"')
   end
-  it '2030 Jan-2050 Jun Mo,We-Fr,Su off "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo,We-Fr,Su off "commentaire avec des espaces"'))).to eql('2030 Jan-2050 Jun Mo,We-Fr,Su off "commentaire avec des espaces"')
+  it '2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su off "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su off "commentaire avec des espaces"'))).to eql('2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su off "commentaire avec des espaces"')
   end
-  it '2030 Jan-2050 Jun Mo,We-Fr,Su 09:00-12:30,14:00-18:30' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo,We-Fr,Su 09:00-12:30,14:00-18:30'))).to eql('2030 Jan-2050 Jun Mo,We-Fr,Su 09:00-12:30,14:00-18:30')
+  it '2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su 09:00-12:30,14:00-18:30' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su 09:00-12:30,14:00-18:30'))).to eql('2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su 09:00-12:30,14:00-18:30')
   end
-  it '2030 Jan-2050 Jun Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan-2050 Jun Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire"')
+  it '2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire"')
   end
-  it '2030 Jan-2050 Jun Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan-2050 Jun Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
+  it '2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan 01-2050 Jun 30 Mo,We-Fr,Su 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
   end
-  it '2030 Jan-2050 Jun Mo-We,Fr,Sa 10:00-20:00' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo-We,Fr,Sa 10:00-20:00'))).to eql('2030 Jan-2050 Jun Mo-We,Fr,Sa 10:00-20:00')
+  it '2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa 10:00-20:00' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa 10:00-20:00'))).to eql('2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa 10:00-20:00')
   end
-  it '2030 Jan-2050 Jun Mo-We,Fr,Sa 10:00-20:00 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo-We,Fr,Sa 10:00-20:00 "commentaire"'))).to eql('2030 Jan-2050 Jun Mo-We,Fr,Sa 10:00-20:00 "commentaire"')
+  it '2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa 10:00-20:00 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa 10:00-20:00 "commentaire"'))).to eql('2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa 10:00-20:00 "commentaire"')
   end
-  it '2030 Jan-2050 Jun Mo-We,Fr,Sa 10:00-20:00 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo-We,Fr,Sa 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan-2050 Jun Mo-We,Fr,Sa 10:00-20:00 "commentaire avec des espaces"')
+  it '2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa 10:00-20:00 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa 10:00-20:00 "commentaire avec des espaces"')
   end
-  it '2030 Jan-2050 Jun Mo-We,Fr,Sa off' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo-We,Fr,Sa off'))).to eql('2030 Jan-2050 Jun Mo-We,Fr,Sa off')
+  it '2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa off' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa off'))).to eql('2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa off')
   end
-  it '2030 Jan-2050 Jun Mo-We,Fr,Sa off "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo-We,Fr,Sa off "commentaire"'))).to eql('2030 Jan-2050 Jun Mo-We,Fr,Sa off "commentaire"')
+  it '2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa off "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa off "commentaire"'))).to eql('2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa off "commentaire"')
   end
-  it '2030 Jan-2050 Jun Mo-We,Fr,Sa off "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo-We,Fr,Sa off "commentaire avec des espaces"'))).to eql('2030 Jan-2050 Jun Mo-We,Fr,Sa off "commentaire avec des espaces"')
+  it '2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa off "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa off "commentaire avec des espaces"'))).to eql('2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa off "commentaire avec des espaces"')
   end
-  it '2030 Jan-2050 Jun Mo-We,Fr,Sa 09:00-12:30,14:00-18:30' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo-We,Fr,Sa 09:00-12:30,14:00-18:30'))).to eql('2030 Jan-2050 Jun Mo-We,Fr,Sa 09:00-12:30,14:00-18:30')
+  it '2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30'))).to eql('2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30')
   end
-  it '2030 Jan-2050 Jun Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan-2050 Jun Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire"')
+  it '2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire"')
   end
-  it '2030 Jan-2050 Jun Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan-2050 Jun Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
+  it '2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan 01-2050 Jun 30 Mo-We,Fr,Sa 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
   end
-  it '2030 Jan-2050 Jun PH,Mo,We-Fr 10:00-20:00' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun PH,Mo,We-Fr 10:00-20:00'))).to eql('2030 Jan-2050 Jun PH,Mo,We-Fr 10:00-20:00')
+  it '2030 Jan 01-2050 Jun 30 PH,Mo,We-Fr 10:00-20:00' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 PH,Mo,We-Fr 10:00-20:00'))).to eql('2030 Jan 01-2050 Jun 30 PH,Mo,We-Fr 10:00-20:00')
   end
-  it '2030 Jan-2050 Jun PH,Mo,We-Fr 10:00-20:00 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun PH,Mo,We-Fr 10:00-20:00 "commentaire"'))).to eql('2030 Jan-2050 Jun PH,Mo,We-Fr 10:00-20:00 "commentaire"')
+  it '2030 Jan 01-2050 Jun 30 PH,Mo,We-Fr 10:00-20:00 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 PH,Mo,We-Fr 10:00-20:00 "commentaire"'))).to eql('2030 Jan 01-2050 Jun 30 PH,Mo,We-Fr 10:00-20:00 "commentaire"')
   end
-  it '2030 Jan-2050 Jun PH,Mo,We-Fr 10:00-20:00 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun PH,Mo,We-Fr 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan-2050 Jun PH,Mo,We-Fr 10:00-20:00 "commentaire avec des espaces"')
+  it '2030 Jan 01-2050 Jun 30 PH,Mo,We-Fr 10:00-20:00 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 PH,Mo,We-Fr 10:00-20:00 "commentaire avec des espaces"'))).to eql('2030 Jan 01-2050 Jun 30 PH,Mo,We-Fr 10:00-20:00 "commentaire avec des espaces"')
   end
-  it '2030 Jan-2050 Jun PH,Mo,We-Fr 09:00-12:30,14:00-18:30' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun PH,Mo,We-Fr 09:00-12:30,14:00-18:30'))).to eql('2030 Jan-2050 Jun PH,Mo,We-Fr 09:00-12:30,14:00-18:30')
+  it '2030 Jan 01-2050 Jun 30 PH,Mo,We-Fr 09:00-12:30,14:00-18:30' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 PH,Mo,We-Fr 09:00-12:30,14:00-18:30'))).to eql('2030 Jan 01-2050 Jun 30 PH,Mo,We-Fr 09:00-12:30,14:00-18:30')
   end
-  it '2030 Jan-2050 Jun PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan-2050 Jun PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire"')
+  it '2030 Jan 01-2050 Jun 30 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire"'))).to eql('2030 Jan 01-2050 Jun 30 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire"')
   end
-  it '2030 Jan-2050 Jun PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
-    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan-2050 Jun PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan-2050 Jun PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
+  it '2030 Jan 01-2050 Jun 30 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01-2050 Jun 30 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('2030 Jan 01-2050 Jun 30 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
   end
   it '2030 Jan 10-2050 Jun 30 10:00-20:00' do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 10-2050 Jun 30 10:00-20:00'))).to eql('2030 Jan 10-2050 Jun 30 10:00-20:00')
