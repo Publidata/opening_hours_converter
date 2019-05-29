@@ -27,11 +27,11 @@ module OpeningHoursConverter
       24 * 60 * 60
     end
 
-    def leap_year?(year = Time.now.year)
+    def leap_year?(year = Date.today.year)
       year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
     end
 
-    def last_day_of_month(month, year)
+    def last_day_of_month(month, year = Date.today.year)
       return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month] unless leap_year?(year) && month == 1
       return 29
     end
