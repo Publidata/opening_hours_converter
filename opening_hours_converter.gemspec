@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'opening_hours_converter'
-  s.version = '1.9.0'
+  s.version = '1.9.2'
   s.summary = "Datetime range to openinghours, openinghours to datetime range"
   s.description = "Datetime range to openinghours, openinghours to datetime range. Very strongly inspired by yohours."
   s.authors = ["Ziserman Martin"]
@@ -9,6 +9,11 @@ Gem::Specification.new do |s|
   s.files = [
     "lib/opening_hours_converter.rb",
     "lib/opening_hours_converter/constants.rb",
+    "lib/opening_hours_converter/utils.rb",
+    "lib/opening_hours_converter/token.rb",
+    "lib/opening_hours_converter/tokenizer.rb",
+    "lib/opening_hours_converter/tokens_handler.rb",
+    "lib/opening_hours_converter/week_index.rb",
     "lib/opening_hours_converter/date_range.rb",
     "lib/opening_hours_converter/interval.rb",
     "lib/opening_hours_converter/opening_hours_builder.rb",
