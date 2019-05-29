@@ -540,6 +540,7 @@ module OpeningHoursConverter
       wd_to = nil
 
       weekday_selector = weekday_selector.split(',')
+
       weekday_selector.each do |wd|
         if !(@RGX_HOLIDAY =~ wd).nil?
           weekdays << { from: -2, to: -2, index: nil }
@@ -555,12 +556,14 @@ module OpeningHoursConverter
 
           weekdays << { from: wd_from, to: wd_to, index: nil }
         elsif !(@RGX_WD_WITH_MODIFIER =~ wd).nil?
-          single_weekday = wd[0...wd.index('[')]
+
+          from, to = wd[0...wd.index('[')].split('-')
           index = wd[wd.index('[') + 1...wd.index(']')]
 
-          wd_from = OSM_DAYS.find_index(single_weekday[0])
+          wd_from = OSM_DAYS.find_index(from)
+          wd_to = OSM_DAYS.find_index(to)
 
-          weekdays << { from: wd_from, to: wd_from, index: index }
+          weekdays << { from: wd_from, to: wd_from, index: index.to_i }
         else
           raise ArgumentError, "Invalid weekday interval : #{wd}"
         end

@@ -35,6 +35,11 @@ module OpeningHoursConverter
       integer? && @value.to_i <= 53 && @value.to_i >= 1
     end
 
+    def weekday_modifier?
+      # Nécessaire mais pas suffisant : 10 de 10:00 retourne true il faudra check le previous/next token pour décider ou garder le state week
+      integer? && (@value.to_i <= 5 && @value.to_i >= 1) || @value.to_i == -1
+    end
+
     def monthday?
       # Nécessaire mais pas suffisant : 10 de 10:00 retourne true il faudra check le previous/next token pour décider
       integer? && @value.to_i <= 31 && @value.to_i >= 1
