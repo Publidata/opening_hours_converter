@@ -61,6 +61,8 @@ module OpeningHoursConverter
       month_start = -1
       day_start = -1
 
+      return result_to_string(years) if is_only_week_interval?(years)
+
       result = {}
 
       if !years['always'].nil?
@@ -120,7 +122,7 @@ module OpeningHoursConverter
                             { day: 30, month: 11 }
                           else
                             { day: MONTH_END_DAY[month - 1] - 1, month: month - 1 }
-                                    end
+                          end
                         else
                           { day: day - 1, month: month }
                         end
@@ -148,61 +150,88 @@ module OpeningHoursConverter
 
     def result_to_string(result)
       str_result = ''
-      result.each do |selector, intervals|
-        if selector == 'always'
-          intervals.each do |interval|
-            str_result += ',' if !str_result.empty?
-            if is_full_year?(interval)
-            elsif is_full_month?(interval)
-              str_result += (OSM_MONTHS[interval[:start][:month]]).to_s
-            elsif starts_month?(interval) && ends_month?(interval)
-              str_result += "#{OSM_MONTHS[interval[:start][:month]]}-#{OSM_MONTHS[interval[:end][:month]]}"
-            elsif is_same_month?(interval)
-              if is_same_day?(interval)
-                str_result += "#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day] + 1 < 10 ? "0#{interval[:start][:day] + 1}" : interval[:start][:day] + 1}"
+      if is_only_week_interval?(result)
+        local_str = result.keys == ['always'] ? 'week ' : result.keys.length == 1 ? result.keys.first.to_s + ' week ' : result.keys.min.to_s + '-' + result.keys.max.to_s + ' week '
+
+        intervals = result[result.keys.first]
+        intervals.each do |interval|
+          local_str += "," if !(local_str[local_str.length - 1] =~ /^[0-9]$/).nil?
+          local_str +=
+            if interval[:modifier].nil?
+              if interval[:start][:week] == interval[:end][:week]
+                interval[:start][:week].to_s
               else
-                str_result += "#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day] + 1 < 10 ? "0#{interval[:start][:day] + 1}" : interval[:start][:day] + 1}-#{interval[:end][:day] + 1 < 10 ? "0#{interval[:end][:day] + 1}" : interval[:end][:day] + 1}"
+                "#{interval[:start][:week].to_s + '-' + interval[:end][:week].to_s}"
               end
             else
-              str_result += "#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day] + 1 < 10 ? "0#{interval[:start][:day] + 1}" : interval[:start][:day] + 1}-#{OSM_MONTHS[interval[:end][:month]]} #{interval[:end][:day] + 1 < 10 ? "0#{interval[:end][:day] + 1}" : interval[:end][:day] + 1}"
+              "#{interval[:start][:week].to_s + '-' + interval[:end][:week].to_s}/#{interval[:modifier].to_s}"
             end
-          end
-        elsif selector == 'multi_year'
-          intervals.each do |_years, intervals|
+        end
+        str_result += local_str
+      else
+        result.each do |selector, intervals|
+          if selector == 'always'
             intervals.each do |interval|
               str_result += ',' if !str_result.empty?
-              if starts_year?(interval) && ends_year?(interval)
+              if is_full_year?(interval)
+              elsif starts_year?(interval) && ends_year?(interval)
                 str_result += "#{interval[:start][:year]}-#{interval[:end][:year]}"
-              # elsif starts_month?(interval) && ends_month?(interval)
-              #   str_result += "#{interval[:start][:year]} #{OSM_MONTHS[interval[:start][:month]]}-#{interval[:end][:year]} #{OSM_MONTHS[interval[:end][:month]]}"
+              elsif is_full_month?(interval)
+                str_result += (OSM_MONTHS[interval[:start][:month]]).to_s
+              elsif is_same_month?(interval)
+                if is_same_day?(interval)
+                  str_result += "#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day] + 1 < 10 ? "0#{interval[:start][:day] + 1}" : interval[:start][:day] + 1}"
+                else
+                  str_result += "#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day] + 1 < 10 ? "0#{interval[:start][:day] + 1}" : interval[:start][:day] + 1}-#{interval[:end][:day] + 1 < 10 ? "0#{interval[:end][:day] + 1}" : interval[:end][:day] + 1}"
+                end
+              elsif starts_month?(interval) && ends_month?(interval)
+                str_result += "#{OSM_MONTHS[interval[:start][:month]]}-#{OSM_MONTHS[interval[:end][:month]]}"
               else
-                str_result += "#{interval[:start][:year]} #{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day] + 1 < 10 ? "0#{interval[:start][:day] + 1}" : interval[:start][:day] + 1}-#{interval[:end][:year]} #{OSM_MONTHS[interval[:end][:month]]} #{interval[:end][:day] + 1 < 10 ? "0#{interval[:end][:day] + 1}" : interval[:end][:day] + 1}"
+                str_result += "#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day] + 1 < 10 ? "0#{interval[:start][:day] + 1}" : interval[:start][:day] + 1}-#{OSM_MONTHS[interval[:end][:month]]} #{interval[:end][:day] + 1 < 10 ? "0#{interval[:end][:day] + 1}" : interval[:end][:day] + 1}"
               end
             end
-          end
-        else
-          local_str = "#{selector} "
-          intervals.each do |interval|
-            if is_full_year?(interval)
-              # elsif
-              # local_str += "#{local_str.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]}"
-              # elsif
-              # local_str += "#{local_str.length > 5 ? "," : ""}#{OSM_MONTHS[interval[:start][:month]]}-#{OSM_MONTHS[interval[:end][:month]]}"
-            elsif is_same_month?(interval)
-              if is_same_day?(interval)
-                local_str += "#{local_str.length > 5 ? ',' : ''}#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day] + 1 < 10 ? "0#{interval[:start][:day] + 1}" : interval[:start][:day] + 1}"
-              else
-                local_str += "#{local_str.length > 5 ? ',' : ''}#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day] + 1 < 10 ? "0#{interval[:start][:day] + 1}" : interval[:start][:day] + 1}-#{interval[:end][:day] + 1 < 10 ? "0#{interval[:end][:day] + 1}" : interval[:end][:day] + 1}"
+          elsif selector == 'multi_year'
+            intervals.each do |_years, intervals|
+              intervals.each do |interval|
+                str_result += ',' if !str_result.empty?
+                if starts_year?(interval) && ends_year?(interval)
+                  str_result += "#{interval[:start][:year]}-#{interval[:end][:year]}"
+                else
+                  str_result += "#{interval[:start][:year]} #{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day] + 1 < 10 ? "0#{interval[:start][:day] + 1}" : interval[:start][:day] + 1}-#{interval[:end][:year]} #{OSM_MONTHS[interval[:end][:month]]} #{interval[:end][:day] + 1 < 10 ? "0#{interval[:end][:day] + 1}" : interval[:end][:day] + 1}"
+                end
               end
-            else
-              local_str += "#{local_str.length > 5 ? ',' : ''}#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day] + 1 < 10 ? "0#{interval[:start][:day] + 1}" : interval[:start][:day] + 1}-#{selector} #{OSM_MONTHS[interval[:end][:month]]} #{interval[:end][:day] + 1 < 10 ? "0#{interval[:end][:day] + 1}" : interval[:end][:day] + 1}"
+            end
+          else
+            local_str = "#{selector} "
+            intervals.each do |interval|
+              if is_full_year?(interval)
+              elsif is_same_month?(interval)
+                if is_same_day?(interval)
+                  local_str += "#{local_str.length > 5 ? ',' : ''}#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day] + 1 < 10 ? "0#{interval[:start][:day] + 1}" : interval[:start][:day] + 1}"
+                else
+                  local_str += "#{local_str.length > 5 ? ',' : ''}#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day] + 1 < 10 ? "0#{interval[:start][:day] + 1}" : interval[:start][:day] + 1}-#{interval[:end][:day] + 1 < 10 ? "0#{interval[:end][:day] + 1}" : interval[:end][:day] + 1}"
+                end
+              else
+                local_str += "#{local_str.length > 5 ? ',' : ''}#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day] + 1 < 10 ? "0#{interval[:start][:day] + 1}" : interval[:start][:day] + 1}-#{selector} #{OSM_MONTHS[interval[:end][:month]]} #{interval[:end][:day] + 1 < 10 ? "0#{interval[:end][:day] + 1}" : interval[:end][:day] + 1}"
+              end
+              str_result += "#{!str_result.empty? ? ',' : ''}#{local_str}"
             end
           end
-          str_result += "#{!str_result.empty? ? ',' : ''}#{local_str}"
         end
       end
 
       str_result.strip
+    end
+
+    def is_only_week_interval?(r)
+      r.all? do |year, intervals|
+        intervals.all? do |interval|
+          is_week_interval?(interval)
+        end
+      end
+    end
+    def is_week_interval?(interval)
+      !interval.is_a?(Array) && interval.key?(:start) && interval[:start].key?(:week)
     end
 
     def is_full_year?(r)

@@ -10,21 +10,25 @@ module OpeningHoursConverter
       oh_rule_added = nil
       range_general = nil
       range_general_for = nil
-      day_ph = false
-      off_day_ph = false
 
       date_ranges.each_with_index do |date_range, date_range_index|
         next unless !date_range.nil?
-        if date_range.typical.intervals.length != 1
-          date_range.typical.intervals.each_with_index do |interval, interval_id|
-            next unless interval&.day_start == -2 && interval&.day_start == interval&.day_end
-            if interval.is_off
-              off_day_ph = true
-            else
-              day_ph = true
-            end
-            date_range.typical.remove_interval(interval_id)
+
+        day_ph = false
+        off_day_ph = false
+        phs = []
+
+        date_range.typical.intervals.each_with_index do |interval, interval_id|
+          next unless interval&.day_start == -2 && interval&.day_start == interval&.day_end
+
+          if interval.is_off
+            off_day_ph = true
+          else
+            day_ph = true
           end
+
+          phs << interval
+          date_range.typical.remove_interval(interval_id)
         end
 
         range_general = nil
@@ -44,9 +48,7 @@ module OpeningHoursConverter
         end
 
         next unless date_range_index == 0 || range_general.nil?
-        if date_range.typical&.intervals&.length == 1 && date_range.typical&.intervals[0].day_start == -2 && date_range.typical&.intervals[0].day_end == -2
-          oh_rules = build_holiday(date_range)
-        elsif date_range.defines_typical_week?
+        if date_range.defines_typical_week?
           oh_rules = if !range_general_for.nil?
                        build_week_diff(date_range, date_ranges[range_general_for])
                      else
@@ -72,7 +74,6 @@ module OpeningHoursConverter
                 end
                 oh_rule_added = true
               rescue Exception => e
-                puts e
                 if oh_rule.date[0].wide_interval.type == 'holiday' && oh_rule.date[0].wide_interval.get_time_selector == 'PH'
                   rules[rule_index].add_ph_weekday
                   oh_rule_added = true
@@ -89,11 +90,37 @@ module OpeningHoursConverter
             end
           end
 
-          oh_rule.add_ph_weekday if day_ph
+          if off_day_ph || day_ph
+            if date_range.typical.intervals.uniq == [nil]
+              oh_rule.date.first.weekdays = [-2]
+              if off_day_ph
+                oh_rule.is_defined_off = off_day_ph
+                phs = []
+              else
+                phs.reverse.each do |interval|
+                  oh_rule.add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, interval.end))
+                end
+              end
+            else
+              if times_are_compatible?(oh_rule, phs)
+                holiday_intervals = get_compatible_intervals(oh_rule, phs)
+                oh_rule.add_ph_weekday if holiday_intervals[:compatible].length > 0
+                rules << oh_rule if !oh_rule_added
+                oh_rule_added = true
+                holiday_intervals[:incompatible].each do |interval|
+                  rules += build_off_holiday(date_range) if off_day_ph
+                  rules += build_holiday(date_range) if day_ph
+                end
+              else
+                rules << oh_rule if !oh_rule_added
+                oh_rule_added = true
+                rules += build_off_holiday(date_range) if off_day_ph
+                rules += build_holiday(date_range) if day_ph
+              end
+            end
+          end
 
           rules << oh_rule if !oh_rule_added
-
-          rules += build_off_holiday(date_range) if off_day_ph
 
           next unless oh_rule == oh_rules.last && oh_rule.has_overwritten_weekday?
           oh_rule_over = OpeningHoursConverter::OpeningHoursRule.new
@@ -118,6 +145,34 @@ module OpeningHoursConverter
       result.strip
     end
 
+    def times_are_compatible?(oh_rule, phs)
+      if oh_rule.is_defined_off
+        phs.any?(&:is_off)
+      else
+        phs.any? do |ph_interval|
+          oh_rule.time.any? do |rule_time|
+            rule_time.start == ph_interval.start && rule_time.end == ph_interval.end
+          end
+        end
+      end
+    end
+
+    def get_compatible_intervals(oh_rule, phs)
+      compatibility = {
+        compatible: [],
+        incompatible: []
+      }
+
+      compatibility[:compatible] = phs.select do |ph_interval|
+        return false if ph_interval.is_off != oh_rule.is_defined_off
+
+        oh_rule.time.any? { |rule_time| rule_time.start == ph_interval.start && rule_time.end == ph_interval.end }
+      end
+      compatibility[:incompatible] = phs - compatibility[:compatible]
+
+      compatibility
+    end
+
     def build_off_holiday(date_range)
       start_year = date_range.wide_interval.start&.key?(:year) ? date_range.wide_interval.start[:year] : date_range.wide_interval.start
       end_year = date_range.wide_interval.end&.key?(:year) ? date_range.wide_interval.end[:year] : date_range.wide_interval.end
@@ -135,9 +190,15 @@ module OpeningHoursConverter
     def build_holiday(date_range)
       start_year = date_range.wide_interval.start&.key?(:year) ? date_range.wide_interval.start[:year] : date_range.wide_interval.start
       end_year = date_range.wide_interval.end&.key?(:year) ? date_range.wide_interval.end[:year] : date_range.wide_interval.end
-
       intervals = date_range.typical.get_intervals(true)
-      date_range = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.holiday('PH', start_year, end_year))
+
+      if date_range.wide_interval.type == 'week'
+        intervals.each do |interval|
+          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(-2, interval.start, -2, interval.end, interval.is_off))
+        end
+      else
+        date_range = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.holiday('PH', start_year, end_year))
+      end
 
       for i in 0..6
         intervals.each do |interval|
@@ -156,7 +217,6 @@ module OpeningHoursConverter
           rule.is_defined_off = rule.is_defined_off || interval.is_off
         end
       end
-
       [rule]
     end
 
@@ -327,6 +387,7 @@ module OpeningHoursConverter
 
     def create_time_intervals(wide_interval, intervals)
       days = []
+
       for i in 0...7
         days << OpeningHoursConverter::OpeningHoursRule.new
         days[i].add_date(OpeningHoursConverter::OpeningHoursDate.new(wide_interval, [i]))
