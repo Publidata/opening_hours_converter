@@ -1,10 +1,17 @@
 module OpeningHoursConverter
   class PeriodTip
+    include Constants
     attr_accessor :date, :available_parts
 
     def initialize date, available_parts
       @date = date
       @available_parts = available_parts
+    end
+
+    def to_s(format = 'MONTH DAY')
+      format.gsub!('DAY', day.to_s) if part_available?(:day)
+      format.gsub!('MONTH', OSM_MONTHS[month - 1]) if part_available?(:month)
+      format.gsub!('YEAR', year.to_s) if part_available?(:month)
     end
 
     def part_available? part

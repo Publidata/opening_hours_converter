@@ -13,6 +13,25 @@ module OpeningHoursConverter
       @type = type
     end
 
+    def to_s
+      return '' if always?
+      if all_available?
+        if same_year?
+          return "#{@from.to_s('YEAR')}" if is_full_year?
+          return "#{@from.to_s('YEAR MONTH DAY')}" if same_month? && same_day?
+          return "#{@from.to_s('YEAR MONTH DAY')}-#{@to.to_s('DAY')}" if same_month?
+          return "#{@from.to_s('YEAR MONTH')-@to.to_s('MONTH')} #{@from.to_s('DAY')}-#{@to.to_s('DAY')}"
+        else
+          return "#{@from.to_s('YEAR')-@to.to_s('YEAR')}" if start_year? && end_year?
+          return "#{@from.to_s('YEAR MONTH DAY')-@to.to_s('YEAR MONTH DAY')}"
+        end
+      else
+        return "#{@from.to_s('MONTH DAY')}" if same_month? && same_day?
+        return "#{@from.to_s('MONTH DAY')}-#{@to.to_s('DAY')}" if same_month?
+        return "#{@from.to_s('MONTH DAY')}-#{@to.to_s('MONTH DAY')}"
+      end
+    end
+
     def part_available?(part, sub_part = nil)
       if sub_part.nil?
         !available_dates_parts.dig(part).nil?
