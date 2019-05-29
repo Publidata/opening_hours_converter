@@ -1,37 +1,33 @@
-module OpeningHoursConverter
-  class PeriodTip
-    include Constants
-    attr_accessor :date, :available_parts
+require 'opening_hours_converter/utils/constants'
 
-    def initialize date, available_parts
+module OpeningHoursConverter
+  class DateRangeTip
+    include Constants
+    attr_accessor :date, :known_year
+
+    def initialize date, known_year
       @date = date
-      @available_parts = available_parts
+      @known_year = known_year
     end
 
     def to_s(format = 'MONTH DAY')
-      format.gsub!('DAY', day.to_s) if part_available?(:day)
-      format.gsub!('MONTH', OSM_MONTHS[month - 1]) if part_available?(:month)
-      format.gsub!('YEAR', year.to_s) if part_available?(:month)
-    end
+      format.gsub!('DAY', day.to_s)
+      format.gsub!('MONTH', OSM_MONTHS[month - 1])
+      format.gsub!('YEAR', year.to_s) if known_year
 
-    def part_available? part
-      available_parts.dig(part).nil? ? false : available_parts.dig(part)
+      format
     end
 
     def day
-      date.day if part_available? :day
+      date.day
     end
 
     def month
-      date.month if part_available? :month
+      date.month
     end
 
     def year
-      date.year if part_available? :year
-    end
-
-    def all_available?
-      [:day, :month, :year].all? { |part| part_available? part }
+      date.year if known_year
     end
 
     def > period_tip
@@ -77,15 +73,15 @@ module OpeningHoursConverter
     end
 
     def compare period_tip, &block
-      if all_available? && period_tip.all_available?
+      if known_year && period_tip.known_year
         yield date, period_tip.date
-      elsif part_available? :year
-        if !period_tip.part_available? :year
+      elsif known_year
+        if !period_tip.known_year
           same_year_copy = Date.new(year, period_tip.month, period_tip.day) # TODO : period tip is 29/02 bisextile
           yield date, same_year_copy
         end
-      elsif period_tip.part_available? :year
-        if !part_available? :year
+      elsif period_tip.known_year
+        if !known_year
           same_year_copy = Date.new(period_tip.year, month, day) # TODO : period tip is 29/02 bisextile
           yield same_year_copy, period_tip.date
         end

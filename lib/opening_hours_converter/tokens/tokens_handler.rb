@@ -1,15 +1,19 @@
-require 'opening_hours_converter/constants'
+require 'opening_hours_converter/utils/constants'
+require 'opening_hours_converter/utils/utils'
 
 module OpeningHoursConverter
   class TokensHandler
     include Constants
+    include Utils
 
-    attr_reader :tokens
+    attr_reader :tokens, :data
 
     def initialize(tokens)
       @unhandled_tokens = tokens
       @index = 0
       @tokens = []
+      @date_range_list = nil
+      @data = {}
 
       handle_tokens
     end
@@ -91,6 +95,9 @@ module OpeningHoursConverter
       start_index = current_token.start_index
       value = current_token.value
       made_from = [current_token]
+      @data[:years] = []
+      @data[:years] << { from: current_token.value.to_i, to: current_token.value.to_i }
+
       @index += 1
 
       while current_token?
@@ -100,8 +107,10 @@ module OpeningHoursConverter
         end
 
         if current_token.year?
-          type[:multi_year] = true
-          if previous_token.hyphen? || previous_token.comma?
+          if previous_token.hyphen?
+            @data[:years].last[:to] = current_token.value.to_i
+          elsif previous_token.comma?
+            @data[:years] << { from: current_token.value.to_i, to: current_token.value.to_i }
             value, made_from, type = add_current_token_to(value, type, made_from)
             next
           end
@@ -112,15 +121,25 @@ module OpeningHoursConverter
           break if current_token.weekday?
 
           if current_token.week?
+            @data[:years].last[:weeks] ||= []
             value, made_from, type = add_current_token_to(value, type, made_from, :week, ' ')
             next
           end
 
           if current_token.month?
-            if previous_token.hyphen? || previous_token.comma?
+
+            @data[:years].last[:months] ||= []
+            if previous_token.hyphen?
+              @data[:years].last[:months].last[:to] = month_index(current_token.value)
+              value, made_from, type = add_current_token_to(value, type, made_from, :multi_month)
+              next
+            elsif previous_token.comma?
+              @data[:years].last[:months] << { from: month_index(current_token.value), to: month_index(current_token.value) }
               value, made_from, type = add_current_token_to(value, type, made_from, :multi_month)
               next
             else
+              @data[:years].last[:months] ||= []
+              @data[:years].last[:months] << { from: month_index(current_token.value), to: month_index(current_token.value) }
               value, made_from, type = add_current_token_to(value, type, made_from, :month, ' ')
               next
             end
@@ -136,14 +155,21 @@ module OpeningHoursConverter
               if previous_token.slash?
                 value, made_from, type = add_current_token_to(value, type, made_from, :modified_week)
                 next
-              elsif previous_token.comma? || previous_token.hyphen?
+              elsif previous_token.comma?
+                @data[:weeks] << { from: current_token.value.to_i, to: current_token.value.to_i }
+                value, made_from, type = add_current_token_to(value, type, made_from, :multi_week)
+                next
+              elsif previous_token.hyphen?
+                @data[:weeks].last[:to] = current_token.value.to_i
                 value, made_from, type = add_current_token_to(value, type, made_from, :multi_week)
                 next
               else
+                @data[:weeks] << { from: current_token.value.to_i, to: current_token.value.to_i }
                 value, made_from, type = add_current_token_to(value, type, made_from, :week, ' ')
                 next
               end
               if current_token_is_week_modifier?
+                @data[:weeks].last[:modifier] = current_token.value.to_i
                 value, made_from, type = add_current_token_to(value, type, made_from, :modified_week)
                 next
               end
@@ -151,10 +177,20 @@ module OpeningHoursConverter
 
           elsif type[:month]
             if current_token_monthday?
-              if previous_token.comma? || previous_token.hyphen?
+              if previous_token.comma?
+                @data[:years].last[:months].last[:days] << { from: current_token.value.to_i, to: current_token.value.to_i }
+                value, made_from, type = add_current_token_to(value, type, made_from, :multi_month)
+                next
+              elsif previous_token.hyphen?
+                @data[:years].last[:months].last[:days].last[:to] = current_token.value.to_i
                 value, made_from, type = add_current_token_to(value, type, made_from, :multi_month)
                 next
               else
+                if @data[:years].last[:months].last[:days].nil?
+                  @data[:years].last[:months].last[:days] = [{ from: current_token.value.to_i, to: current_token.value.to_i }]
+                else
+                  @data[:years].last[:months].last[:days].last[:to] = current_token.value.to_i
+                end
                 value, made_from, type = add_current_token_to(value, type, made_from, :month, ' ')
                 next
               end
@@ -164,6 +200,7 @@ module OpeningHoursConverter
 
         break
       end
+      binding.pry
 
       token(value, type, start_index, made_from)
     end

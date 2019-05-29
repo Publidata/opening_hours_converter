@@ -1,4 +1,4 @@
-require 'opening_hours_converter/constants'
+require 'opening_hours_converter/utils/constants'
 
 module OpeningHoursConverter
   class Token

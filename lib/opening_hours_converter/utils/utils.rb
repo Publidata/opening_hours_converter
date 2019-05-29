@@ -1,5 +1,9 @@
 module OpeningHoursConverter
   module Utils
+    def month_index(month)
+      %w[Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec].index(month) + 1
+    end
+
     def reindex_sunday_week_to_monday_week(wday)
       (wday + 6) % 7
     end
