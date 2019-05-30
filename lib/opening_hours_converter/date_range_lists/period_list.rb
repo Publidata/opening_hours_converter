@@ -1,5 +1,5 @@
 module OpeningHoursConverter
-  class PeriodList
+  class PeriodList < DateRangeList
     attr_accessor :periods
 
     def initialize(periods = [])

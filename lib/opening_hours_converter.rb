@@ -16,6 +16,7 @@ module OpeningHoursConverter
   require_relative './opening_hours_converter/date_range_tip'
 
   require_relative './opening_hours_converter/tokens/token'
+  require_relative './opening_hours_converter/tokens/token_data'
   require_relative './opening_hours_converter/tokens/tokenizer'
   require_relative './opening_hours_converter/tokens/tokens_handler'
 end

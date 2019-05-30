@@ -4,14 +4,14 @@ module OpeningHoursConverter
   class Week < DateRange
     include Utils
 
-    attr_accessor :index, :year_known
+    attr_accessor :index, :year, :known_year
 
-    def initialize(index, year_known)
+    def initialize(index, year, known_year)
       @index = index
-      week = WeekIndex.index_from_week
-      @from = DateRangeTip.new(week.from, year_known)
-      @to = DateRangeTip.new(week.to, year_known)
-      @year_known = year_known
+      week = WeekIndex.week_from_index
+      @from = DateRangeTip.new(week.from, known_year)
+      @to = DateRangeTip.new(week.to, known_year)
+      @known_year = known_year
     end
 
     def to_s(template: nil, as_period: false)

@@ -2,6 +2,10 @@ module OpeningHoursConverter
   class DateRangeList
     attr_accessor :date_ranges
 
+    def to_s
+      date_ranges.map(&:to_s).join(',')
+    end
+
     def width
       return 0 if date_ranges.length == 0
 
