@@ -40,51 +40,77 @@ module OpeningHoursConverter
     end
 
     def create_period(from, to, year_available)
-      binding.pry
-
       from = Date.new(from[:year], from[:month], from[:day] || 1)
-      to = Date.new(to[:year], to[:month], to[:day] || last_day_of(to[:month], to[:year]))
+      to = Date.new(to[:year], to[:month], to[:day] || last_day_of_month(to[:month] - 1, to[:year]))
       Period.new(from, to, year_available)
     end
 
     def create_periods
-      if years.length > 1
-        years.map do |year|
-          (year[:from]..year[:to]).map do |range_year|
-            create_period_with({ from: range_year, to: range_year }, months, true)
-          end
-        end.flatten
-      elsif years.length == 1
-        create_period_with(years.first, months, true).flatten
+      binding.pry
+
+      if years.length > 0
+        if months.length == 1 && months.first[:from].is_a?(Hash) && years.length == 1
+          create_period_with({ from: years.first[:from], to: years.first[:to] }, months, true)
+        else
+          years.map do |year|
+            (year[:from]..year[:to]).map do |range_year|
+              create_period_with({ from: range_year, to: range_year }, months, true)
+            end
+          end.flatten
+        end
       else
         create_period_with({ from: Date.now.year, to: Date.now.year }, months, false).flatten
       end
     end
 
     def create_period_with year, months, year_known
-      months.map do |month|
-        if month[:days] && month[:days].length > 0
-          month[:days].map do |day|
+      if months.length == 0
+        create_period({
+          year: year[:from],
+          month: 1,
+          day: 1
+        }, {
+          year: year[:to],
+          month: 12,
+          day: 31
+        }, year_known)
+      else
+        months.map do |month|
+          if month[:from].is_a?(Hash)
+            create_period({
+              year: year[:from],
+              month: month[:from][:month],
+              day: month[:from][:day]
+            }, {
+              year: year[:to],
+              month: month[:to][:month],
+              day: month[:to][:day]
+            }, year_known)
+          elsif month[:days] && month[:days].length > 0
+            month[:days].map do |day|
+              (month[:from]..month[:to]).map do |range_month|
+                create_period({
+                  year: year[:from],
+                  month: range_month,
+                  day: day[:from]
+                }, {
+                  year: year[:to],
+                  month: range_month,
+                  day: day[:to]
+                }, year_known)
+              end
+            end
+          else
             create_period({
               year: year[:from],
               month: month[:from],
-              day: day[:from]
+              day: nil
             }, {
               year: year[:to],
               month: month[:to],
-              day: day[:to]
+              day: nil
             }, year_known)
           end
-        else
-          create_period({
-            year: year[:from],
-            month: month[:from][:month],
-            day: month[:from][:day]
-          }, {
-            year: year[:to],
-            month: month[:to][:month],
-            day: month[:to][:day]
-          }, year_known)
         end
       end
     end

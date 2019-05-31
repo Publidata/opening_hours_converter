@@ -35,6 +35,11 @@ module OpeningHoursConverter
         _date > period_tip_date
       end
     end
+    def <=> period_tip
+      compare period_tip do |_date, period_tip_date|
+        _date <=> period_tip_date
+      end
+    end
 
     def >= period_tip
       compare period_tip do |_date, period_tip_date|

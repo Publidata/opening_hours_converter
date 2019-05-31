@@ -1,5 +1,9 @@
+require 'opening_hours_converter/utils/constants'
+
 module OpeningHoursConverter
   class DateRange
+    include Constants
+
     def to_s(template = nil)
       if template.nil?
         get
@@ -47,7 +51,7 @@ module OpeningHoursConverter
       return false if always?
       return false unless same_month?
 
-      from.month == to.month && from.day == 1 && to.day == last_day_of_month(to.month, to.year)
+      from.month == to.month && from.day == 1 && to.day == last_day_of_month(to.month - 1, to.year)
     end
 
     def full_year?
@@ -82,6 +86,10 @@ module OpeningHoursConverter
       return true if always? && period.always?
 
       from == period.from && to == period.to
+    end
+
+    def <=> period, part = :from
+      part == :from ? from <=> period.from : to <=> period.to
     end
 
     def touch? period

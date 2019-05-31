@@ -109,6 +109,8 @@ module OpeningHoursConverter
         if current_token.year?
           if previous_token.hyphen?
             @data.years.last[:to] = current_token.value.to_i
+            value, made_from, type = add_current_token_to(value, type, made_from)
+            next
           elsif previous_token.comma?
             @data.years << { from: current_token.value.to_i, to: current_token.value.to_i }
             value, made_from, type = add_current_token_to(value, type, made_from)
@@ -129,7 +131,7 @@ module OpeningHoursConverter
           if current_token.month?
             @data.months ||= []
             if previous_token.hyphen?
-              if @unhandled_tokens[@index - 2].monthday? && @unhandled_tokens[@index - 3].month?
+              if (@unhandled_tokens[@index - 2].monthday? && @unhandled_tokens[@index - 3].month?) # Jan 10-Feb 20
                 from = @data.months.last[:from]
                 @data.months.last[:from] = { month: from, day: @data.months.last[:days].last[:from] }
                 @data.months.last.delete(:days)
@@ -145,7 +147,7 @@ module OpeningHoursConverter
               @data.months << { from: month_index(current_token.value), to: month_index(current_token.value) }
               value, made_from, type = add_current_token_to(value, type, made_from, :multi_month)
               next
-            elsif previous_token.year? && @unhandled_tokens[@index - 2]&.hyphen?
+            elsif previous_token.year? && @unhandled_tokens[@index - 2]&.hyphen? && !@unhandled_tokens[@index - 3]&.year? # 2010 Jan 10-2011 Feb 20
               from = @data.months.last[:from]
               @data.months.last[:from] = { month: from, day: @data.months.last[:days]&.last[:from] }
               @data.months.last[:to] = { month: month_index(current_token.value) }
@@ -203,7 +205,8 @@ module OpeningHoursConverter
                 value, made_from, type = add_current_token_to(value, type, made_from, :multi_month)
                 next
 
-              elsif previous_token.month? && @unhandled_tokens[@index - 2]&.hyphen? && !@unhandled_tokens[@index - 3].month?
+              elsif (previous_token.month? && @unhandled_tokens[@index - 2]&.hyphen? && !@unhandled_tokens[@index - 3].month?) || # 2010 Jan 10-Feb 20
+                (previous_token.month? && @unhandled_tokens[@index - 2]&.year? && @unhandled_tokens[@index - 3].hyphen? && !@unhandled_tokens[@index - 4].year?) # 2010 Jan 10-2011 Feb 20
                 @data.months.last[:to][:day] = current_token.value.to_i
                 value, made_from, type = add_current_token_to(value, type, made_from, :month, ' ')
                 next
@@ -221,6 +224,7 @@ module OpeningHoursConverter
             end
           end
         end
+        binding.pry
 
         break
       end
