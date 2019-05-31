@@ -41,13 +41,11 @@ module OpeningHoursConverter
 
     def create_period(from, to, year_available)
       from = Date.new(from[:year], from[:month], from[:day] || 1)
-      to = Date.new(to[:year], to[:month], to[:day] || last_day_of_month(to[:month] - 1, to[:year]))
+      to = Date.new(to[:year], to[:month], to[:day] || last_day_of_month(to[:month] - 1, to[:year] || Date.today.year))
       Period.new(from, to, year_available)
     end
 
     def create_periods
-      binding.pry
-
       if years.length > 0
         if months.length == 1 && months.first[:from].is_a?(Hash) && years.length == 1
           create_period_with({ from: years.first[:from], to: years.first[:to] }, months, true)
@@ -59,7 +57,7 @@ module OpeningHoursConverter
           end.flatten
         end
       else
-        create_period_with({ from: Date.now.year, to: Date.now.year }, months, false).flatten
+        create_period_with({ from: Date.today.year, to: Date.today.year }, months, false).flatten
       end
     end
 

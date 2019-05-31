@@ -17,16 +17,24 @@ module OpeningHoursConverter
       if periods.length == 1
         periods.first.to_s
       else
-        if all_years_similar?
-          if periods.all?(&:full_year?)
-            years_to_s
+        if known_years?
+          if all_years_similar?
+            if periods.all?(&:full_year?)
+              years_to_s
+            else
+              years_to_s + ' ' + months_with_days_to_s
+            end
           else
-            years_to_s + ' ' + months_with_days_to_s
+            super
           end
         else
-          super
+          months_with_days_to_s
         end
       end
+    end
+
+    def known_years?
+      periods.all?(&:known_years)
     end
 
     def years_to_s
@@ -46,7 +54,7 @@ module OpeningHoursConverter
     end
 
     def months_with_days_to_s
-      x=months_with_days(years.first).map do |month, days|
+      months_with_days(years.first).map do |month, days|
         if month.is_a?(Integer) && days.is_a?(Array)
           days = consecutives(days.map(&:day))
 
@@ -58,9 +66,8 @@ module OpeningHoursConverter
               "#{day[:from]}-#{day[:to]}"
             end
           end.join(',')
-
         elsif month[0] == month[1]
-          if days[0].day == 1 && days[1].day == last_day_of_month(month[0] - 1, years.first)
+          if days[0].day == 1 && days[1].day == last_day_of_month(month[0] - 1, years.first || Date.today.year)
             OSM_MONTHS[month[0] - 1]
           else
             "#{OSM_MONTHS[month[0] - 1]} #{days[0].day}-#{days[1].day}"
@@ -72,6 +79,7 @@ module OpeningHoursConverter
     end
 
     def consecutives?(array_of_int)
+      return [] if array_of_int.nil? || array_of_int == []
       array_of_int.reduce(array_of_int.first - 1) do |reduced, value|
         return false unless reduced == value - 1
         reduced += 1
@@ -185,44 +193,7 @@ module OpeningHoursConverter
       end.flatten
     end
 
-    def days_for_month(month, year = nil)
-      if year.nil?
-        periods.select { |period|
-          period.from.month == month || period.to.month == month
-        }.map do |period|
-          if period.from.month != period.to.month
-            [period.from, period.to]
-          else
-            (period.from.date..period.to.date).map do |date|
-              break unless date.month == month
-
-              date
-            end
-          end
-        end.flatten
-      else
-        periods.select { |period|
-          (period.from.year == year || period.to.year == year) &&
-          (period.from.month == month || period.to.month == month)
-        }.map do |period|
-          (period.from.date..period.to.date).map do |date|
-            break unless date.year == year && date.month == month
-
-            date
-          end
-        end.flatten
-      end
-    end
-
-    def month_for_year(year)
-      periods.map do |period|
-        if period.in_year?(year)
-          [period.from.year, period.to.year]
-        end
-      end.flatten.uniq.compact
-    end
-
-    def sorted_periods(part = :from)
+   def sorted_periods(part = :from)
       @periods.sort { |period1, period2| period1.send(part) <=> period2.send(part) }
     end
   end

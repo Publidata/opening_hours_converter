@@ -51,7 +51,7 @@ module OpeningHoursConverter
       return false if always?
       return false unless same_month?
 
-      from.month == to.month && from.day == 1 && to.day == last_day_of_month(to.month - 1, to.year)
+      from.month == to.month && from.day == 1 && to.day == last_day_of_month(to.month - 1, to.year || Date.today.year)
     end
 
     def full_year?
