@@ -48,20 +48,20 @@ module OpeningHoursConverter
     def create_periods
       if years.length > 0
         if months.length == 1 && months.first[:from].is_a?(Hash) && years.length == 1
-          create_period_with({ from: years.first[:from], to: years.first[:to] }, months, true)
+          create_period_with({ from: years.first[:from], to: years.first[:to] }, true)
         else
           years.map do |year|
             (year[:from]..year[:to]).map do |range_year|
-              create_period_with({ from: range_year, to: range_year }, months, true)
+              create_period_with({ from: range_year, to: range_year }, true)
             end
           end.flatten
         end
       else
-        create_period_with({ from: Date.today.year, to: Date.today.year }, months, false).flatten
+        create_period_with({ from: Date.today.year, to: Date.today.year }, false).flatten
       end
     end
 
-    def create_period_with year, months, year_known
+    def create_period_with year, year_known
       if months.length == 0
         create_period({
           year: year[:from],
