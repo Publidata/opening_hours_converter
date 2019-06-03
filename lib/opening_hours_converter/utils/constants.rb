@@ -1,4 +1,5 @@
 require 'date'
+
 module OpeningHoursConverter
   module Constants
     DAYS = {

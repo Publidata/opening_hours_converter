@@ -1,10 +1,10 @@
-require 'opening_hours_converter/constants'
+require 'opening_hours_converter/utils/constants'
 
 module OpeningHoursConverter
   class Tokenizer
     include Constants
 
-    attr_reader :tokens
+    attr_reader :tokens, :date_range_list
 
     def initialize(opening_hours_string)
       @opening_hours_string = opening_hours_string
@@ -13,6 +13,7 @@ module OpeningHoursConverter
       tokenize
       @tokens_handler = OpeningHoursConverter::TokensHandler.new(@tokens)
       @tokens = @tokens_handler.tokens.map(&:value)
+      @date_range_list = @tokens_handler.data.to_date_range_list
     end
 
     def tokenize

@@ -1,5 +1,5 @@
-require 'opening_hours_converter/constants'
-require 'opening_hours_converter/utils'
+require 'opening_hours_converter/utils/constants'
+require 'opening_hours_converter/utils/utils'
 
 module OpeningHoursConverter
   class WeekIndex
