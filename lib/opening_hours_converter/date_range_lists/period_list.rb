@@ -18,14 +18,10 @@ module OpeningHoursConverter
         periods.first.to_s
       else
         if known_years?
-          if all_years_similar?
-            if periods.all?(&:full_year?)
-              years_to_s
-            else
-              years_to_s + ' ' + months_with_days_to_s
-            end
+          if periods.all?(&:full_year?)
+            years_to_s
           else
-            super
+            years_to_s + ' ' + months_with_days_to_s
           end
         else
           months_with_days_to_s
