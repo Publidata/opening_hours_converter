@@ -7,7 +7,6 @@ module OpeningHoursConverter
     extend Utils
 
     def self.week_from_index(index, year = Time.now.year)
-      raise unless index <= week_count(year)
       raise unless index >= 1
 
       week = first_week(year)

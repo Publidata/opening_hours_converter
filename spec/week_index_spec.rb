@@ -2,7 +2,6 @@ require 'opening_hours_converter'
 RSpec.describe OpeningHoursConverter::WeekIndex, '#week_from_index' do # (index, year = Time.now.year)
   it 'raises with out of range index' do
     expect { OpeningHoursConverter::WeekIndex.week_from_index(0, 2019) }.to raise_error
-    expect { OpeningHoursConverter::WeekIndex.week_from_index(53, 2019) }.to raise_error
   end
 
   it 'does not raise with good index' do
