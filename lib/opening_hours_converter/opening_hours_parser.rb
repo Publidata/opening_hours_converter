@@ -27,6 +27,7 @@ module OpeningHoursConverter
       @RGX_YEAR_WEEK = /^(\d{4})(\-(\d{4}))? week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?)*\:?$/
       @RGX_YEAR_WEEK_WITH_MODIFIER = /^(\d{4})(\-(\d{4}))? week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123])(\/[1-9])?)?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123])(\/[1-9])?)?)*$/
       @RGX_YEAR_MONTH_DAY = /^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([012]?[0-9]|3[01])(\-((\d{4}) )?((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) )?([012]?[0-9]|3[01]))?\:?$/
+      @RGX_YEAR_MULTI_MONTH_DAY = /^(\d{4}) ((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([012]?[0-9]|3[01]),?)*?$/
       @RGX_YEAR_MONTH = /^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\-((\d{4}) )?((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)))?\:?$/
       @RGX_COMMENT = /^\"[^\"]*\"$/
     end
@@ -130,6 +131,8 @@ module OpeningHoursConverter
               months << get_month(wide_range_selector)
             elsif !(@RGX_YEAR =~ wide_range_selector).nil?
               years << get_year(wide_range_selector)
+            elsif !(@RGX_YEAR_MULTI_MONTH_DAY =~ wide_range_selector).nil?
+              months += get_year_multi_month_day(wide_range_selector)
             elsif !(@RGX_YEAR_WEEK_WITH_MODIFIER =~ wide_range_selector).nil?
               weeks << get_year_week_with_modifier(wide_range_selector)
             elsif !(@RGX_YEAR_WEEK =~ wide_range_selector).nil?
@@ -512,6 +515,20 @@ module OpeningHoursConverter
       { from_day: year_month_day_from, to_day: year_month_day_to }
     end
 
+    def get_year_multi_month_day(wrs)
+      year = wrs[0...4]
+      wrs = wrs[5..wrs.length]
+
+      wrs.split(',').map do |wr|
+        from = {
+          year: year.to_i,
+          month: OSM_MONTHS.find_index(wr[0...3]) + 1,
+          day: wr[4...wr.length].to_i
+        }
+        { from_day: from, to_day: from }
+      end
+    end
+
     def get_times(time_selector)
       times = []
       from = nil
@@ -790,6 +807,9 @@ module OpeningHoursConverter
 
     def is_year_week_with_modifier?(token)
       !(@RGX_YEAR_WEEK_WITH_MODIFIER =~ token).nil?
+    end
+    def is_year_multi_month_day?(token)
+      !(@RGX_YEAR_MULTI_MONTH_DAY =~ token).nil?
     end
   end
 end
