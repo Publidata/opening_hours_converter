@@ -5,12 +5,13 @@ module OpeningHoursConverter
   class TokenData
     include Constants
     include Utils
-    attr_accessor :years, :months, :weeks
+    attr_accessor :years, :months, :weeks, :times
 
     def initialize
       @years = []
       @months = []
       @weeks = []
+      @times = []
     end
 
     def valid?

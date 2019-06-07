@@ -19,4 +19,6 @@ module OpeningHoursConverter
   require_relative './opening_hours_converter/tokens/token_data'
   require_relative './opening_hours_converter/tokens/tokenizer'
   require_relative './opening_hours_converter/tokens/tokens_handler'
+
+  require_relative './opening_hours_converter/parser'
 end
