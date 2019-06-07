@@ -412,5 +412,9 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse("week 1-3 PH off;"))).to eql("week 1-3 PH off")
   end
 
+  it "2019 Jan 09,Jan 23,Feb 06,Feb 20,Mar 06,Mar 20,Apr 03,Apr 17,May 15,May 29,Jun 12,Jun 26,Jul 10,Jul 24,Aug 07,Aug 21,Sep 04,Sep 18,Oct 02,Oct 16,Oct 30,Nov 13,Nov 27,Dec 11,Dec 25 00:00-23:59" do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse("2019 Jan 09,Jan 23,Feb 06,Feb 20,Mar 06,Mar 20,Apr 03,Apr 17,May 15,May 29,Jun 12,Jun 26,Jul 10,Jul 24,Aug 07,Aug 21,Sep 04,Sep 18,Oct 02,Oct 16,Oct 30,Nov 13,Nov 27,Dec 11,Dec 25 00:00-23:59"))).to eql("2019 Jan 09,Jan 23,Feb 06,Feb 20,Mar 06,Mar 20,Apr 03,Apr 17,May 15,May 29,Jun 12,Jun 26,Jul 10,Jul 24,Aug 07,Aug 21,Sep 04,Sep 18,Oct 02,Oct 16,Oct 30,Nov 13,Nov 27,Dec 11,Dec 25 00:00-23:59")
+  end
+
 
 end
