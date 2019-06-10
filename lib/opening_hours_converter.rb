@@ -1,5 +1,6 @@
 module OpeningHoursConverter
   require 'date'
+  require 'pry'
   require_relative './opening_hours_converter/utils'
   require_relative './opening_hours_converter/date_range'
   require_relative './opening_hours_converter/token'

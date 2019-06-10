@@ -172,23 +172,30 @@ module OpeningHoursConverter
       else
         result.each do |selector, intervals|
           if selector == 'always'
-            intervals.each do |interval|
+            if end_before_start?(intervals)
+              end_interval = intervals.select { |interval| interval[:start][:day] == 0 && interval[:start][:month] == 0 }.first
+              start_interval = intervals.select { |interval| interval[:end][:day] == 30 && interval[:end][:month] == 11 }.first
               str_result += ',' if !str_result.empty?
-              if is_full_year?(interval)
-              elsif starts_year?(interval) && ends_year?(interval)
-                str_result += "#{interval[:start][:year]}-#{interval[:end][:year]}"
-              elsif is_full_month?(interval)
-                str_result += (OSM_MONTHS[interval[:start][:month]]).to_s
-              elsif is_same_month?(interval)
-                if is_same_day?(interval)
-                  str_result += "#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day] + 1 < 10 ? "0#{interval[:start][:day] + 1}" : interval[:start][:day] + 1}"
+              str_result += "#{OSM_MONTHS[start_interval[:start][:month]]} #{start_interval[:start][:day] + 1 < 10 ? "0#{start_interval[:start][:day] + 1}" : start_interval[:start][:day] + 1}-#{OSM_MONTHS[end_interval[:end][:month]]} #{end_interval[:end][:day] + 1 < 10 ? "0#{end_interval[:end][:day] + 1}" : end_interval[:end][:day] + 1}"
+            else
+              intervals.each do |interval|
+                str_result += ',' if !str_result.empty?
+                if is_full_year?(interval)
+                elsif starts_year?(interval) && ends_year?(interval)
+                  str_result += "#{interval[:start][:year]}-#{interval[:end][:year]}"
+                elsif is_full_month?(interval)
+                  str_result += (OSM_MONTHS[interval[:start][:month]]).to_s
+                elsif is_same_month?(interval)
+                  if is_same_day?(interval)
+                    str_result += "#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day] + 1 < 10 ? "0#{interval[:start][:day] + 1}" : interval[:start][:day] + 1}"
+                  else
+                    str_result += "#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day] + 1 < 10 ? "0#{interval[:start][:day] + 1}" : interval[:start][:day] + 1}-#{interval[:end][:day] + 1 < 10 ? "0#{interval[:end][:day] + 1}" : interval[:end][:day] + 1}"
+                  end
+                elsif starts_month?(interval) && ends_month?(interval)
+                  str_result += "#{OSM_MONTHS[interval[:start][:month]]}-#{OSM_MONTHS[interval[:end][:month]]}"
                 else
-                  str_result += "#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day] + 1 < 10 ? "0#{interval[:start][:day] + 1}" : interval[:start][:day] + 1}-#{interval[:end][:day] + 1 < 10 ? "0#{interval[:end][:day] + 1}" : interval[:end][:day] + 1}"
+                  str_result += "#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day] + 1 < 10 ? "0#{interval[:start][:day] + 1}" : interval[:start][:day] + 1}-#{OSM_MONTHS[interval[:end][:month]]} #{interval[:end][:day] + 1 < 10 ? "0#{interval[:end][:day] + 1}" : interval[:end][:day] + 1}"
                 end
-              elsif starts_month?(interval) && ends_month?(interval)
-                str_result += "#{OSM_MONTHS[interval[:start][:month]]}-#{OSM_MONTHS[interval[:end][:month]]}"
-              else
-                str_result += "#{OSM_MONTHS[interval[:start][:month]]} #{interval[:start][:day] + 1 < 10 ? "0#{interval[:start][:day] + 1}" : interval[:start][:day] + 1}-#{OSM_MONTHS[interval[:end][:month]]} #{interval[:end][:day] + 1 < 10 ? "0#{interval[:end][:day] + 1}" : interval[:end][:day] + 1}"
               end
             end
           elsif selector == 'multi_year'
@@ -225,7 +232,15 @@ module OpeningHoursConverter
       str_result.strip
     end
 
+    def end_before_start?(intervals)
+      intervals.length == 2 &&
+      intervals.one? { |interval| interval[:start][:day] == 0 && interval[:start][:month] == 0 } &&
+      intervals.one? { |interval| interval[:end][:day] == 30 && interval[:end][:month] == 11 }
+    end
+
     def is_only_week_interval?(r)
+      return false if r == {}
+
       r.all? do |year, intervals|
         intervals.all? do |interval|
           is_week_interval?(interval)
