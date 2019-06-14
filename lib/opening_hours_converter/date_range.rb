@@ -15,7 +15,7 @@ module OpeningHoursConverter
     def get
       return '' if always?
 
-      if known_years
+      if known_year
         return "#{@from.to_s('YEAR')}" if full_year?
         if same_year?
           return "#{@from.to_s('YEAR MONTH DAY')}" if same_day?

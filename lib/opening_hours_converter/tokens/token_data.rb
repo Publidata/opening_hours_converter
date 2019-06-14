@@ -15,25 +15,13 @@ module OpeningHoursConverter
     end
 
     def valid?
-      return months.length == 0 && days.length == 0 if weeks.length >= 1
-
-      # return unless months.all? do |month|
-      #   if month[:days] && month[:days].length > 0
-      #     OSM_MONTHS.include?(month[:month])
-      #   else
-      #     OSM_MONTHS.include?(month[:from][:month]) && OSM_MONTHS.include?(month[:to][:month])
-      #   end
-      # end
+      return months.length == 0 if weeks.length >= 1
 
       return true
     end
 
-    # def complete?
-    #   valid? && (months.length >= 1) || (weeks.length >= 1)
-    # end
-
     def weeks?
-      complete? && weeks.length >= 1
+      valid? && weeks.length >= 1
     end
 
     def periods?
@@ -129,27 +117,28 @@ module OpeningHoursConverter
     def create_week_with(year, weeks, year_known)
       weeks.map do |week|
         if week.key?(:modifier) && week[:modifier] > 1
-          (week[:from]..week[:to]).each_with_index do |week_index, index|
+
+          (week[:from]..week[:to]).each_with_index.map do |week_index, index|
             next unless index % week[:modifier] == 0
 
-            Week.new(year, week_index, year_known)
-          end
+            Week.new(week_index, year, year_known)
+          end.compact
         else
-          (week[:from]..week[:to]).each do |week_index|
-            Week.new(year, week_index, year_known)
+          (week[:from]..week[:to]).map do |week_index|
+            Week.new(week_index, year, year_known)
           end
         end
-      end
+      end.flatten
     end
 
     def to_date_range_list
-      if periods?
-        PeriodList.new(
-          create_periods
-        )
-      elsif weeks?
+      if weeks?
         WeekList.new(
           create_weeks
+        )
+      elsif periods?
+        PeriodList.new(
+          create_periods
         )
       end
     end

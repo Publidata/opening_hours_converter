@@ -172,6 +172,7 @@ module OpeningHoursConverter
           if type[:week]
             if current_token.week_index?
               if previous_token.slash?
+                @data.weeks.last[:modifier] = current_token.value.to_i
                 value, made_from, type = add_current_token_to(value, type, made_from, :modified_week)
                 next
               elsif previous_token.comma?

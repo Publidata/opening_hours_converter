@@ -29,26 +29,6 @@ module OpeningHoursConverter
       end
     end
 
-    def known_years?
-      periods.all?(&:known_years)
-    end
-
-    def years_to_s
-      if consecutives?(years)
-        "#{sorted_periods(part = :from).first.to_s('FROM YEAR')}-#{sorted_periods(part = :to).last.to_s('TO YEAR')}"
-      else
-
-        consecutives(years).map do |year|
-          if year.is_a?(Integer)
-            year.to_s
-          elsif year.is_a?(Hash)
-            "#{year[:from]}-#{year[:to]}"
-          end
-        end.join(',')
-
-      end
-    end
-
     def months_with_days_to_s
       months_with_days(years.first).map do |month, days|
         if month.is_a?(Integer) && days.is_a?(Array)
@@ -74,57 +54,14 @@ module OpeningHoursConverter
       end.join(',')
     end
 
-    def consecutives?(array_of_int)
-      return [] if array_of_int.nil? || array_of_int == []
-      array_of_int.reduce(array_of_int.first - 1) do |reduced, value|
-        return false unless reduced == value - 1
-        reduced += 1
-      end
-    end
-
-    def consecutives(array_of_int)
-      array_of_int.reduce([]) do |reduced, value|
-        if reduced == []
-          reduced << value
-        else
-          if reduced.last.is_a?(Hash)
-            if reduced.last[:to] == value - 1
-              reduced.last[:to] = value
-            else
-              reduced << value
-            end
-          elsif reduced.last.is_a?(Integer)
-            if reduced.last == value - 1
-              from = reduced.last
-              reduced[reduced.length - 1] = { from: from, to: value }
-            else
-              reduced << value
-            end
-          end
-        end
-
-        reduced
-      end
-    end
-
-    def all_years_similar?
-      years.all? { |year| same_days(year, years.first) }
-    end
-
-    def years
-      sorted_periods.map do |period|
-        [period.from.year, period.to.year]
-      end.flatten.uniq.compact
-    end
-
     def months
-      sorted_periods.map do |period|
+      sorted_date_ranges.map do |period|
         [period.from.month, period.to.month]
       end.flatten.uniq.compact
     end
 
     def days
-      sorted_periods.map do |period|
+      sorted_date_ranges.map do |period|
         [period.from.day, period.to.day]
       end.flatten.uniq.compact
     end
@@ -187,10 +124,6 @@ module OpeningHoursConverter
           date
         end
       end.flatten
-    end
-
-   def sorted_periods(part = :from)
-      @periods.sort { |period1, period2| period1.send(part) <=> period2.send(part) }
     end
   end
 end
