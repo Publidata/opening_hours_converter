@@ -27,7 +27,8 @@ module OpeningHoursConverter
       @RGX_YEAR_WEEK = /^(\d{4})(\-(\d{4}))? week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?)*\:?$/
       @RGX_YEAR_WEEK_WITH_MODIFIER = /^(\d{4})(\-(\d{4}))? week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123])(\/[1-9])?)?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123])(\/[1-9])?)?)*$/
       @RGX_YEAR_MONTH_DAY = /^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([012]?[0-9]|3[01])(\-((\d{4}) )?((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) )?([012]?[0-9]|3[01]))?\:?$/
-      @RGX_YEAR_MULTI_MONTH_DAY = /^(\d{4}) ((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([012]?[0-9]|3[01]),?)*?$/
+      @RGX_YEAR_MULTI_MONTH_DAY = /^(\d{4}) ((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)( ([012]?[0-9]|3[01])(-([012]?[0-9]|3[01]))?)?,? ?)*?$/
+      @RGX_YEAR_MULTI_MONTH = /^(\d{4}) ((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec),? ?)*?$/
       @RGX_YEAR_MONTH = /^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\-((\d{4}) )?((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)))?\:?$/
       @RGX_COMMENT = /^\"[^\"]*\"$/
     end
@@ -131,6 +132,8 @@ module OpeningHoursConverter
               months << get_month(wide_range_selector)
             elsif !(@RGX_YEAR =~ wide_range_selector).nil?
               years << get_year(wide_range_selector)
+            elsif !(@RGX_YEAR_MULTI_MONTH =~ wide_range_selector).nil?
+              months += get_year_multi_month(wide_range_selector)
             elsif !(@RGX_YEAR_MULTI_MONTH_DAY =~ wide_range_selector).nil?
               months += get_year_multi_month_day(wide_range_selector)
             elsif !(@RGX_YEAR_WEEK_WITH_MODIFIER =~ wide_range_selector).nil?
@@ -520,12 +523,47 @@ module OpeningHoursConverter
       wrs = wrs[5..wrs.length]
 
       wrs.split(',').map do |wr|
+        month = wr[0...3]
+        days = wr[4...wr.length].split('-').reject { |e| e == '' }.map(&:to_i)
+        if days.length == 2
+          from = {
+            year: year.to_i,
+            month: OSM_MONTHS.find_index(wr[0...3]) + 1,
+            day: days[0]
+          }
+          to = {
+            year: year.to_i,
+            month: OSM_MONTHS.find_index(wr[0...3]) + 1,
+            day: days[1]
+          }
+          { from_day: from, to_day: to }
+        else
+          from = {
+            year: year.to_i,
+            month: OSM_MONTHS.find_index(wr[0...3]) + 1,
+            day: wr[4...wr.length].to_i
+          }
+          { from_day: from, to_day: from }
+        end
+      end
+    end
+
+    def get_year_multi_month(wrs)
+      year = wrs[0...4]
+      wrs = wrs[5..wrs.length]
+
+      wrs.split(',').map do |wr|
         from = {
           year: year.to_i,
           month: OSM_MONTHS.find_index(wr[0...3]) + 1,
-          day: wr[4...wr.length].to_i
+          day: 1
         }
-        { from_day: from, to_day: from }
+        to = {
+          year: year.to_i,
+          month: OSM_MONTHS.find_index(wr[0...3]) + 1,
+          day: MONTH_END_DAY[OSM_MONTHS.find_index(wr[0...3])]
+        }
+        { from_day: from, to_day: to }
       end
     end
 
