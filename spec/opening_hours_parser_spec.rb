@@ -1,5 +1,13 @@
 require 'opening_hours_converter'
 
+RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#merge_groups' do
+  it 'merge tokens' do
+    parser = OpeningHoursConverter::OpeningHoursParser.new 
+    expect(parser.merge_groups([['2017', 'Jan', '01', 'Mo', 'Tu', 'Sa-Su']])).
+      to eql(['2017 Jan 01', 'Mo,Tu,Sa-Su'])
+  end
+end
+
 RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   def parsed_rebuilt
     parsed = OpeningHoursConverter::OpeningHoursParser.new.parse(test_string)
@@ -8,10 +16,6 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
 
   def test_string
     RSpec.current_example.metadata[:description]
-  end
-
-  it 'merge tokens' do
-    expect(OpeningHoursConverter::OpeningHoursParser.new.merge_groups([['2017', 'Jan', '01', 'Mo', 'Tu', 'Sa-Su']])).to eql(['2017 Jan 01', 'Mo,Tu,Sa-Su'])
   end
 
   it 'off' do
