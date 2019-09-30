@@ -21,10 +21,6 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   it 'off' do
     expect(parsed_rebuilt).to eql(test_string)
   end
-  # todo ?
-  # it '2000 Jan 01,2001 Jan 01 13:30-17:35' do
-  #   expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2000 Jan 01,2001 Jan 01 13:30-17:35'))).to eql('2000 Jan 01,2001 Jan 01 13:30-17:35')
-  # end
   it 'PH,Su 10:00-11:00' do
     expect(parsed_rebuilt).to eql(test_string)
   end
@@ -397,10 +393,4 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   it '2019 Jan,Jul Mo 00:00-23:59' do
     expect(parsed_rebuilt).to eql('2019 Jan 01-31,Jul 01-31 Mo 00:00-23:59')
   end
-  # it '2019-2020 Jan,Jul Mo 00:00-23:59' do
-  #   expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2019-2020 Jan,Jul Mo 00:00-23:59'))).to eql('2019-2020 Jan,Jul Mo 00:00-23:59')
-  # end
-  # it '2019,2021 Jan,Jul Mo 00:00-23:59' do
-  #   expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2019,2021 Jan,Jul Mo 00:00-23:59'))).to eql('2019,2021 Jan,Jul Mo 00:00-23:59')
-  # end
 end
