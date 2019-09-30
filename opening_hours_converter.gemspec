@@ -32,4 +32,5 @@ Gem::Specification.new do |s|
   s.license = 'AGPL-3.0'
 
   s.add_development_dependency "simplecov"
+  s.add_development_dependency "rspec", "3.8.0"
 end
