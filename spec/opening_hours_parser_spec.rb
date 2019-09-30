@@ -1,5 +1,18 @@
 require 'opening_hours_converter'
 
+##
+# When testing, please use the test helpers `parsed_rebuilt` and `test_string`.
+#
+# `test_string` merely returns the description of the test.
+# `parsed_rebuilt` parses that description and then rebuilds a string from
+# the parsed result.
+# Most often those should match:
+#   expect(parsed_rebuilt).to eql(test_string)
+# Sometimes they do not match exactly:
+#   expect(parsed_rebuilt).to eql("slightly different outcome")
+# TODO: write a matcher that warns when "slightly different outcome" is not
+#       different. That way we know we are introducing unexpected duplication.
+
 RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#merge_groups' do
   it 'merge tokens' do
     parser = OpeningHoursConverter::OpeningHoursParser.new 
