@@ -256,6 +256,7 @@ module OpeningHoursConverter
               end
             end
           elsif !wide_interval.start[:month].nil?
+            years[year] ||= Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
             if wide_interval.end.nil? || wide_interval.end[:month].nil? || wide_interval.start[:month] == wide_interval.end[:month]
               years[year][wide_interval.start[:month]-1].each_with_index do |month, i|
                 years[year][wide_interval.start[:month]-1][i] = true
