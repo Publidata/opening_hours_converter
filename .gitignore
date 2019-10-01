@@ -1,7 +1,6 @@
 .DS_Store
 */.DS_Store
 *.gem
-.ruby-version
 coverage/*
 tmp/*
 
