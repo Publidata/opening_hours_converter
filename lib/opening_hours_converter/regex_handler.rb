@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-require 'pry-byebug'
+
 module OpeningHoursConverter
   class RegexHandler
     def rule_modifier_regex
@@ -43,7 +43,10 @@ module OpeningHoursConverter
     def month_day_regex
       compile(
         line(
-          potential_range(month + space + month_day)
+          potential_range(
+            month + space + month_day,
+            potential(month + space) + month_day
+          )
         )
       )
     end
@@ -171,6 +174,10 @@ module OpeningHoursConverter
 
     def year_multi_month_regex
       compile(line(year + space + group(potential_range(month), potential_comma) + '*'))
+    end
+
+    def multi_month_regex
+      compile(line(potential_list(potential_range(month))))
     end
 
     def week_value_regex

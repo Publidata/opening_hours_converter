@@ -99,7 +99,7 @@ module OpeningHoursConverter
           end
           if !wide_range_selector.empty?
             wide_range_selector = wide_range_selector.strip
-            # wide_range_selector = wide_range_selector.split(',')
+
             if !(@regex_handler.year_month_day_regex =~ wide_range_selector).nil?
               years << get_year_month_day(wide_range_selector)
             elsif !(@regex_handler.year_month_regex =~ wide_range_selector).nil?
@@ -110,6 +110,8 @@ module OpeningHoursConverter
               months << get_month(wide_range_selector)
             elsif !(@regex_handler.year_regex =~ wide_range_selector).nil?
               years << get_year(wide_range_selector)
+            elsif !(@regex_handler.multi_month_regex =~ wide_range_selector).nil?
+              months += get_multi_month(wide_range_selector)
             elsif !(@regex_handler.year_multi_month_regex =~ wide_range_selector).nil?
               months += get_year_multi_month(wide_range_selector)
             elsif !(@regex_handler.year_multi_month_day_regex =~ wide_range_selector).nil?
@@ -526,21 +528,85 @@ module OpeningHoursConverter
       end
     end
 
+    def get_multi_month(wrs)
+      wrs.split(',').map do |wr|
+        if wr.include?('-')
+          start_month, end_month = wr.split('-')
+          from = {
+            month: OSM_MONTHS.find_index(start_month) + 1,
+            day: 1
+          }
+          to = {
+            month: OSM_MONTHS.find_index(end_month) + 1,
+            day: MONTH_END_DAY[OSM_MONTHS.find_index(end_month)]
+          }
+        else
+          from = {
+            month: OSM_MONTHS.find_index(wr[0...3]) + 1,
+            day: 1
+          }
+          to = {
+            month: OSM_MONTHS.find_index(wr[0...3]) + 1,
+            day: MONTH_END_DAY[OSM_MONTHS.find_index(wr[0...3])]
+          }
+        end
+        { from_day: from, to_day: to }
+      end
+    end
+
     def get_year_multi_month(wrs)
       year = wrs[0...4]
       wrs = wrs[5..wrs.length]
 
+      # wrs.split(',').map do |wr|
+      #   if wr.include?('-')
+      #     start_month, end_month = wr.split('-')
+      #     from = {
+      #       month: OSM_MONTHS.find_index(start_month) + 1,
+      #       day: 1
+      #     }
+      #     to = {
+      #       month: OSM_MONTHS.find_index(end_month) + 1,
+      #       day: MONTH_END_DAY[OSM_MONTHS.find_index(end_month)]
+      #     }
+      #   else
+      #     from = {
+      #       month: OSM_MONTHS.find_index(wr[0...3]) + 1,
+      #       day: 1
+      #     }
+      #     to = {
+      #       month: OSM_MONTHS.find_index(wr[0...3]) + 1,
+      #       day: MONTH_END_DAY[OSM_MONTHS.find_index(wr[0...3])]
+      #     }
+      #   end
+      #   { from_day: from, to_day: to }
+      # end
+
       wrs.split(',').map do |wr|
-        from = {
-          year: year.to_i,
-          month: OSM_MONTHS.find_index(wr[0...3]) + 1,
-          day: 1
-        }
-        to = {
-          year: year.to_i,
-          month: OSM_MONTHS.find_index(wr[0...3]) + 1,
-          day: MONTH_END_DAY[OSM_MONTHS.find_index(wr[0...3])]
-        }
+        if wr.include?('-')
+          start_month, end_month = wr.split('-')
+          from = {
+            year: year.to_i,
+            month: OSM_MONTHS.find_index(start_month) + 1,
+            day: 1
+          }
+          to = {
+            year: year.to_i,
+            month: OSM_MONTHS.find_index(end_month) + 1,
+            day: MONTH_END_DAY[OSM_MONTHS.find_index(end_month)]
+          }
+        else
+          from = {
+            year: year.to_i,
+            month: OSM_MONTHS.find_index(wr[0...3]) + 1,
+            day: 1
+          }
+          to = {
+            year: year.to_i,
+            month: OSM_MONTHS.find_index(wr[0...3]) + 1,
+            day: MONTH_END_DAY[OSM_MONTHS.find_index(wr[0...3])]
+          }
+        end
         { from_day: from, to_day: to }
       end
     end
