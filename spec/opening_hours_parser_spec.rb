@@ -15,7 +15,7 @@ require 'opening_hours_converter'
 
 RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#merge_groups' do
   it 'merge tokens' do
-    parser = OpeningHoursConverter::OpeningHoursParser.new 
+    parser = OpeningHoursConverter::OpeningHoursParser.new
     expect(parser.merge_groups([['2017', 'Jan', '01', 'Mo', 'Tu', 'Sa-Su']])).
       to eql(['2017 Jan 01', 'Mo,Tu,Sa-Su'])
   end
@@ -405,5 +405,11 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   end
   it '2019 Jan,Jul Mo 00:00-23:59' do
     expect(parsed_rebuilt).to eql('2019 Jan 01-31,Jul 01-31 Mo 00:00-23:59')
+  end
+  it "Apr-Jul,Sep-Nov 24/7" do
+    expect(parsed_rebuilt).to eql(test_string)
+  end
+  it "Apr-Jul 24/7; Sep-Nov 24/7" do
+    expect(parsed_rebuilt).to eql('Apr-Jul,Sep-Nov 24/7')
   end
 end

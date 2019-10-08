@@ -8,29 +8,7 @@ module OpeningHoursConverter
     include Utils
 
     def initialize
-      @RGX_RULE_MODIFIER = /^(open|closed|off)$/i
-      @RGX_WEEK_KEY = /^week$/
-      @RGX_WEEK = /^week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?)*$/
-      @RGX_WEEK_VAL = /^([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?)*$/
-      @RGX_WEEK_WITH_MODIFIER = /^week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123])(\/[1-9])?)?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123])(\/[1-9])?)?)*$/
-      @RGX_WEEK_VAL_WITH_MODIFIER = /^([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123])(\/[1-9])?)?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123])(\/[1-9])?)?)*$/
-      @RGX_MONTH = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\-(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))?\:?$/
-      @RGX_MONTHDAY = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([012]?[0-9]|3[01])(\-((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) )?([012]?[0-9]|3[01]))?\:?$/
-      @RGX_TIME = /^((([01]?[0-9]|2[01234])\:[012345][0-9](\-([01]?[0-9]|2[01234])\:[012345][0-9])?(,([01]?[0-9]|2[01234])\:[012345][0-9](\-([01]?[0-9]|2[01234])\:[012345][0-9])?)*)|(24\/7))$/
-      @RGX_WEEKDAY = /^(((Mo|Tu|We|Th|Fr|Sa|Su)(\-(Mo|Tu|We|Th|Fr|Sa|Su))?)|(PH))(,(((Mo|Tu|We|Th|Fr|Sa|Su)(\-(Mo|Tu|We|Th|Fr|Sa|Su))?)|(PH)))*$/
-      @RGX_HOLIDAY = /^(PH|SH|easter)$/
-      @RGX_WD = /^(Mo|Tu|We|Th|Fr|Sa|Su)(\-(Mo|Tu|We|Th|Fr|Sa|Su))?$/
-      @RGX_WD_WITH_MODIFIER = /^(Mo|Tu|We|Th|Fr|Sa|Su)\[([1-5]|\-1)\]$/
-      @RGX_DAY = /^([012]?[0-9]|3[01])(\-[012]?[0-9]|3[01])?$/
-      @RGX_YEAR = /^(\d{4})(\-(\d{4}))?$/
-      @RGX_YEAR_PH = /^(\d{4})( PH|(\-(\d{4}) PH))\:?$/
-      @RGX_YEAR_WEEK = /^(\d{4})(\-(\d{4}))? week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123]))?)*\:?$/
-      @RGX_YEAR_WEEK_WITH_MODIFIER = /^(\d{4})(\-(\d{4}))? week ([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123])(\/[1-9])?)?(, ?([01234]?[0-9]|5[0123])(\-([01234]?[0-9]|5[0123])(\/[1-9])?)?)*$/
-      @RGX_YEAR_MONTH_DAY = /^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([012]?[0-9]|3[01])(\-((\d{4}) )?((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) )?([012]?[0-9]|3[01]))?\:?$/
-      @RGX_YEAR_MULTI_MONTH_DAY = /^(\d{4}) ((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)( ([012]?[0-9]|3[01])(-([012]?[0-9]|3[01]))?)?,? ?)*?$/
-      @RGX_YEAR_MULTI_MONTH = /^(\d{4}) ((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec),? ?)*?$/
-      @RGX_YEAR_MONTH = /^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\-((\d{4}) )?((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)))?\:?$/
-      @RGX_COMMENT = /^\"[^\"]*\"$/
+      @regex_handler = RegexHandler.new
     end
 
     def parse(oh)
@@ -122,27 +100,27 @@ module OpeningHoursConverter
           if !wide_range_selector.empty?
             wide_range_selector = wide_range_selector.strip
             # wide_range_selector = wide_range_selector.split(',')
-            if !(@RGX_YEAR_MONTH_DAY =~ wide_range_selector).nil?
+            if !(@regex_handler.year_month_day_regex =~ wide_range_selector).nil?
               years << get_year_month_day(wide_range_selector)
-            elsif !(@RGX_YEAR_MONTH =~ wide_range_selector).nil?
+            elsif !(@regex_handler.year_month_regex =~ wide_range_selector).nil?
               years << get_year_month(wide_range_selector)
-            elsif !(@RGX_MONTHDAY =~ wide_range_selector).nil?
+            elsif !(@regex_handler.month_day_regex =~ wide_range_selector).nil?
               months << get_month_day(wide_range_selector)
-            elsif !(@RGX_MONTH =~ wide_range_selector).nil?
+            elsif !(@regex_handler.month_regex =~ wide_range_selector).nil?
               months << get_month(wide_range_selector)
-            elsif !(@RGX_YEAR =~ wide_range_selector).nil?
+            elsif !(@regex_handler.year_regex =~ wide_range_selector).nil?
               years << get_year(wide_range_selector)
-            elsif !(@RGX_YEAR_MULTI_MONTH =~ wide_range_selector).nil?
+            elsif !(@regex_handler.year_multi_month_regex =~ wide_range_selector).nil?
               months += get_year_multi_month(wide_range_selector)
-            elsif !(@RGX_YEAR_MULTI_MONTH_DAY =~ wide_range_selector).nil?
+            elsif !(@regex_handler.year_multi_month_day_regex =~ wide_range_selector).nil?
               months += get_year_multi_month_day(wide_range_selector)
-            elsif !(@RGX_YEAR_WEEK_WITH_MODIFIER =~ wide_range_selector).nil?
+            elsif !(@regex_handler.year_week_with_modifier_regex =~ wide_range_selector).nil?
               weeks << get_year_week_with_modifier(wide_range_selector)
-            elsif !(@RGX_YEAR_WEEK =~ wide_range_selector).nil?
+            elsif !(@regex_handler.year_week_regex =~ wide_range_selector).nil?
               weeks << get_year_week(wide_range_selector)
-            elsif !(@RGX_WEEK_WITH_MODIFIER =~ wide_range_selector).nil?
+            elsif !(@regex_handler.week_with_modifier_regex =~ wide_range_selector).nil?
               weeks << get_week_with_modifier(wide_range_selector)
-            elsif !(@RGX_WEEK =~ wide_range_selector).nil?
+            elsif !(@regex_handler.week_regex =~ wide_range_selector).nil?
               weeks << get_week(wide_range_selector)
             else
               raise ArgumentError, "Unsupported selector #{wide_range_selector}"
@@ -597,9 +575,9 @@ module OpeningHoursConverter
       weekday_selector = weekday_selector.split(',')
 
       weekday_selector.each do |wd|
-        if !(@RGX_HOLIDAY =~ wd).nil?
+        if !(@regex_handler.holiday_regex =~ wd).nil?
           weekdays << { from: -2, to: -2, index: nil }
-        elsif !(@RGX_WD =~ wd).nil?
+        elsif !(@regex_handler.week_day_regex =~ wd).nil?
           single_weekday = wd.split('-')
 
           wd_from = OSM_DAYS.find_index(single_weekday[0])
@@ -610,7 +588,7 @@ module OpeningHoursConverter
                   end
 
           weekdays << { from: wd_from, to: wd_to, index: nil }
-        elsif !(@RGX_WD_WITH_MODIFIER =~ wd).nil?
+        elsif !(@regex_handler.week_day_with_modifier_regex =~ wd).nil?
 
           from, to = wd[0...wd.index('[')].split('-')
           index = wd[wd.index('[') + 1...wd.index(']')]
@@ -783,10 +761,10 @@ module OpeningHoursConverter
     def is_part_of_wide_interval?(string)
       is_wide_interval = false
       string.split('-').each do |str|
-        if (!(@RGX_YEAR =~ str).nil? || !(@RGX_YEAR_MONTH =~ str).nil? || !(@RGX_YEAR_MONTH_DAY =~ str).nil? ||
-            !(@RGX_DAY =~ str).nil? || !(@RGX_MONTHDAY =~ str).nil? || !(@RGX_MONTH =~ str).nil? ||
-            !(@RGX_WEEK_KEY =~ str).nil? || !(@RGX_WEEK_VAL =~ str).nil? || !(@RGX_WEEK_VAL_WITH_MODIFIER =~ str).nil?) &&
-            ((@RGX_TIME =~ str).nil? && (@RGX_WEEKDAY =~ str).nil?)
+        if (!(@regex_handler.year_regex =~ str).nil? || !(@regex_handler.year_month_regex =~ str).nil? || !(@regex_handler.year_month_day_regex =~ str).nil? ||
+            !(@regex_handler.month_day_regex =~ str).nil? || !(@regex_handler.month_day_regex =~ str).nil? || !(@regex_handler.month_regex =~ str).nil? ||
+            !(@regex_handler.week_key_regex =~ str).nil? || !(@regex_handler.week_value_regex =~ str).nil? || !(@regex_handler.week_value_with_modifier_regex =~ str).nil?) &&
+            ((@regex_handler.time_regex =~ str).nil? && (@regex_handler.week_day_or_holiday_regex =~ str).nil?)
           is_wide_interval = true
         else
           return false
@@ -796,58 +774,58 @@ module OpeningHoursConverter
     end
 
     def is_comment?(token)
-      !(@RGX_COMMENT =~ token).nil?
+      !(@regex_handler.comment_regex =~ token).nil?
     end
 
     def is_holiday?(token)
-      !(@RGX_HOLIDAY =~ token).nil?
+      !(@regex_handler.holiday_regex =~ token).nil?
     end
 
     def is_rule_modifier?(token)
-      !(@RGX_RULE_MODIFIER =~ token).nil?
+      !(@regex_handler.rule_modifier_regex =~ token).nil?
     end
 
     def is_time?(token)
-      !(@RGX_TIME =~ token).nil?
+      !(@regex_handler.time_regex =~ token).nil?
     end
 
     def is_weekday?(token)
-      !(@RGX_WEEKDAY =~ token).nil?
+      !(@regex_handler.week_day_or_holiday_regex =~ token).nil?
     end
 
     def is_weekday_with_modifier?(token)
-      !(@RGX_WD_WITH_MODIFIER =~ token).nil?
+      !(@regex_handler.week_day_with_modifier_regex =~ token).nil?
     end
 
     def is_year?(token)
-      !(@RGX_YEAR =~ token).nil?
+      !(@regex_handler.year_regex =~ token).nil?
     end
 
     def is_week_key?(token)
-      !(@RGX_WEEK_KEY =~ token).nil?
+      !(@regex_handler.week_key_regex =~ token).nil?
     end
 
     def is_week_val?(token)
-      !(@RGX_WEEK_VAL =~ token).nil?
+      !(@regex_handler.week_value_regex =~ token).nil?
     end
 
     def is_week_with_modifier?(token)
-      !(@RGX_WEEK_WITH_MODIFIER =~ token).nil?
+      !(@regex_handler.week_with_modifier_regex =~ token).nil?
     end
 
     def is_week_val_with_modifier?(token)
-      !(@RGX_WEEK_VAL_WITH_MODIFIER =~ token).nil?
+      !(@regex_handler.week_value_with_modifier_regex =~ token).nil?
     end
 
     def is_year_week?(token)
-      !(@RGX_YEAR_WEEK =~ token).nil?
+      !(@regex_handler.year_week_regex =~ token).nil?
     end
 
     def is_year_week_with_modifier?(token)
-      !(@RGX_YEAR_WEEK_WITH_MODIFIER =~ token).nil?
+      !(@regex_handler.year_week_with_modifier_regex =~ token).nil?
     end
     def is_year_multi_month_day?(token)
-      !(@RGX_YEAR_MULTI_MONTH_DAY =~ token).nil?
+      !(@regex_handler.year_multi_month_day_regex =~ token).nil?
     end
   end
 end
