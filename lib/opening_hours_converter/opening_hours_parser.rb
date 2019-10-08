@@ -558,30 +558,6 @@ module OpeningHoursConverter
       year = wrs[0...4]
       wrs = wrs[5..wrs.length]
 
-      # wrs.split(',').map do |wr|
-      #   if wr.include?('-')
-      #     start_month, end_month = wr.split('-')
-      #     from = {
-      #       month: OSM_MONTHS.find_index(start_month) + 1,
-      #       day: 1
-      #     }
-      #     to = {
-      #       month: OSM_MONTHS.find_index(end_month) + 1,
-      #       day: MONTH_END_DAY[OSM_MONTHS.find_index(end_month)]
-      #     }
-      #   else
-      #     from = {
-      #       month: OSM_MONTHS.find_index(wr[0...3]) + 1,
-      #       day: 1
-      #     }
-      #     to = {
-      #       month: OSM_MONTHS.find_index(wr[0...3]) + 1,
-      #       day: MONTH_END_DAY[OSM_MONTHS.find_index(wr[0...3])]
-      #     }
-      #   end
-      #   { from_day: from, to_day: to }
-      # end
-
       wrs.split(',').map do |wr|
         if wr.include?('-')
           start_month, end_month = wr.split('-')
