@@ -67,6 +67,7 @@ module OpeningHoursConverter
       date_ranges.each do |dr|
         is_ph = true if dr.is_holiday?
       end
+
       date_ranges_array = get_iterator(date_ranges)
       datetime_result = []
 
@@ -79,9 +80,12 @@ module OpeningHoursConverter
             end
             date_ranges[index].typical.intervals.each do |i|
               next unless !i.nil? && !i.is_off
-              next unless (i.day_start..i.day_end).cover?(reindex_sunday_week_to_monday_week(day.wday)) || (is_ph && year_ph.include?(Time.new(day.year, day.month, day.day)))
-              itr = { start: Time.new(day.year, day.month, day.day, i.start / 60, i.start % 60),
-                      end: Time.new(day.year, day.month, day.day, i.end / 60, i.end % 60) }
+
+              if date_ranges[index].typical.is_a? Week
+                next unless (i.day_start..i.day_end).cover?(reindex_sunday_week_to_monday_week(day.wday)) || (is_ph && year_ph.include?(Time.new(day.year, day.month, day.day)))
+              end
+
+              itr = { start: Time.new(day.year, day.month, day.day, i.start / 60, i.start % 60), end: Time.new(day.year, day.month, day.day, i.end / 60, i.end % 60) }
               datetime_result << itr unless datetime_result.include?(itr)
             end
           end
