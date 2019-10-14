@@ -4,6 +4,9 @@ RSpec.describe OpeningHoursConverter::Iterator, "state" do
   it "off" do
     expect(OpeningHoursConverter::Iterator.new.get_time_iterator(OpeningHoursConverter::OpeningHoursParser.new.parse "off")).to eql([])
   end
+  it "31 dec 2019" do
+    expect(OpeningHoursConverter::Iterator.new.get_time_iterator(OpeningHoursConverter::OpeningHoursParser.new.parse "2018 Dec 31 10:00-11:00")).not_to eql([])
+  end
   it "state" do
     expect(OpeningHoursConverter::Iterator.new.state("off")).to be false
     expect(OpeningHoursConverter::Iterator.new.state("2017 PH 16:00-17:00", Time.new(2017,1,1,16,30))).to eql({start: Time.new(2017,1,1,16,00), end: Time.new(2017,1,1,17,00)})

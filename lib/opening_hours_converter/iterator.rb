@@ -11,6 +11,7 @@ module OpeningHoursConverter
 
       date_ranges.each do |date_range|
         years = OpeningHoursConverter::Year.build_day_array_from_date_range(date_range, true)
+
         result = []
 
         year_start = -1
@@ -25,7 +26,6 @@ module OpeningHoursConverter
                 month_start = month
                 day_start = day
               elsif day_bool && year_start >= 0 && month == 11 && day == 30 && years[year + 1].nil?
-
                 result << { start: DateTime.new(year_start, month_start + 1, day_start + 1), end: DateTime.new(year, 12, 31) }
 
                 year_start = -1
@@ -39,9 +39,8 @@ module OpeningHoursConverter
                               DateTime.new(year - 1, 12, 31)
                             else
                               DateTime.new(year, month, MONTH_END_DAY[month - 1])
-                                      end
+                            end
                           else
-
                             DateTime.new(year, month + 1, day)
                           end
 
@@ -50,6 +49,11 @@ module OpeningHoursConverter
                 month_start = -1
                 day_start = -1
               end
+
+              if day_bool && year_start >= 0 && month == 11 && day == 30 && years[year + 1].nil?
+                result << { start: DateTime.new(year_start, month_start + 1, day_start + 1), end: DateTime.new(year, 12, 31) }
+              end
+
             end
           end
         end
