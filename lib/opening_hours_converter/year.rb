@@ -262,7 +262,7 @@ module OpeningHoursConverter
                 years[year][wide_interval.start[:month]-1][i] = true
               end
             else
-              for month in wide_interval.start[:month]-1..date.wide_interval.end[:month]-1
+              for month in wide_interval.start[:month]-1..wide_interval.end[:month]-1
                 years[year][month].each_with_index do |day, i|
                   years[year][month][i] = true
                 end
