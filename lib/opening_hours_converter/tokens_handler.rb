@@ -427,16 +427,21 @@ module OpeningHoursConverter
     end
 
     def current_token_is_all_time?
-      current_token? &&
+      return false unless current_token?
+      return false unless ['24', '7', '/'].include?(current_token.value)
 
-      # check if current token is 24 or / or 7 in 24/7
-      current_token.integer? &&
-        previous_token? && previous_token.slash? && current_token.value == '7' ||
-        next_token? && next_token.slash? && current_token.value == '24' ||
+      if current_token.value == '24'
+        return false unless next_token? && next_token.slash?
+        return false unless !@unhandled_tokens[@index + 2].nil? && @unhandled_tokens[@index + 2].value == '7'
+      elsif current_token.slash?
+        return false unless previous_token? && previous_token.value == '24'
+        return false unless next_token? && next_token.value == '7'
+      else # current token is 7
+        return false unless previous_token? && previous_token.slash?
+        return false unless !@unhandled_tokens[@index - 2].nil? && @unhandled_tokens[@index - 2].value == '24'
+      end
 
-      current_token.slash? &&
-        previous_token? && previous_token.value == '24' &&
-        next_token? && next_token.value == '7'
+      true
     end
 
     def current_token

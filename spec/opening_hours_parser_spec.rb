@@ -418,4 +418,7 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   it "2020 Apr-Jul 24/7; 2020 Sep-Nov 24/7" do
     expect(parsed_rebuilt).to eql('2020 Apr 01-2020 Jul 31,Sep 01-2020 Nov 30 24/7')
   end
+  it "2019 week 3-11/4,16-24/4,29-37/4,42,46,51 Sa 10:40-13:30" do
+    expect(parsed_rebuilt).to eql(test_string)
+  end
 end
