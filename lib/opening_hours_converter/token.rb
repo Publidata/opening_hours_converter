@@ -14,6 +14,10 @@ module OpeningHoursConverter
       @made_from = made_from
     end
 
+    def to_s
+      "Token(value: #{@value}, type: #{@type}, start_index: #{@start_index})"
+    end
+
     def year?
       integer? && @value.length == 4
     end
