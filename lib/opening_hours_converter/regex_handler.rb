@@ -205,7 +205,7 @@ module OpeningHoursConverter
     end
 
     def int_range(max)
-      raise 'too high' if max > 99
+      raise ArgumentError, 'too high' if max > 99
 
       base = max / 10
 

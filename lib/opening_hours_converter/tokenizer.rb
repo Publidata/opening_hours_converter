@@ -18,7 +18,7 @@ module OpeningHoursConverter
     def tokenize
       counter = 0
       while @index < @opening_hours_string.length
-        raise 'ups' if counter > 200
+        raise ParseError if counter > 200
         skip_white_spaces
         @tokens << handle_string if string?
 

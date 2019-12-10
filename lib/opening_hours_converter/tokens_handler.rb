@@ -67,7 +67,7 @@ module OpeningHoursConverter
           next
         end
 
-        raise "can't read current token #{current_token}"
+        raise ParseError, "can't read current token #{current_token}"
       end
     end
 
@@ -105,7 +105,7 @@ module OpeningHoursConverter
             value, made_from, type = add_current_token_to(value, type, made_from)
             next
           end
-          raise "you can\'t have two years with just space between them previous token: #{previous_token}, current token: #{current_token}"
+          raise ParseError, "you can\'t have two years with just space between them previous token: #{previous_token}, current token: #{current_token}"
         end
 
         if current_token.string?
@@ -309,23 +309,23 @@ module OpeningHoursConverter
       made_from = [current_token]
       @index += 1
 
-      raise unless current_token.colon?
+      raise ParseError unless current_token.colon?
       value, made_from, type = add_current_token_to(value, type, made_from)
 
-      raise unless current_token.time?
+      raise ParseError unless current_token.time?
       value, made_from, type = add_current_token_to(value, type, made_from)
 
-      raise unless current_token.hyphen?
+      raise ParseError unless current_token.hyphen?
       value, made_from, type = add_current_token_to(value, type, made_from)
 
       # second part of time range
-      raise unless current_token.time?
+      raise ParseError unless current_token.time?
       value, made_from, type = add_current_token_to(value, type, made_from)
 
-      raise unless current_token.colon?
+      raise ParseError unless current_token.colon?
       value, made_from, type = add_current_token_to(value, type, made_from)
 
-      raise unless current_token.time?
+      raise ParseError unless current_token.time?
       value, made_from, type = add_current_token_to(value, type, made_from)
 
       token(value, type, start_index, made_from)

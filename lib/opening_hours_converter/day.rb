@@ -17,7 +17,7 @@ module OpeningHoursConverter
 
         off, start_minute, end_minute = handle_interval(interval)
 
-        raise "Invalid interval #{interval.inspect}" if start_minute.nil? && end_minute.nil?
+        raise ParseError, "Invalid interval #{interval.inspect}" if start_minute.nil? && end_minute.nil?
 
         (start_minute..end_minute).step do |minute|
           minute_array[minute] = off ? 'off' : true
