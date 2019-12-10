@@ -125,12 +125,12 @@ module OpeningHoursConverter
             elsif !(@regex_handler.week_regex =~ wide_range_selector).nil?
               weeks << get_week(wide_range_selector)
             else
-              raise ArgumentError, "Unsupported selector #{wide_range_selector}"
+              raise ParseError, "Unsupported selector #{wide_range_selector}"
             end
           end
         end
 
-        raise ArgumentError, 'Unreadable string' if @current_token == tokens.length - 1
+        raise ParseError, 'Unreadable string' if @current_token == tokens.length - 1
 
         # puts "weekdays : #{weekdays}"
         # puts "weeks : #{weeks}"
