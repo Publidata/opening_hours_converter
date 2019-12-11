@@ -24,6 +24,7 @@ module OpeningHoursConverter
           years = process_always_holiday(date_range.wide_interval, years)
         end
       end
+
       if !date_range.wide_interval.start.nil? && !date_range.wide_interval.start[:year].nil?
         if date_range.wide_interval.end.nil? || date_range.wide_interval.end[:year].nil? || date_range.wide_interval.start[:year] == date_range.wide_interval.end[:year]
           if !years[date_range.wide_interval.start[:year]].nil?
@@ -227,7 +228,15 @@ module OpeningHoursConverter
         end
       else
         for year in (DateTime.now.year)..(DateTime.now.year + 1)
-          if wide_interval.start.nil?
+          if wide_interval.type == 'week'
+            years[year] ||= Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
+            wide_interval.indexes.each do |week_index|
+              interval = WeekIndex.week_from_index(week_index, year)
+              (interval[:from]..interval[:to]).each do |day|
+                years[year][day.month - 1][day.day - 1] = true
+              end
+            end
+          elsif wide_interval.start.nil?
             years[year] = Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { true } }
           elsif !wide_interval.start[:day].nil?
             years[year] ||= Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
@@ -360,6 +369,14 @@ module OpeningHoursConverter
             years[wide_interval.start[:year]][month].each_with_index do |day, i|
               years[wide_interval.start[:year]][month][i] = true
             end
+          end
+        end
+      elsif wide_interval.type == "week"
+        year = wide_interval.start&.dig(:year) || Time.now.year # can't process weeks with undefined year
+        wide_interval.indexes.each do |week_index|
+          interval = WeekIndex.week_from_index(week_index, year)
+          (interval[:from]..interval[:to]).each do |day|
+            years[year][day.month - 1][day.day - 1] = true
           end
         end
       elsif wide_interval.type == "day"
