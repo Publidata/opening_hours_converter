@@ -52,4 +52,15 @@ RSpec.describe OpeningHoursConverter::Iterator, 'state' do
     ti = OpeningHoursConverter::Iterator.new.get_time_iterator(parsed)
     expect(!ti.empty?).to be true
   end
+  it 'iterator handle week ranges' do
+    oh = '2019 week 1-52/2 We 00:00-23:59'
+    parsed = OpeningHoursConverter::OpeningHoursParser.new.parse(oh)
+    ti = OpeningHoursConverter::Iterator.new.get_time_iterator(parsed)
+    expect(!ti.empty?).to be true
+
+    oh = 'week 1-52/2 We 00:00-23:59'
+    parsed = OpeningHoursConverter::OpeningHoursParser.new.parse(oh)
+    ti = OpeningHoursConverter::Iterator.new.get_time_iterator(parsed)
+    expect(!ti.empty?).to be true
+  end
 end

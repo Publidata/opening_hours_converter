@@ -230,8 +230,7 @@ module OpeningHoursConverter
         for year in (DateTime.now.year)..(DateTime.now.year + 1)
           if wide_interval.type == 'week'
             years[year] ||= Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
-            wide_interval.indexes.each do |week_index|
-              interval = WeekIndex.week_from_index(week_index, year)
+            WeekIndex.weeks_from_index(wide_interval.indexes, year).each do |interval|
               (interval[:from]..interval[:to]).each do |day|
                 years[year][day.month - 1][day.day - 1] = true
               end
@@ -373,8 +372,7 @@ module OpeningHoursConverter
         end
       elsif wide_interval.type == "week"
         year = wide_interval.start&.dig(:year) || Time.now.year # can't process weeks with undefined year
-        wide_interval.indexes.each do |week_index|
-          interval = WeekIndex.week_from_index(week_index, year)
+        WeekIndex.weeks_from_index(wide_interval.indexes, year).each do |interval|
           (interval[:from]..interval[:to]).each do |day|
             years[year][day.month - 1][day.day - 1] = true
           end

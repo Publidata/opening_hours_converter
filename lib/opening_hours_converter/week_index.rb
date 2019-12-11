@@ -6,6 +6,20 @@ module OpeningHoursConverter
     include Constants
     extend Utils
 
+    def self.weeks_from_index(array_of_indexes, year = Time.now.year)
+      array_of_indexes.flat_map do |index_or_range|
+        if index_or_range.is_a?(Hash)
+          index_or_range[:from].step(index_or_range[:to], index_or_range[:modifier]).map do |index|
+            week_from_index(index, year)
+          end
+        elsif index_or_range.is_a?(Integer)
+          week_from_index(index_or_range, year)
+        else
+          raise ArgumentError, "#{index_or_range} in #{array_of_indexes} is neither an integer nor a Hash"
+        end
+      end
+    end
+
     def self.week_from_index(index, year = Time.now.year)
       raise unless index >= 1
 
