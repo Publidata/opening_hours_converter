@@ -1,6 +1,7 @@
 module OpeningHoursConverter
   require 'date'
   require_relative './opening_hours_converter/utils'
+  require_relative './opening_hours_converter/errors.rb'
   require_relative './opening_hours_converter/regex_handler'
   require_relative './opening_hours_converter/date_range'
   require_relative './opening_hours_converter/token'

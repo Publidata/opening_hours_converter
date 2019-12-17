@@ -7,7 +7,7 @@ module OpeningHoursConverter
     extend Utils
 
     def self.week_from_index(index, year = Time.now.year)
-      raise unless index >= 1
+      raise ArgumentError unless index >= 1
 
       week = first_week(year)
       offset = (index - 1) * 7
@@ -92,7 +92,7 @@ module OpeningHoursConverter
           first_day_of_the_week = first_day_of_month - first_wday_of_month
           first_day_of_the_week + wday + (n - 1) * 7
         end
-      raise 'Out of bound' unless date.month == month
+      raise ArgumentError, 'Out of bound' unless date.month == month
 
       date
     end
@@ -119,7 +119,7 @@ module OpeningHoursConverter
           first_day_of_the_week = last_day_of_month - last_wday_of_month
           first_day_of_the_week + wday
         end
-      raise 'Out of bound' unless date.month == month
+      raise ArgumentError, 'Out of bound' unless date.month == month
 
       date
     end
