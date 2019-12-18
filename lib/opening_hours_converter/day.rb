@@ -12,9 +12,7 @@ module OpeningHoursConverter
     def get_as_minute_array
       minute_array = Array.new(MINUTES_MAX + 1, false)
 
-      @intervals.each do |interval|
-        next if interval.nil?
-
+      @intervals.compact.each do |interval|
         off, start_minute, end_minute = handle_interval(interval)
 
         raise ParseError, "Invalid interval #{interval.inspect}" if start_minute.nil? && end_minute.nil?
