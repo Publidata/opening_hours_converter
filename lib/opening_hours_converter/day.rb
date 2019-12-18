@@ -45,19 +45,17 @@ module OpeningHoursConverter
     end
 
     def get_intervals(clean = false)
-      if clean
-        minute_array = get_as_minute_array
-        intervals = []
-        minute_start = -1
-        off = false
+      return @intervals unless clean
 
-        minute_array.each_with_index do |minute, i|
-          off, minute_start, intervals = handle_minute(minute, off, minute_start, intervals, i, minute_array)
-        end
-        intervals
-      else
-        @intervals
+      minute_array = get_as_minute_array
+      intervals = []
+      minute_start = -1
+      off = false
+
+      minute_array.each_with_index do |minute, i|
+        off, minute_start, intervals = handle_minute(minute, off, minute_start, intervals, i, minute_array)
       end
+      intervals
     end
 
     def handle_minute(minute, off, minute_start, intervals, i, minute_array)
