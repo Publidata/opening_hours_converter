@@ -2,6 +2,10 @@
 
 ![](https://github.com/Publidata/opening_hours_converter/workflows/CI/badge.svg)
 
+OpenStreetMap Opening Hours to Date & Date to Opening Hours
+
+See [Wiki](https://wiki.openstreetmap.org/wiki/Key:opening_hours/specification) for OpenStreetMap Opening Hours specification.
+
 # Installation
 
 ```
