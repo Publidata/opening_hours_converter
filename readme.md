@@ -37,4 +37,4 @@ rspec spec --format=documentation
 
 ## Credits
 
-Done with [YoHours](https://framagit.org/PanierAvide/YoHours) as inspiration and with constant help from the [Evaluation tool](http://openingh.openstreetmap.de/evaluation_tool/)/[repository](https://github.com/opening-hours/opening_hours.js)
+Done with [YoHours](https://framagit.org/PanierAvide/YoHours) as inspiration and with constant help from the [Evaluation tool](http://openingh.openstreetmap.de/evaluation_tool/)/[repository](https://github.com/opening-hours/opening_hours.js).
