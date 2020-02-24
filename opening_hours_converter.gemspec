@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.authors = ['Ziserman Martin']
   s.email = 'tech@publidata.io'
   s.add_runtime_dependency 'json'
-  s.files = Dir['{lib}/**/*', 'readme.md']
+  s.files = Dir['{lib}/**/*', 'README.md']
   s.homepage = 'https://github.com/Publidata/opening_hours_converter'
   s.license = 'AGPL-3.0'
 
