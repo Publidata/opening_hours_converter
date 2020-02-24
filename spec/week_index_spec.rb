@@ -29,9 +29,9 @@ RSpec.describe OpeningHoursConverter::WeekIndex, '#index_from_week' do # (week, 
     w1_2019 = { from: Date.new(2018, 12, 31), to: Date.new(2019, 1, 6) }
     w32_2019 = { from: Date.new(2019, 8, 5), to: Date.new(2019, 8, 11) }
     w42_2019 = { from: Date.new(2019, 10, 14), to: Date.new(2019, 10, 20) }
-    expect(OpeningHoursConverter::WeekIndex.index_from_week(w1_2019)).to eq 1
-    expect(OpeningHoursConverter::WeekIndex.index_from_week(w32_2019)).to eq 32
-    expect(OpeningHoursConverter::WeekIndex.index_from_week(w42_2019)).to eq 42
+    expect(OpeningHoursConverter::WeekIndex.index_from_week(w1_2019, 2019)).to eq 1
+    expect(OpeningHoursConverter::WeekIndex.index_from_week(w32_2019, 2019)).to eq 32
+    expect(OpeningHoursConverter::WeekIndex.index_from_week(w42_2019, 2019)).to eq 42
   end
 end
 
