@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |s|
   s.name = 'opening_hours_converter'
-  s.version = '1.13.8'
+  s.version = '1.13.9'
   s.summary = 'Datetime range to opening hours, opening hours to datetime range'
   s.description = 'Datetime range to opening hours, opening hours to datetime range. Very strongly inspired by YoHours.'
   s.authors = ['Ziserman Martin']
