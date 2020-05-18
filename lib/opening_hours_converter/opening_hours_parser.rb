@@ -500,9 +500,12 @@ module OpeningHoursConverter
 
     def get_year_multi_month_day(wrs)
       year = wrs[0...4]
-      wrs = wrs[5..wrs.length]
 
-      wrs.split(',').map do |wr|
+      wrs.split(',').map.with_index do |wr|
+        if wr.start_with?(/#{@regex_handler.year}/)
+          year = wr[0...4]
+          wr = wr[5...wr.length]
+        end
         month = wr[0...3]
         days = wr[4...wr.length].split('-').reject { |e| e == '' }.map(&:to_i)
         if days.length == 2

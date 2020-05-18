@@ -3241,4 +3241,13 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   it 'Jan 10-Jun 30 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"' do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('Jan 10-Jun 30 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"'))).to eql('Jan 10-Jun 30 PH,Mo,We-Fr 09:00-12:30,14:00-18:30 "commentaire avec des espaces"')
   end
+  it '2030 Jan 01 off; 2031 Jan 01 off' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01 off; 2031 Jan 01 off'))).to eql('2030 Jan 01,2031 Jan 01 off')
+  end
+  it '2030 Jan 01,2031 Jan 01 off' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2030 Jan 01,2031 Jan 01 off'))).to eql('2030 Jan 01,2031 Jan 01 off')
+  end
+  it 'Tu,We,Fr-Su 05:00-12:00; 2020 Jan 01,Apr 13,May 01,May 08,May 21,Jun 01,Jul 14,Aug 15,Nov 01,Nov 11,Dec 25,2021 Jan 01,Apr 05,May 01,May 08,May 13,May 24,Jul 14,Aug 15,Nov 01,Nov 11,Dec 25 off' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('Tu,We,Fr-Su 05:00-12:00; 2020 Jan 01,Apr 13,May 01,May 08,May 21,Jun 01,Jul 14,Aug 15,Nov 01,Nov 11,Dec 25,2021 Jan 01,Apr 05,May 01,May 08,May 13,May 24,Jul 14,Aug 15,Nov 01,Nov 11,Dec 25 off'))).to eql('Tu,We,Fr-Su 05:00-12:00; 2020 Jan 01,Apr 13,May 01,May 08,May 21,Jun 01,Jul 14,Aug 15,Nov 01,Nov 11,Dec 25,2021 Jan 01,Apr 05,May 01,May 08,May 13,May 24,Jul 14,Aug 15,Nov 01,Nov 11,Dec 25 off')
+  end
 end

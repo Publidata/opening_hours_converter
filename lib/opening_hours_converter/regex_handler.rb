@@ -163,6 +163,7 @@ module OpeningHoursConverter
         line(
           year + space +
           potential_list(
+            potential(year + space) +
             month +
             group(
               space, potential_range(month_day)
