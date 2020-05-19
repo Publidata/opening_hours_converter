@@ -502,7 +502,7 @@ module OpeningHoursConverter
       year = wrs[0...4]
 
       wrs.split(',').map.with_index do |wr|
-        if wr.start_with?(/#{@regex_handler.year}/)
+        if wr =~ /^#{@regex_handler.year}/
           year = wr[0...4]
           wr = wr[5...wr.length]
         end
