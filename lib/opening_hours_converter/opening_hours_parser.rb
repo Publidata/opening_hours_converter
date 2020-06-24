@@ -107,7 +107,7 @@ module OpeningHoursConverter
             elsif !(@regex_handler.month_day_regex =~ wide_range_selector).nil?
               months << get_month_day(wide_range_selector)
             elsif !(@regex_handler.month_regex =~ wide_range_selector).nil?
-              months << get_month(wide_range_selector)
+              months += get_month(wide_range_selector)
             elsif !(@regex_handler.year_regex =~ wide_range_selector).nil?
               years << get_year(wide_range_selector)
             elsif !(@regex_handler.multi_month_regex =~ wide_range_selector).nil?
@@ -408,7 +408,23 @@ module OpeningHoursConverter
       else
         month_to = month_from
       end
-      { from: month_from, to: month_to }
+
+      if month_from > month_to
+        [
+          {
+            from: month_from,
+            to: 12
+          },
+          {
+            from: 1,
+            to: month_to
+          }
+        ]
+      else
+        [
+          { from: month_from, to: month_to }
+        ]
+      end
     end
 
     def get_month_day(wrs)
