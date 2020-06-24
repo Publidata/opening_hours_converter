@@ -445,6 +445,7 @@ module OpeningHoursConverter
       else
         month_to = nil
       end
+
       { from_day: month_from, to_day: month_to }
     end
 
@@ -550,25 +551,36 @@ module OpeningHoursConverter
     def get_multi_month(wrs)
       wrs.split(',').map do |wr|
         if wr.include?('-')
-          start_month, end_month = wr.split('-')
+          start_month_day, end_month_day = wr.split('-')
+
+          start_month = start_month_day[0...3]
+          start_day = start_month_day[4...start_month_day.length]&.to_i
+
+          end_month = end_month_day[0...3]
+          end_day = end_month_day[4...end_month_day.length]&.to_i
+
           from = {
             month: OSM_MONTHS.find_index(start_month) + 1,
-            day: 1
+            day: start_day || 1
           }
           to = {
             month: OSM_MONTHS.find_index(end_month) + 1,
-            day: MONTH_END_DAY[OSM_MONTHS.find_index(end_month)]
+            day: end_day || MONTH_END_DAY[OSM_MONTHS.find_index(end_month)]
           }
         else
+          month = wr[0...3]
+          day = wr[4...wr.length]&.to_i
+
           from = {
-            month: OSM_MONTHS.find_index(wr[0...3]) + 1,
-            day: 1
+            month: OSM_MONTHS.find_index(month) + 1,
+            day: day || 1
           }
           to = {
-            month: OSM_MONTHS.find_index(wr[0...3]) + 1,
-            day: MONTH_END_DAY[OSM_MONTHS.find_index(wr[0...3])]
+            month: OSM_MONTHS.find_index(month) + 1,
+            day: day || MONTH_END_DAY[OSM_MONTHS.find_index(month)]
           }
         end
+
         { from_day: from, to_day: to }
       end
     end

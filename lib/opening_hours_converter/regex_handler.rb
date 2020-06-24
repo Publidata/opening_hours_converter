@@ -178,7 +178,20 @@ module OpeningHoursConverter
     end
 
     def multi_month_regex
-      compile(line(potential_list(potential_range(month))))
+      compile(
+        line(
+          potential_list(
+            potential_range(
+              month +
+              potential(
+                group(
+                  space, potential_range(month_day)
+                )
+              )
+            )
+          )
+        )
+      )
     end
 
     def week_value_regex
