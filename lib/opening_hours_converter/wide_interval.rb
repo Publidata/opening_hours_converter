@@ -53,25 +53,25 @@ module OpeningHoursConverter
       when 'day'
         if !@end.nil?
           if @start[:year] && !@end[:year] || @start[:year] && @start[:year] == @end[:year]
-            result = "du #{@start[:day]} #{IRL_MONTHS[@start[:month] - 1]} #{@start[:year]} au #{@end[:day]} #{IRL_MONTHS[@end[:month] - 1]} #{@start[:year]}"
+            result = "Du #{@start[:day]} #{IRL_MONTHS[@start[:month] - 1]} #{@start[:year]} au #{@end[:day]} #{IRL_MONTHS[@end[:month] - 1]} #{@start[:year]}"
           elsif @start[:year] && @end[:year] && @start[:year] != @end[:year]
-            result = "du #{@start[:day]} #{IRL_MONTHS[@start[:month] - 1]} #{@start[:year]} au #{@end[:day]} #{IRL_MONTHS[@end[:month] - 1]} #{@end[:year]}"
+            result = "Du #{@start[:day]} #{IRL_MONTHS[@start[:month] - 1]} #{@start[:year]} au #{@end[:day]} #{IRL_MONTHS[@end[:month] - 1]} #{@end[:year]}"
           elsif @start[:month] != @end[:month]
-            result = "du #{@start[:day]} #{IRL_MONTHS[@start[:month] - 1]} au #{@end[:day]} #{IRL_MONTHS[@end[:month] - 1]}"
+            result = "Du #{@start[:day]} #{IRL_MONTHS[@start[:month] - 1]} au #{@end[:day]} #{IRL_MONTHS[@end[:month] - 1]}"
           else
-            result = "le #{@start[:day]} #{IRL_MONTHS[@start[:month] - 1]}"
+            result = "Le #{@start[:day]} #{IRL_MONTHS[@start[:month] - 1]}"
           end
         else
-          result = "le #{@start[:day]} #{IRL_MONTHS[@start[:month] - 1]} #{@start[:year] || ''}"
+          result = "Le #{@start[:day]} #{IRL_MONTHS[@start[:month] - 1]} #{@start[:year] || ''}"
         end
       when 'month'
         if !@end.nil?
           if @start[:year] && !@end[:year] || @start[:year] && @start[:year] == @end[:year]
-            result = "de #{IRL_MONTHS[@start[:month] - 1]} #{@start[:year]} à #{IRL_MONTHS[@end[:month] - 1]} #{@start[:year]}"
+            result = "De #{IRL_MONTHS[@start[:month] - 1]} #{@start[:year]} à #{IRL_MONTHS[@end[:month] - 1]} #{@start[:year]}"
           elsif @start[:year] && @end[:year] && @start[:year] != @end[:year]
-            result = "de #{IRL_MONTHS[@start[:month] - 1]} #{@start[:year]} à #{IRL_MONTHS[@end[:month] - 1]} #{@end[:year]}"
+            result = "De #{IRL_MONTHS[@start[:month] - 1]} #{@start[:year]} à #{IRL_MONTHS[@end[:month] - 1]} #{@end[:year]}"
           else
-            result = "de #{IRL_MONTHS[@start[:month] - 1]} à #{IRL_MONTHS[@end[:month] - 1]}"
+            result = "De #{IRL_MONTHS[@start[:month] - 1]} à #{IRL_MONTHS[@end[:month] - 1]}"
           end
         else
           result = "#{IRL_MONTHS[@start[:month] - 1]}#{@start[:year] ? " #{@start[:year]}" : ''}"
@@ -85,17 +85,17 @@ module OpeningHoursConverter
       when 'holiday'
         result = if !@end.nil?
                    if !@start[:year]
-                     'jours fériés'
+                     'Jours fériés'
                    else
-                     "les jours fériés de #{@start[:year]} à #{@end[:year]}"
+                     "Les jours fériés de #{@start[:year]} à #{@end[:year]}"
                    end
                  elsif !@start[:year]
-                   'jours fériés'
+                   'Jours fériés'
                  else
-                   "les jours fériés de #{@start[:year]}"
+                   "Les jours fériés de #{@start[:year]}"
                  end
       when 'always'
-        result = 'tout le temps'
+        result = 'Toute l\'année'
       end
       result
     end

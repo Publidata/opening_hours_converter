@@ -144,9 +144,9 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#day" do
     end
 
     it "get time for human" do
-      expect(@november_28_2017.get_time_for_humans).to eql('le 28 Novembre 2017')
-      expect(@november_28_to_november_29_2017.get_time_for_humans).to eql('du 28 Novembre 2017 au 29 Novembre 2017')
-      expect(@november_2017_in_day.get_time_for_humans).to eql('du 1 Novembre 2017 au 30 Novembre 2017')
+      expect(@november_28_2017.get_time_for_humans).to eql('Le 28 Novembre 2017')
+      expect(@november_28_to_november_29_2017.get_time_for_humans).to eql('Du 28 Novembre 2017 au 29 Novembre 2017')
+      expect(@november_2017_in_day.get_time_for_humans).to eql('Du 1 Novembre 2017 au 30 Novembre 2017')
     end
   end
   context "several days" do
@@ -287,7 +287,7 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#month" do
   it "get time for human" do
     expect(@november_2017.get_time_for_humans).to eql('Novembre 2017')
     expect(@october.get_time_for_humans).to eql('Octobre')
-    expect(@october_to_november_2017.get_time_for_humans).to eql('de Octobre 2017 à Novembre 2017')
+    expect(@october_to_november_2017.get_time_for_humans).to eql('De Octobre 2017 à Novembre 2017')
   end
 
 
@@ -561,9 +561,9 @@ RSpec.describe OpeningHoursConverter::WideInterval, "#holiday" do
     @holiday_2017_2020 = OpeningHoursConverter::WideInterval.new.holiday("PH", 2017, 2020)
   end
   it "get time for human" do
-    expect(@always_holiday.get_time_for_humans).to eql('jours fériés')
-    expect(@holiday_2017.get_time_for_humans).to eql('les jours fériés de 2017')
-    expect(@holiday_2017_2020.get_time_for_humans).to eql('les jours fériés de 2017 à 2020')
+    expect(@always_holiday.get_time_for_humans).to eql('Jours fériés')
+    expect(@holiday_2017.get_time_for_humans).to eql('Les jours fériés de 2017')
+    expect(@holiday_2017_2020.get_time_for_humans).to eql('Les jours fériés de 2017 à 2020')
   end
 end
 RSpec.describe OpeningHoursConverter::WideInterval, "#always" do
