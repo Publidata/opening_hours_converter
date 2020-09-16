@@ -286,7 +286,7 @@ module OpeningHoursConverter
               break
             end
 
-            if current_token.hyphen? || current_token.weekday_modifier?
+            if current_token.hyphen? || current_token.comma? || current_token.weekday_modifier?
               value, made_from, type = add_current_token_to(value, type, made_from)
               next
             end
