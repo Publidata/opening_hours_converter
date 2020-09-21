@@ -68,8 +68,20 @@ module OpeningHoursConverter
       is_ph = false
       year = nil
       year_ph = nil
-      date_ranges.each do |dr|
-        is_ph = true if dr.is_holiday?
+      date_ranges.each do |date_range|
+        is_ph = true if date_range.is_holiday?
+      end
+
+      date_ranges = date_ranges.flat_map do |date_range|
+        if date_range.wide_interval.type == 'week' # Generate date range list from week syntax
+          date_range.wide_interval.to_day.map do |day|
+            day_range = date_range.dup
+            day_range.update_range(day)
+            day_range
+          end
+        else
+          date_range
+        end
       end
 
       date_ranges_array = get_iterator(date_ranges)
@@ -82,6 +94,7 @@ module OpeningHoursConverter
               year = day.year
               year_ph = PublicHoliday.ph_for_year(year)
             end
+
             date_ranges[index].typical.intervals.each do |i|
               next unless !i.nil? && !i.is_off
 
