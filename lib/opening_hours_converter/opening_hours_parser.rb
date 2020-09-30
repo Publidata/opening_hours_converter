@@ -29,10 +29,7 @@ module OpeningHoursConverter
       dr_obj = nil
       res_dr_id = nil
 
-      blocks.each do |block|
-        block.strip!
-        next if block.empty?
-
+      blocks.map(&:strip).reject(&:empty?).each do |block|
         tokenizer = OpeningHoursConverter::Tokenizer.new(block)
         tokens = tokenizer.tokens
         # tokens = tokenize(block)
