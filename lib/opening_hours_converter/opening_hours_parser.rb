@@ -130,8 +130,6 @@ module OpeningHoursConverter
           end
         end
 
-        raise ParseError, 'Unreadable string' if @current_token == tokens.length - 1
-
         # puts "weekdays : #{weekdays}"
         # puts "weeks : #{weeks}"
         # puts "months : #{months}"
