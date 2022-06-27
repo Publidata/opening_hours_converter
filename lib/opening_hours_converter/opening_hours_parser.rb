@@ -48,7 +48,7 @@ module OpeningHoursConverter
         end
 
         # get state and time associated with weekdays
-        while @current_token >= 0 && (is_rule_modifier?(tokens[@current_token]) || is_time?(tokens[@current_token]))
+        while @current_token >= 0 && (is_rule_modifier?(tokens[@current_token]) || is_time?(tokens[@current_token])) || is_weekday?(tokens[@current_token])
           if is_rule_modifier?(tokens[@current_token])
             local_modifier = tokens[@current_token].downcase
             @current_token -= 1
@@ -72,6 +72,11 @@ module OpeningHoursConverter
               local_times.concat get_times(time_selector)
               @current_token -= 1
             end
+
+            if local_times.empty?
+              local_times.concat get_times("00:00-23:59")
+            end
+
             begin
               weekday_selector = tokens[@current_token]
               weekdays_and_holidays = get_weekdays(weekday_selector)
@@ -125,6 +130,7 @@ module OpeningHoursConverter
             elsif !(@regex_handler.week_regex =~ wide_range_selector).nil?
               weeks << get_week(wide_range_selector)
             else
+
               raise ParseError, "Unsupported selector #{wide_range_selector}"
             end
           end

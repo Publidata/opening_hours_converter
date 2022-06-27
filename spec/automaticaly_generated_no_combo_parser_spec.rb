@@ -3268,4 +3268,16 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   it 'Feb 04;Mar 18;Apr 29;Jun 10;Jul 22;Sep 02;Oct 14;Nov 25' do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('Feb 04;Mar 18;Apr 29;Jun 10;Jul 22;Sep 02;Oct 14;Nov 25'))).to eql('Feb 04,Mar 18,Apr 29,Jun 10,Jul 22,Sep 02,Oct 14,Nov 25 00:00-23:59')
   end
+  it 'We' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('We'))).to eql('We 00:00-23:59')
+  end
+  it 'Mo-We' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('Mo-We'))).to eql('Mo-We 00:00-23:59')
+  end
+  it 'Nov 30' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('Nov 30'))).to eql('Nov 30 00:00-23:59')
+  end
+  it 'Nov 30 We' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('Nov 30 We'))).to eql('Nov 30 00:00-23:59')
+  end
 end
