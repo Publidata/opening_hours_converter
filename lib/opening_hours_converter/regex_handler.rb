@@ -317,7 +317,7 @@ module OpeningHoursConverter
 
     def compile(string)
       @compile ||= {}
-      @compile[string] ||= Regexp.compile(string)
+      @compile[string] ||= Regexp.compile(string, Regexp::IGNORECASE)
     end
 
     def escape(string)

@@ -23,15 +23,15 @@ module OpeningHoursConverter
     end
 
     def weekday?
-      string? && OSM_DAYS.any? { |day| day == @value }
+      string? && OSM_DAYS.any? { |day| day.downcase == @value.downcase }
     end
 
     def month?
-      string? && OSM_MONTHS.any? { |day| day == @value }
+      string? && OSM_MONTHS.any? { |day| day.downcase == @value.downcase }
     end
 
     def week?
-      string? && @value == 'week'
+      string? && @value.downcase == 'week'
     end
 
     def week_index?

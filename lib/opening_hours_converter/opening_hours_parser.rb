@@ -403,11 +403,11 @@ module OpeningHoursConverter
 
     def get_month(wrs)
       single_month = wrs.gsub(/\:$/, '').split('-')
-      month_from = OSM_MONTHS.find_index(single_month[0]) + 1
+      month_from = OSM_MONTHS.find_index(single_month[0].capitalize) + 1
       raise ArgumentError, "Invalid month : #{single_month[0]}" if month_from < 1
 
       if single_month.length > 1
-        month_to = OSM_MONTHS.find_index(single_month[1]) + 1
+        month_to = OSM_MONTHS.find_index(single_month[1].capitalize) + 1
         raise ArgumentError, "Invalid month : #{single_month[1]}" if month_to < 1
       else
         month_to = month_from
@@ -435,13 +435,13 @@ module OpeningHoursConverter
       single_month = wrs.gsub(/\:$/, '').split('-')
 
       month_from = single_month[0].split(' ')
-      month_from = { day: month_from[1].to_i, month: OSM_MONTHS.find_index(month_from[0]) + 1 }
+      month_from = { day: month_from[1].to_i, month: OSM_MONTHS.find_index(month_from[0].capitalize) + 1 }
       raise ArgumentError, "Invalid month : #{month_from.inspect}" if month_from[:month] < 1
 
       if single_month.length > 1
         month_to = single_month[1].split(' ')
         month_to = if month_to.length > 1
-                     { day: month_to[1].to_i, month: OSM_MONTHS.find_index(month_to[0]) + 1 }
+                     { day: month_to[1].to_i, month: OSM_MONTHS.find_index(month_to[0].capitalize) + 1 }
                    else
                      { day: month_to[0].to_i, month: month_from[:month] }
                    end
@@ -456,16 +456,16 @@ module OpeningHoursConverter
     def get_year_month(wrs)
       single_year_month = wrs.gsub(/\:$/, '').split('-')
       year_month_from = single_year_month[0].split(' ')
-      year_month_from = { month: OSM_MONTHS.find_index(year_month_from[1]) + 1, year: year_month_from[0].to_i }
+      year_month_from = { month: OSM_MONTHS.find_index(year_month_from[1].capitalize) + 1, year: year_month_from[0].to_i }
       if year_month_from.empty?
         raise ArgumentError, "Invalid year_month : #{year_month_from.inspect}"
       end
       if single_year_month.length > 1
         year_month_to = single_year_month[1].split(' ')
         if year_month_to.length == 2
-          year_month_to = { month: OSM_MONTHS.find_index(year_month_to[1]) + 1, year: year_month_to[0].to_i }
+          year_month_to = { month: OSM_MONTHS.find_index(year_month_to[1].capitalize) + 1, year: year_month_to[0].to_i }
         elsif year_month_to.length == 1
-          year_month_to = { month: OSM_MONTHS.find_index(year_month_to[0]) + 1, year: year_month_from[:year] }
+          year_month_to = { month: OSM_MONTHS.find_index(year_month_to[0].capitalize) + 1, year: year_month_from[:year] }
         end
         raise ArgumentError, "Invalid year_month : #{year_month_to.inspect}" if year_month_to.empty?
       else
@@ -489,7 +489,7 @@ module OpeningHoursConverter
       single_year_month_day = wrs.gsub(/\:$/, '').split('-')
       year_month_day_from = single_year_month_day[0].split(' ')
       year_month_day_from = { day: year_month_day_from[2].to_i,
-                              month: OSM_MONTHS.find_index(year_month_day_from[1]) + 1,
+                              month: OSM_MONTHS.find_index(year_month_day_from[1].capitalize) + 1,
                               year: year_month_day_from[0].to_i }
       if year_month_day_from.empty?
         raise ArgumentError, "Invalid year_month_day : #{year_month_day_from.inspect}"
@@ -498,11 +498,11 @@ module OpeningHoursConverter
         year_month_day_to = single_year_month_day[1].split(' ')
         if year_month_day_to.length == 3
           year_month_day_to = { day: year_month_day_to[2].to_i,
-                                month: OSM_MONTHS.find_index(year_month_day_to[1]) + 1,
+                                month: OSM_MONTHS.find_index(year_month_day_to[1].capitalize) + 1,
                                 year: year_month_day_to[0].to_i }
         elsif year_month_day_to.length == 2
           year_month_day_to = { day: year_month_day_to[1].to_i,
-                                month: OSM_MONTHS.find_index(year_month_day_to[0]) + 1,
+                                month: OSM_MONTHS.find_index(year_month_day_to[0].capitalize) + 1,
                                 year: year_month_day_from[:year] }
         elsif year_month_day_to.length == 1
           year_month_day_to = { day: year_month_day_to[0].to_i,
@@ -532,12 +532,12 @@ module OpeningHoursConverter
         if days.length == 2
           from = {
             year: year.to_i,
-            month: OSM_MONTHS.find_index(wr[0...3]) + 1,
+            month: OSM_MONTHS.find_index(wr[0...3].capitalize) + 1,
             day: days[0]
           }
           to = {
             year: year.to_i,
-            month: OSM_MONTHS.find_index(wr[0...3]) + 1,
+            month: OSM_MONTHS.find_index(wr[0...3].capitalize) + 1,
             day: days[1]
           }
           { from_day: from, to_day: to }
@@ -564,24 +564,24 @@ module OpeningHoursConverter
           end_day = end_month_day[4...end_month_day.length]&.to_i
 
           from = {
-            month: OSM_MONTHS.find_index(start_month) + 1,
+            month: OSM_MONTHS.find_index(start_month.capitalize) + 1,
             day: start_day || 1
           }
           to = {
-            month: OSM_MONTHS.find_index(end_month) + 1,
-            day: end_day || MONTH_END_DAY[OSM_MONTHS.find_index(end_month)]
+            month: OSM_MONTHS.find_index(end_month.capitalize) + 1,
+            day: end_day || MONTH_END_DAY[OSM_MONTHS.find_index(end_month.capitalize)]
           }
         else
           month = wr[0...3]
           day = wr[4...wr.length]&.to_i
 
           from = {
-            month: OSM_MONTHS.find_index(month) + 1,
+            month: OSM_MONTHS.find_index(month.capitalize) + 1,
             day: day || 1
           }
           to = {
-            month: OSM_MONTHS.find_index(month) + 1,
-            day: day || MONTH_END_DAY[OSM_MONTHS.find_index(month)]
+            month: OSM_MONTHS.find_index(month.capitalize) + 1,
+            day: day || MONTH_END_DAY[OSM_MONTHS.find_index(month.capitalize)]
           }
         end
 
@@ -598,24 +598,24 @@ module OpeningHoursConverter
           start_month, end_month = wr.split('-')
           from = {
             year: year.to_i,
-            month: OSM_MONTHS.find_index(start_month) + 1,
+            month: OSM_MONTHS.find_index(start_month.capitalize) + 1,
             day: 1
           }
           to = {
             year: year.to_i,
-            month: OSM_MONTHS.find_index(end_month) + 1,
-            day: MONTH_END_DAY[OSM_MONTHS.find_index(end_month)]
+            month: OSM_MONTHS.find_index(end_month.capitalize) + 1,
+            day: MONTH_END_DAY[OSM_MONTHS.find_index(end_month.capitalize)]
           }
         else
           from = {
             year: year.to_i,
-            month: OSM_MONTHS.find_index(wr[0...3]) + 1,
+            month: OSM_MONTHS.find_index(wr[0...3].capitalize) + 1,
             day: 1
           }
           to = {
             year: year.to_i,
-            month: OSM_MONTHS.find_index(wr[0...3]) + 1,
-            day: MONTH_END_DAY[OSM_MONTHS.find_index(wr[0...3])]
+            month: OSM_MONTHS.find_index(wr[0...3].capitalize) + 1,
+            day: MONTH_END_DAY[OSM_MONTHS.find_index(wr[0...3].capitalize)]
           }
         end
         { from_day: from, to_day: to }
@@ -657,9 +657,9 @@ module OpeningHoursConverter
         elsif !(@regex_handler.week_day_regex =~ wd).nil?
           single_weekday = wd.split('-')
 
-          wd_from = OSM_DAYS.find_index(single_weekday[0])
+          wd_from = OSM_DAYS.find_index(single_weekday[0].capitalize)
           wd_to = if single_weekday.length > 1
-                    OSM_DAYS.find_index(single_weekday[1])
+                    OSM_DAYS.find_index(single_weekday[1].capitalize)
                   else
                     wd_from
                   end
@@ -670,8 +670,8 @@ module OpeningHoursConverter
           from, to = wd[0...wd.index('[')].split('-')
           index = wd[wd.index('[') + 1...wd.index(']')]
 
-          wd_from = OSM_DAYS.find_index(from)
-          wd_to = OSM_DAYS.find_index(to)
+          wd_from = OSM_DAYS.find_index(from.capitalize)
+          wd_to = OSM_DAYS.find_index(to.capitalize)
 
           weekdays << { from: wd_from, to: wd_from, index: index.to_i }
         else
