@@ -519,7 +519,7 @@ module OpeningHoursConverter
       if self_to_day.is_a?(Array)
         if o_to_day.is_a?(Array)
           return false unless o_to_day.length == self_to_day.length
-          return self_to_day.all? do |self_day|
+          return self.start == o.start && self_to_day.all? do |self_day|
             o_to_day.any? do |o_day|
               self_day.equals(o_day)
             end

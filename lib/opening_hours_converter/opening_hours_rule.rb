@@ -294,6 +294,17 @@ module OpeningHoursConverter
       end
     end
 
+    def mergeable?(o)
+      if o.nil? || o.date.length != @date.length
+        true
+      else
+        @date.each_with_index do |d, i|
+          return false if (d.wide_interval.start&.dig(:year) != o.date[i].wide_interval.start&.dig(:year)) && d.wide_interval.type != o.date[i].wide_interval.type
+        end
+        true
+      end
+    end
+
     def equals(o)
       return false unless o.instance_of?(OpeningHoursConverter::OpeningHoursRule)
       (same_time?(o) && same_date?(o))

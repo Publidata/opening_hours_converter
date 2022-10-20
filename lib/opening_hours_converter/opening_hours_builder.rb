@@ -67,7 +67,7 @@ module OpeningHoursConverter
           rule_index = 0
 
           while !oh_rule_added && rule_index < rules.length
-            if rules[rule_index].same_time?(oh_rule) && !rules[rule_index].equals(oh_rule) && rules[rule_index].comment == oh_rule.comment
+            if rules[rule_index].mergeable?(oh_rule) && rules[rule_index].same_time?(oh_rule) && !rules[rule_index].equals(oh_rule) && rules[rule_index].comment == oh_rule.comment && rules[rule_index].comment != "off" && oh_rule.comment != "off"
               begin
                 for date_id in 0...oh_rule.date.length
                   rules[rule_index].add_date(oh_rule.date[date_id])

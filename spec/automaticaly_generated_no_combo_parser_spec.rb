@@ -3301,4 +3301,7 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   it 'NOv-dEc wE-Fr 08:00-12:00' do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('NOv-dEc wE-Fr 08:00-12:00'))).to eql('Nov-Dec We-Fr 08:00-12:00')
   end
+  it 'week 11-50 Mo 05:00-13:00; week 33 off; 2022 off; 2022 week 11-50 Tu 05:30-13:00' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('week 11-50 Mo 05:00-13:00; week 33 off; 2022 off; 2022 week 11-50 Tu 05:30-13:00'))).to eql('week 11-50 Mo 05:00-13:00; week 33 off; 2022 off; 2022 week 11-50 Tu 05:30-13:00')
+  end
 end
