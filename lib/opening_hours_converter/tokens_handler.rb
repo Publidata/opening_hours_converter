@@ -67,6 +67,12 @@ module OpeningHoursConverter
           next
         end
 
+        if current_token.colon?
+          # catches "Dec: "
+          @index += 1
+          next
+        end
+
         raise ParseError, "can't read current token #{current_token}"
       end
     end
