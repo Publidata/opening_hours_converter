@@ -322,7 +322,7 @@ module OpeningHoursConverter
     end
 
     def get_year_week_with_modifier(wrs)
-      year, weeks = wrs.split(' week ')
+      year, weeks = wrs.split(/ week /i)
       years = year.split('-')
 
       indexes = weeks.split(',').map { |week_index|
@@ -346,7 +346,7 @@ module OpeningHoursConverter
     end
 
     def get_year_week(wrs)
-      year, weeks = wrs.split(' week ')
+      year, weeks = wrs.split(/ week /i)
       # does not handle 2018,2019
       years = year.split('-')
       # does not handle week 1,2,3
@@ -365,7 +365,7 @@ module OpeningHoursConverter
     end
 
     def get_week_with_modifier(wrs)
-      weeks = wrs.gsub('week ', '').split(',')
+      weeks = wrs.gsub(/week /i, '').split(',')
 
       indexes = weeks.map { |week_index|
         if week_index.include?('-')
@@ -386,7 +386,7 @@ module OpeningHoursConverter
     end
 
     def get_week(wrs)
-      weeks = wrs.gsub('week ', '').split(',')
+      weeks = wrs.gsub(/week /i, '').split(',')
 
       indexes = weeks.map { |week_index|
         if week_index.include?('-')
