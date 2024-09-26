@@ -393,7 +393,7 @@ module OpeningHoursConverter
         days[i].add_date(OpeningHoursConverter::OpeningHoursDate.new(wide_interval, [i]))
       end
 
-      intervals.each do |interval|
+      intervals.compact.each do |interval|
         next if interval.nil?
 
         begin
