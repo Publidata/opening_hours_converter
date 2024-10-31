@@ -299,7 +299,7 @@ module OpeningHoursConverter
         true
       else
         @date.each_with_index do |d, i|
-          return false if (d.wide_interval.start&.dig(:year) != o.date[i].wide_interval.start&.dig(:year)) && d.wide_interval.type != o.date[i].wide_interval.type
+          return false if (d.wide_interval.start&.dig(:year) != o.date[i].wide_interval.start&.dig(:year)) && d.wide_interval.type != o.date[i].wide_interval.type || (d.wide_interval.type == "week" && o.date[i].wide_interval.type == "week" && d.wide_interval.indexes != o.date[i].wide_interval.indexes)
         end
         true
       end

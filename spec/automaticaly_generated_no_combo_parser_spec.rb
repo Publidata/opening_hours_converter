@@ -3310,4 +3310,13 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   it 'Week 1-52/2 Mo 05:00-12:00' do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('Week 1-52/2 Mo 05:00-12:00'))).to eql('week 1-52/2 Mo 05:00-12:00')
   end
+  it '2024 Week 3, 6, 9 Mo; 2025 Week 3, 6, 9 Mo' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2024 Week 3, 6, 9 Mo; 2025 Week 3, 6, 9 Mo'))).to eql('2024-2025 week 3,6,9 Mo 00:00-23:59')
+  end
+  it '2024 Week 3, 6, 9 Mo; 2025 Week 6, 9, 3 Mo' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2024 Week 3, 6, 9 Mo; 2025 Week 9, 6, 3 Mo'))).to eql('2024-2025 week 3,6,9 Mo 00:00-23:59')
+  end
+  it '2024 Week 3, 6, 9, 12-44/2, 47, 50 Mo; 2025 Week 1, 4, 7, 10, 13-43/2, 46, 49, 52 Mo' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2024 Week 3, 6, 9, 12-44/2, 47, 50 Mo; 2025 Week 1, 4, 7, 10, 13-43/2, 46, 49, 52 Mo'))).to eql('2024 week 3,6,9,12-44/2,47,50 Mo 00:00-23:59; 2025 week 1,4,7,10,13-43/2,46,49,52 Mo 00:00-23:59')
+  end
 end

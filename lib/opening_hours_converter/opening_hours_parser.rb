@@ -338,7 +338,15 @@ module OpeningHoursConverter
         else
           week_index.to_i
         end
-      }
+      }.sort_by do |index|
+        if index.is_a?(Integer)
+          index
+        elsif index.is_a?(Hash)
+          index[:from]
+        else
+          0
+        end
+      end
 
       { year_from: years[0].to_i, week_indexes: indexes }.tap do |hsh|
         hsh[:year_to] = years.length > 1 ? years[1].to_i : nil
