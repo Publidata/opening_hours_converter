@@ -283,6 +283,7 @@ module OpeningHoursConverter
       end
     end
 
+
     def same_date?(o)
       if o.nil? || o.date.length != @date.length
         false
@@ -295,12 +296,23 @@ module OpeningHoursConverter
     end
 
     def mergeable?(o)
-      if o.nil? || o.date.length != @date.length
+      return true if o.nil?
+
+      if o.date.length != @date.length
+        if @date.any? { |date| date.wide_interval.type == "week" }
+          indexes = (@date + o.date).map do |date|
+            date.wide_interval.indexes
+          end.uniq
+
+          return false if indexes.length > 1
+        end
+
         true
       else
         @date.each_with_index do |d, i|
           return false if (d.wide_interval.start&.dig(:year) != o.date[i].wide_interval.start&.dig(:year)) && d.wide_interval.type != o.date[i].wide_interval.type || (d.wide_interval.type == "week" && o.date[i].wide_interval.type == "week" && d.wide_interval.indexes != o.date[i].wide_interval.indexes)
         end
+
         true
       end
     end
