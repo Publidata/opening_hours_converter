@@ -132,7 +132,30 @@ module OpeningHoursConverter
       datetime_result.sort_by { |a| a[:start] }
     end
 
-    # A partir d'une string OH et d'une DateTime (= now par défaut), renvoyer le current state (début / fin / commentaire)
+    # from and to are Time
+    def get_open_intervals(opening_hours_string, from, to)
+      date_ranges = OpeningHoursConverter::OpeningHoursParser.new.parse(opening_hours_string)
+      ti = get_time_iterator(date_ranges)
+
+      data = {}
+
+      ti.each do |interval|
+        if interval[:start] >= from && interval[:end] <= to
+          wday = reindex_sunday_week_to_monday_week(interval[:start].wday)
+          data[wday] ||= []
+          data[wday] << {
+            from: interval[:start],
+            to: interval[:end]
+          }
+        elsif interval[:end] > to
+          break
+        end
+      end
+
+      data
+    end
+
+    # Given an opening hours string and a time (default is now), returns current state (from, to, comment)
     def state(opening_hours_string, time = Time.now)
       date_ranges = OpeningHoursConverter::OpeningHoursParser.new.parse(opening_hours_string)
       ti = get_time_iterator(date_ranges)
@@ -142,7 +165,7 @@ module OpeningHoursConverter
       false
     end
 
-    # A partir d'une string OH et d'une DateTime (= now par défaut), renvoyer le prochain state (début / fin / commentaire - nextState dans opening_hours.js) permettant d'afficher à l'utilisateur le prochain événement (ouverture/fermeture)
+    # Given an opening hours string and a time (default is now), returns next state (from, to, comment)
     def next_state(opening_hours_string, time = Time.now)
       date_ranges = OpeningHoursConverter::OpeningHoursParser.new.parse(opening_hours_string)
       ti = get_time_iterator(date_ranges)
@@ -163,7 +186,7 @@ module OpeningHoursConverter
       false
     end
 
-    # A partir d'une string OH et d'une DateTime (= now par défaut), déterminer cela correspond à une période d'ouverture : renvoyer un boolean.
+    # Given an opening hours string and a time (default is now), returns current state as a boolean (true : open, false : close)
     def is_opened?(opening_hours_string, time = Time.now)
       date_ranges = OpeningHoursConverter::OpeningHoursParser.new.parse(opening_hours_string)
       ti = get_time_iterator(date_ranges)
