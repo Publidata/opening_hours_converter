@@ -56,56 +56,54 @@ module OpeningHoursConverter
     end
 
     def get_intervals(clean = false)
-      if clean
-        minute_array = get_as_minute_array
-        intervals = []
-        day_start = -1
-        minute_start = -1
-        minute_end = nil
-        off = false
-        minute_array.each_with_index do |day, day_index|
-          day.each_with_index do |minute, minute_index|
-            if day_index == 0 && minute_index == 0
-              if minute
-                off = minute == 'off'
-                day_start = day_index
-                minute_start = minute_index
-              end
-            elsif minute && day_index == DAYS_MAX && minute_index == day.length - 1
+      return @intervals unless clean
+
+      minute_array = get_as_minute_array
+      intervals = []
+      day_start = -1
+      minute_start = -1
+      minute_end = nil
+      off = false
+      minute_array.each_with_index do |day, day_index|
+        day.each_with_index do |minute, minute_index|
+          if day_index == 0 && minute_index == 0
+            if minute
               off = minute == 'off'
-              if day_start >= 0
-                intervals << OpeningHoursConverter::Interval.new(day_start, minute_start, day_index, minute_index, off)
-              else
-                intervals << OpeningHoursConverter::Interval.new(6, minute_index, 6, minute_index, off)
-              end
+              day_start = day_index
+              minute_start = minute_index
+            end
+          elsif minute && day_index == DAYS_MAX && minute_index == day.length - 1
+            off = minute == 'off'
+            if day_start >= 0
+              intervals << OpeningHoursConverter::Interval.new(day_start, minute_start, day_index, minute_index, off)
             else
-              if minute && day_start < 0
-                off = minute == 'off'
-                day_start = day_index
-                minute_start = minute_index
-              elsif off && minute != 'off'
+              intervals << OpeningHoursConverter::Interval.new(6, minute_index, 6, minute_index, off)
+            end
+          else
+            if minute && day_start < 0
+              off = minute == 'off'
+              day_start = day_index
+              minute_start = minute_index
+            elsif off && minute != 'off'
+              intervals << OpeningHoursConverter::Interval.new(day_start, minute_start, day_index - 1, MINUTES_MAX, off)
+              off = false
+              day_start = minute ? day_index : -1
+              minute_start = minute ? minute_index : -1
+            elsif !minute && day_start >= 0
+              if minute_index == 0
                 intervals << OpeningHoursConverter::Interval.new(day_start, minute_start, day_index - 1, MINUTES_MAX, off)
-                off = false
-                day_start = minute ? day_index : -1
-                minute_start = minute ? minute_index : -1
-              elsif !minute && day_start >= 0
-                if minute_index == 0
-                  intervals << OpeningHoursConverter::Interval.new(day_start, minute_start, day_index - 1, MINUTES_MAX, off)
-                else
-                  intervals << OpeningHoursConverter::Interval.new(day_start, minute_start, day_index, minute_index - 1, off)
-                end
-                off = false
-                day_start = -1
-                minute_start = - 1
+              else
+                intervals << OpeningHoursConverter::Interval.new(day_start, minute_start, day_index, minute_index - 1, off)
               end
+              off = false
+              day_start = -1
+              minute_start = - 1
             end
           end
         end
-
-        intervals
-      else
-        @intervals
       end
+
+      intervals
     end
 
     def get_intervals_diff(week)
