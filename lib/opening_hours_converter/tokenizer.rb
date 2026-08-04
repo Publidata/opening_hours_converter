@@ -62,7 +62,7 @@ module OpeningHoursConverter
     def handle_string
       type = :string
       start_index = @index
-      value = ''
+      value = String.new
 
       while string? && current_character?
         value << current_character
@@ -75,7 +75,7 @@ module OpeningHoursConverter
     def handle_integer
       type = :integer
       start_index = @index
-      value = ''
+      value = String.new
 
       while integer? && current_character?
         value << current_character
