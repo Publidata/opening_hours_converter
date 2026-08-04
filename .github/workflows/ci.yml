@@ -1,19 +1,30 @@
 name: CI
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
-  build:
+  test:
+    runs-on: ${{ matrix.os }}
 
-    # 22.04 is the most recent runner ruby/setup-ruby still ships a 2.6 build for.
-    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ruby/setup-ruby ships no 2.6 build for ubuntu-24.04, so that row
+          # needs the older runner.
+          - { ruby-version: '2.6.9', os: ubuntu-22.04 }
+          - { ruby-version: '3.2', os: ubuntu-latest }
+          - { ruby-version: '3.3', os: ubuntu-latest }
+          - { ruby-version: '3.4', os: ubuntu-latest }
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Ruby 2.6
-      uses: ruby/setup-ruby@v1
+    - uses: actions/checkout@v6.0.1
+
+    - name: Set up Ruby ${{ matrix.ruby-version }}
+      uses: ruby/setup-ruby@v1.278.0
       with:
-        ruby-version: 2.6.9
+        ruby-version: ${{ matrix.ruby-version }}
         bundler-cache: true
-    - name: Build and test with Rspec
+
+    - name: Run tests
       run: bundle exec rspec spec
