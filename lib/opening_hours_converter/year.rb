@@ -371,6 +371,21 @@ module OpeningHoursConverter
               years[wide_interval.start[:year]][wide_interval.start[:month]-1][day] = true
             end
           end
+        elsif wide_interval.end[:month] < wide_interval.start[:month]
+          # A range such as "2025 Dec 26-2025 Jan 13" wraps around New Year and
+          # covers both ends of the same year.
+          for month in wide_interval.start[:month]-1..11
+            first_day = month == wide_interval.start[:month]-1 ? wide_interval.start[:day]-1 : 0
+            for day in first_day...MONTH_END_DAY[month]
+              years[wide_interval.start[:year]][month][day] = true
+            end
+          end
+          for month in 0..wide_interval.end[:month]-1
+            last_day = month == wide_interval.end[:month]-1 ? wide_interval.end[:day]-1 : MONTH_END_DAY[month]-1
+            for day in 0..last_day
+              years[wide_interval.start[:year]][month][day] = true
+            end
+          end
         else
           for month in wide_interval.start[:month]-1..wide_interval.end[:month]-1
             if month == wide_interval.start[:month]-1

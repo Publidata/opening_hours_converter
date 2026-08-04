@@ -112,6 +112,16 @@ module OpeningHoursConverter
       datetime_result.sort_by { |a| a[:start] }
     end
 
+    # Open intervals of an opening hours string inside a concrete window, as
+    # [{ start: Time, end: Time }], sorted and clamped to [from, to].
+    #
+    # Unlike get_time_iterator, this applies "off" rules and intervals crossing
+    # midnight, and covers every year the window touches rather than the
+    # current one.
+    def get_open_intervals(opening_hours_string, from, to)
+      OpeningHoursConverter::OpenIntervals.call(opening_hours_string, from, to)
+    end
+
     def get_datetime_iterator(date_ranges)
       result = get_iterator(date_ranges)
       datetime_result = []

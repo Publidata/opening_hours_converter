@@ -680,31 +680,33 @@ module OpeningHoursConverter
       weeks_as_days = []
       @indexes.each do |week_index|
         if week_index.is_a?(Integer)
-          week = OpeningHoursConverter::WeekIndex.week_from_index(week_index, year)
-          weeks_as_days << OpeningHoursConverter::WideInterval.new.day(week[:from].day, week[:from].month, week[:from].year,
-                week[:to].day, week[:to].month, week[:to].year)
+          week_as_day(week_index, year, weeks_as_days)
         else
           if week_index.key?(:modifier)
             i = 0
             (week_index[:from]..week_index[:to]).map do |index|
-              if i % week_index[:modifier] == 0
-                week = OpeningHoursConverter::WeekIndex.week_from_index(index, year)
-                weeks_as_days << OpeningHoursConverter::WideInterval.new.day(week[:from].day, week[:from].month, week[:from].year,
-                  week[:to].day, week[:to].month, week[:to].year)
-              end
+              week_as_day(index, year, weeks_as_days) if i % week_index[:modifier] == 0
               i += 1
             end
           else
             (week_index[:from]..week_index[:to]).map do |index|
-              week = OpeningHoursConverter::WeekIndex.week_from_index(index, year)
-              weeks_as_days << OpeningHoursConverter::WideInterval.new.day(week[:from].day, week[:from].month, week[:from].year,
-                week[:to].day, week[:to].month, week[:to].year)
+              week_as_day(index, year, weeks_as_days)
             end
           end
         end
       end
 
       weeks_as_days
+    end
+
+    # A year has 52 or 53 ISO weeks, so an index past the last one selects
+    # nothing rather than a week borrowed from the next year.
+    def week_as_day(index, year, weeks_as_days)
+      return if index > OpeningHoursConverter::WeekIndex.week_count(year)
+
+      week = OpeningHoursConverter::WeekIndex.week_from_index(index, year)
+      weeks_as_days << OpeningHoursConverter::WideInterval.new.day(week[:from].day, week[:from].month, week[:from].year,
+                                                                  week[:to].day, week[:to].month, week[:to].year)
     end
     def get_public_holidays_for_year(year = Time.now.year)
       OpeningHoursConverter::PublicHoliday.ph_for_year(year).map do |holiday|
