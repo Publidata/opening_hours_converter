@@ -1,6 +1,12 @@
 name: CI
 
-on: [push, pull_request]
+# A branch pushed to this repository and then opened as a pull request would
+# otherwise run the matrix twice, once per event. Pull requests cover the
+# branches, push covers what lands on master.
+on:
+  push:
+    branches: [master]
+  pull_request:
 
 jobs:
   test:
