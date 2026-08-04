@@ -5,16 +5,15 @@ on: [push]
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    # 22.04 is the most recent runner ruby/setup-ruby still ships a 2.6 build for.
+    runs-on: ubuntu-22.04
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Ruby 2.6
-      uses: actions/setup-ruby@v1
+      uses: ruby/setup-ruby@v1
       with:
-        ruby-version: 2.6.x
+        ruby-version: 2.6.9
+        bundler-cache: true
     - name: Build and test with Rspec
-      run: |
-        gem install bundler
-        bundle install --jobs 4 --retry 3
-        bundle exec rspec spec
+      run: bundle exec rspec spec
