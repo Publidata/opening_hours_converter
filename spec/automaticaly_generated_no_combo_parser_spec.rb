@@ -3322,4 +3322,25 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   it '2024 Week 1-52/2 Tu; 2025 Week 1-52/2 Tu; 2026 Week 1 Tu' do
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2024 Week 1-52/2 Tu; 2025 Week 1-52/2 Tu; 2026 Week 1 Tu'))).to eql('2024-2025 week 1-52/2 Tu 00:00-23:59; 2026 week 1 Tu 00:00-23:59')
   end
+  it 'We[1] 05:00-20:00' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('We[1] 05:00-20:00'))).to eql('We[1] 05:00-20:00')
+  end
+  it 'Tu[4]' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('Tu[4]'))).to eql('Tu[4] 00:00-23:59')
+  end
+  it 'Mo-Fr unknown' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('Mo-Fr unknown'))).to eql('Mo-Fr unknown')
+  end
+  it 'Mo-Fr 08:00-12:00 || "phone for opening hours"' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('Mo-Fr 08:00-12:00 || "phone for opening hours"'))).to eql('Mo-Fr 08:00-12:00 || "phone for opening hours"')
+  end
+  it 'Th 18:00+' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('Th 18:00+'))).to eql('Th 18:00+')
+  end
+  it '2020+ Mo off' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('2020+ Mo off'))).to eql('2020+ Mo off')
+  end
+  it 'easter off' do
+    expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse('easter off'))).to eql('easter off')
+  end
 end

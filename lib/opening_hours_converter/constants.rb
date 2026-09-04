@@ -20,5 +20,6 @@ module OpeningHoursConverter
     DAYS_MAX = 6
     YEAR_DAYS_MAX = 365
     PH_WEEKDAY = -2
+    EASTER_WEEKDAY = -3
   end
 end

@@ -86,7 +86,12 @@ RSpec.describe OpeningHoursConverter::OpenIntervals, 'production patterns' do
     ['May-Sep Fr,Sa 10:00-19:00', 2026, 2027, 44, [2026, 5, 1, 10, 0], [2026, 5, 1, 19, 0]], # M-M D,D T-T — 329 records
     ['2026 Jan 3-2026 Jan 21', 2026, 2027, 19, [2026, 1, 3, 0, 0], [2026, 1, 3, 23, 59]], # Y M N-Y M N — 324 records
     ['Mar 14-Dec 27 Tu 05:00-13:00', 2026, 2027, 41, [2026, 3, 17, 5, 0], [2026, 3, 17, 13, 0]], # M N-M N D T-T — 310 records
-    ['2023 Mo,Th 05:00-23:00', 2023, 2024, 104, [2023, 1, 2, 5, 0], [2023, 1, 2, 23, 0]] # Y D,D T-T — 294 records
+    ['2023 Mo,Th 05:00-23:00', 2023, 2024, 104, [2023, 1, 2, 5, 0], [2023, 1, 2, 23, 0]], # Y D,D T-T — 294 records
+    ['We[2] 5:00-20:00', 2026, 2027, 12, [2026, 1, 14, 5, 0], [2026, 1, 14, 20, 0]], # D[N] T-T — 4676 records
+    ['Mar,Nov Sa[3] 09:00-17:00', 2026, 2027, 2, [2026, 3, 21, 9, 0], [2026, 3, 21, 17, 0]], # M,M D[N] T-T — 1909 records
+    ['Jan,Mar,Jun Mo[4]', 2026, 2027, 3, [2026, 1, 26, 0, 0], [2026, 1, 26, 23, 59]], # M,M D[N] — 345 records
+    ['2025 Jan,Apr,Jul,Oct Th[2] 05:00-12:00', 2025, 2026, 4, [2025, 1, 9, 5, 0], [2025, 1, 9, 12, 0]], # Y M,M D[N] T-T — 328 records
+    ['Mo[1]', 2026, 2027, 12, [2026, 1, 5, 0, 0], [2026, 1, 5, 23, 59]] # D[N] — 325 records
   ].freeze
 
   supported.each do |opening_hours, first_year, last_year, count, start_at, end_at|
@@ -103,13 +108,8 @@ RSpec.describe OpeningHoursConverter::OpenIntervals, 'production patterns' do
   # evaluator for them. Should support be added, these examples fail and become
   # the place to assert the new behaviour.
   unsupported = [
-    'We[2] 5:00-20:00', # D[N] T-T — 4676 records
-    'Mar,Nov Sa[3] 09:00-17:00', # M,M D[N] T-T — 1909 records
     'Jan: Tu[2,4] 09:00-19:00', # M: D[N,N] T-T — 565 records
     '2024 Jan 01-2025 Jan 31 week 02-52/2 Mo 06:00-23:59', # Y M N-Y M N week N-N/N D T-T — 383 records
-    'Jan,Mar,Jun Mo[4]', # M,M D[N] — 345 records
-    '2025 Jan,Apr,Jul,Oct Th[2] 05:00-12:00', # Y M,M D[N] T-T — 328 records
-    'Mo[1]', # D[N] — 325 records
     '2024,2025 Tu 14:00-21:00' # Y,Y D T-T — 302 records
   ].freeze
 

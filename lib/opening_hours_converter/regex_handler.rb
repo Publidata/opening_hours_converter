@@ -3,7 +3,7 @@
 module OpeningHoursConverter
   class RegexHandler
     def rule_modifier_regex
-      /^(open|closed|off)$/i
+      /^(open|closed|off|unknown)$/i
     end
 
     def week_key_regex
@@ -59,6 +59,10 @@ module OpeningHoursConverter
       compile(line(ph))
     end
 
+    def easter_regex
+      compile(line(easter))
+    end
+
     def time_regex
       compile(
         line(
@@ -68,7 +72,7 @@ module OpeningHoursConverter
                 group(time)
               ) + '|' + group(full_time)
             )
-          )
+          ) + '\\+?' # a trailing "+" marks an open-ended time ("18:00+")
         )
       )
     end
@@ -106,7 +110,8 @@ module OpeningHoursConverter
     def year_regex
       compile(
         line(
-          potential_range(year)
+          # a trailing "+" marks an open-ended year ("2020+" = 2020 onward)
+          group(potential_range(year), '\\+?')
         )
       )
     end
@@ -281,6 +286,10 @@ module OpeningHoursConverter
 
     def ph
       'PH'
+    end
+
+    def easter
+      'easter'
     end
 
     def week_day

@@ -58,8 +58,16 @@ module OpeningHoursConverter
       string? && @value.downcase == 'ph'
     end
 
+    def easter?
+      string? && @value.downcase == 'easter'
+    end
+
     def off?
       string? && @value.downcase == 'off'
+    end
+
+    def unknown?
+      string? && @value.downcase == 'unknown'
     end
 
     def string?

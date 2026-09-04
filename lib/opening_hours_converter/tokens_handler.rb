@@ -41,7 +41,7 @@ module OpeningHoursConverter
           next
         end
 
-        if current_token.public_holiday?
+        if current_token.public_holiday? || current_token.easter?
           @tokens << handle_public_holiday
           next
         end
@@ -51,7 +51,7 @@ module OpeningHoursConverter
           next
         end
 
-        if current_token.off?
+        if current_token.off? || current_token.unknown?
           @tokens << handle_off
           next
         end
@@ -131,6 +131,12 @@ module OpeningHoursConverter
               next
             end
           end
+        end
+
+        # an open-ended year ("2020+" — applies from that year onward)
+        if current_token.string? && current_token.value == '+'
+          value, made_from, type = add_current_token_to(value, type, made_from, :open_ended)
+          break
         end
 
         if current_token.integer?
@@ -320,6 +326,12 @@ module OpeningHoursConverter
 
       raise ParseError unless current_token.time?
       value, made_from, type = add_current_token_to(value, type, made_from)
+
+      # open-ended time ("18:00+" — opening time known, closing time isn't)
+      if current_token? && current_token.string? && current_token.value == '+'
+        value, made_from, type = add_current_token_to(value, type, made_from, :open_ended)
+        return token(value, type, start_index, made_from)
+      end
 
       raise ParseError unless current_token.hyphen?
       value, made_from, type = add_current_token_to(value, type, made_from)
