@@ -72,6 +72,14 @@ module OpeningHoursConverter
       string? && @value.downcase == 'unknown'
     end
 
+    def open?
+      string? && @value.downcase == 'open'
+    end
+
+    def closed?
+      string? && @value.downcase == 'closed'
+    end
+
     def string?
       @type == :string
     end

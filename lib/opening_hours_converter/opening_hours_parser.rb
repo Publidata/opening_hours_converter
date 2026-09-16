@@ -25,7 +25,13 @@ module OpeningHoursConverter
         fallback_suffix = fallback.strip
       end
 
+      # ";" separates rules, and so does "," when it stands between two rule
+      # sequences rather than inside a selector. The tokenizer drops that
+      # comma, so the blocks are split again on the tokens themselves.
       blocks = oh.split(';')
+               .map(&:strip)
+               .reject(&:empty?)
+               .flat_map { |block| split_into_rules(OpeningHoursConverter::Tokenizer.new(block).tokens) }
 
       comment = ''
       time_selector = nil
@@ -41,13 +47,9 @@ module OpeningHoursConverter
       dr_obj = nil
       res_dr_id = nil
 
-      blocks.each do |block|
-        block.strip!
-        next if block.empty?
+      blocks.each do |tokens|
+        next if tokens.empty?
 
-        tokenizer = OpeningHoursConverter::Tokenizer.new(block)
-        tokens = tokenizer.tokens
-        # tokens = tokenize(block)
         @current_token = tokens.length - 1
 
         weekdays = {}
@@ -63,6 +65,15 @@ module OpeningHoursConverter
         while @current_token >= 0 && (is_rule_modifier?(tokens[@current_token]) || is_time?(tokens[@current_token])) || is_weekday?(tokens[@current_token])
           if is_rule_modifier?(tokens[@current_token])
             local_modifier = tokens[@current_token].downcase
+
+            # "open" only restates what a time selector already means, so it
+            # carries no weekday selector of its own and the rule is read as
+            # if it were absent.
+            if local_modifier == 'open'
+              @current_token -= 1
+              next
+            end
+
             @current_token -= 1
             begin
               weekday_selector = tokens[@current_token]
@@ -697,6 +708,33 @@ module OpeningHoursConverter
       end
 
       weekdays
+    end
+
+    # A time selector closes a rule sequence, so a wide range selector right
+    # after one opens a new rule. That covers the additional rule separator
+    # ("Jul-Aug Th[2,4] 09:00-19:00, Sep-Nov Th 09:00-19:00", whose comma the
+    # tokenizer drops) and the rules the data writes with no separator at all
+    # ("Feb: Mo[1,3] 09:00-19:00 Mar-Jun Th 09:00-19:00").
+    #
+    # A weekday after a time is left alone: "Jan We 11:00-12:00,Mo off" has
+    # always read January for both weekdays, and splitting there would take
+    # the month away from the second one.
+    def split_into_rules(tokens)
+      rules = []
+      current = []
+
+      tokens.each_with_index do |token, i|
+        current << token
+        following = tokens[i + 1]
+        next if following.nil? || !is_time?(token)
+        next unless is_part_of_wide_interval?(following)
+
+        rules << current
+        current = []
+      end
+
+      rules << current unless current.empty?
+      rules
     end
 
     # "Sa" and its three letter form "Sat" name the same weekday.

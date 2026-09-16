@@ -51,7 +51,7 @@ module OpeningHoursConverter
           next
         end
 
-        if current_token.off? || current_token.unknown?
+        if current_token.off? || current_token.unknown? || current_token.open? || current_token.closed?
           @tokens << handle_off
           next
         end
