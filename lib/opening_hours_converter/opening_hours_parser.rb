@@ -14,11 +14,13 @@ module OpeningHoursConverter
     def parse(oh)
       result = []
 
-      # "||" is the OSM fallback-rule separator ("use the alternative when the
-      # primary rule doesn't apply"). It's a live-status concept, orthogonal to
-      # enumerating concrete open intervals over a date range, so only the
-      # primary rule is actually parsed; the fallback text is carried verbatim
-      # on the first DateRange purely so the builder can round-trip it.
+      # "||" is the OSM fallback-rule separator: what follows it applies only
+      # where the rules before it leave the place closed. The two sides are
+      # parsed apart, since the fallback is neither an additional rule nor an
+      # override; its own date ranges and its text both ride on the first
+      # DateRange, where OpenIntervals applies them and the builder rebuilds
+      # the string unchanged. A chained "a || b || c" nests: parsing "b || c"
+      # hangs "c" on "b" in turn.
       fallback_suffix = nil
       if oh.include?('||')
         oh, fallback = oh.split('||', 2)
@@ -317,7 +319,10 @@ module OpeningHoursConverter
         end
       end
 
-      result.first.fallback_suffix = fallback_suffix if !result.empty? && fallback_suffix
+      if !result.empty? && fallback_suffix
+        result.first.fallback_suffix = fallback_suffix
+        result.first.fallback_ranges = self.class.new.parse(fallback_suffix)
+      end
 
       result
     end

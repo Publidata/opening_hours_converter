@@ -49,6 +49,22 @@ function verdict(j, r) {
   return 'mismatch';
 }
 
+// Intervals joined where they touch. opening_hours.js cuts a run in two where
+// the state turns "unknown"; the gem, which knows only open and closed, does
+// not, and merging tells that difference apart from a rule going missing.
+function merged(intervals) {
+  const result = [];
+  intervals.forEach((i) => {
+    const last = result[result.length - 1];
+    if (last && last.end >= i.start) {
+      if (i.end > last.end) last.end = i.end;
+    } else {
+      result.push({ start: i.start, end: i.end });
+    }
+  });
+  return result.map(key);
+}
+
 function yamlString(s) {
   return `"${s.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
 }
@@ -108,6 +124,13 @@ js.forEach((j) => {
       // The gem reads the rule but drops what an "unknown" modifier
       // contributes, where opening_hours.js reports it as a flagged interval.
       reason = 'the intervals an "unknown" rule contributes are missing';
+    } else if (vm === 'mismatch' && j.intervals.some((i) => i.unknown) &&
+               same(merged(j.intervals), merged(rm.intervals))) {
+      // The gem covers the same minutes, in fewer intervals: it has one state
+      // where the reference has two, so it cannot cut the run where the
+      // reference does.
+      reason = 'the same minutes are covered, but opening_hours.js splits them where the ' +
+               'state turns "unknown", which get_open_intervals has no way to express';
     } else if (vm === 'ruby_error') {
       reason = rm.error.replace(/^OpeningHoursConverter::ParseError: /, 'ParseError: ');
     } else if (vm === 'ruby_accepts_invalid') {
