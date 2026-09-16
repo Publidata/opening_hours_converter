@@ -64,6 +64,11 @@ module OpeningHoursConverter
       string? && @value.downcase == 'easter'
     end
 
+    # The unit of a day offset ("easter +1 day", "PH -2 days").
+    def day_unit?
+      string? && %w[day days].include?(@value.downcase)
+    end
+
     def off?
       string? && @value.downcase == 'off'
     end

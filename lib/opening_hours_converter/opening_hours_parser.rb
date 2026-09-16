@@ -733,10 +733,12 @@ module OpeningHoursConverter
       weekday_selector = split_weekday_selector(weekday_selector)
 
       weekday_selector.each do |wd|
+        wd, offset = split_day_offset(wd)
+
         if !(@regex_handler.holiday_regex =~ wd).nil?
-          weekdays << { from: PH_WEEKDAY, to: PH_WEEKDAY, index: nil }
+          weekdays << { from: PH_WEEKDAY, to: PH_WEEKDAY, index: nil, offset: offset }
         elsif !(@regex_handler.easter_regex =~ wd).nil?
-          weekdays << { from: EASTER_WEEKDAY, to: EASTER_WEEKDAY, index: nil }
+          weekdays << { from: EASTER_WEEKDAY, to: EASTER_WEEKDAY, index: nil, offset: offset }
         elsif !(@regex_handler.week_day_regex =~ wd).nil?
           single_weekday = wd.split('-')
 
@@ -747,14 +749,14 @@ module OpeningHoursConverter
                     wd_from
                   end
 
-          weekdays << { from: wd_from, to: wd_to, index: nil }
+          weekdays << { from: wd_from, to: wd_to, index: nil, offset: offset }
         elsif !(@regex_handler.week_day_with_modifier_regex =~ wd).nil?
           day = wd[0...wd.index('[')]
           index = wd[wd.index('[') + 1...wd.index(']')]
 
           wd_from = weekday_index(day)
 
-          weekdays << { from: wd_from, to: wd_from, index: get_weekday_indexes(index) }
+          weekdays << { from: wd_from, to: wd_from, index: get_weekday_indexes(index), offset: offset }
         else
           raise ArgumentError, "Invalid weekday interval : #{wd}"
         end
@@ -810,6 +812,17 @@ module OpeningHoursConverter
         weekday: weekday_index(day),
         index: index.first
       }
+    end
+
+    # A selector can name a date by counting days from the one it selects:
+    # "easter +1 day" is Easter Monday, "PH -2 days" the day before the eve of
+    # a public holiday. Returns the selector without its suffix and the offset
+    # in days, zero when there is none.
+    def split_day_offset(weekday)
+      match = @regex_handler.day_offset_regex.match(weekday)
+      return [weekday, 0] if match.nil?
+
+      [match.pre_match, match[1].to_i]
     end
 
     # "Sa" and its three letter form "Sat" name the same weekday.
@@ -963,14 +976,14 @@ module OpeningHoursConverter
 
       if weekdays[:from] <= weekdays[:to]
         for wd in weekdays[:from]..weekdays[:to]
-          add_interval_wd(typical, times, wd, weekdays[:index])
+          add_interval_wd(typical, times, wd, weekdays[:index], weekdays[:offset])
         end
       else
         for wd in weekdays[:from]..6
-          add_interval_wd(typical, times, wd, weekdays[:index])
+          add_interval_wd(typical, times, wd, weekdays[:index], weekdays[:offset])
         end
         for wd in 0..weekdays[:to]
-          add_interval_wd(typical, times, wd, weekdays[:index])
+          add_interval_wd(typical, times, wd, weekdays[:index], weekdays[:offset])
         end
       end
     end
@@ -986,14 +999,14 @@ module OpeningHoursConverter
 
       if weekdays[:from] <= weekdays[:to]
         for wd in weekdays[:from]..weekdays[:to]
-          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true, weekdays[:index]))
+          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true, weekdays[:index], false, false, weekdays[:offset]))
         end
       else
         for wd in weekdays[:from]..6
-          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true, weekdays[:index]))
+          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true, weekdays[:index], false, false, weekdays[:offset]))
         end
         for wd in 0..weekdays[:to]
-          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true, weekdays[:index]))
+          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true, weekdays[:index], false, false, weekdays[:offset]))
         end
       end
     end
@@ -1009,27 +1022,27 @@ module OpeningHoursConverter
 
       if weekdays[:from] <= weekdays[:to]
         for wd in weekdays[:from]..weekdays[:to]
-          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true, weekdays[:index], true))
+          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true, weekdays[:index], true, false, weekdays[:offset]))
         end
       else
         for wd in weekdays[:from]..6
-          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true, weekdays[:index], true))
+          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true, weekdays[:index], true, false, weekdays[:offset]))
         end
         for wd in 0..weekdays[:to]
-          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true, weekdays[:index], true))
+          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true, weekdays[:index], true, false, weekdays[:offset]))
         end
       end
     end
 
-    def add_interval_wd(typical, times, wd, index = nil)
+    def add_interval_wd(typical, times, wd, index = nil, offset = 0)
       if times[:to] >= times[:from]
-        typical.add_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd, times[:to], false, index, false, times[:open_ended]))
+        typical.add_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd, times[:to], false, index, false, times[:open_ended], offset))
       else
         if wd < 6
-          typical.add_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd + 1, times[:to], false, index))
+          typical.add_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd + 1, times[:to], false, index, false, false, offset))
         else
-          typical.add_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd, 24 * 60, false, index))
-          typical.add_interval(OpeningHoursConverter::Interval.new(0, 0, 0, times[:to], false, index))
+          typical.add_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd, 24 * 60, false, index, false, false, offset))
+          typical.add_interval(OpeningHoursConverter::Interval.new(0, 0, 0, times[:to], false, index, false, false, offset))
         end
       end
     end
