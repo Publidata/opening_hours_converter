@@ -107,6 +107,16 @@ module OpeningHoursConverter
       )
     end
 
+    # A monthday range whose bounds are variable dates: "Jun Mo[1]-Sep Sa[1]"
+    # runs from the first Monday of June to the first Saturday of September.
+    def variable_date_range_regex
+      compile(
+        line(
+          variable_date + '-' + variable_date
+        )
+      )
+    end
+
     def year_regex
       compile(
         line(
@@ -244,6 +254,11 @@ module OpeningHoursConverter
 
     def potential_list(pattern, optional_pattern = pattern)
       group(pattern, group(group(comma, optional_pattern), '?'), '*')
+    end
+
+    # A date named by an index rather than by a day number: "Jun Mo[1]".
+    def variable_date
+      group(month + space + week_day + week_day_modifier)
     end
 
     # A weekday of a sequence, with or without its index: "Mo", "Mo-Fr", "Sa[2]".

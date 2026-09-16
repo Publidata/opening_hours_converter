@@ -120,6 +120,7 @@ module OpeningHoursConverter
         months = []
         years = []
         holidays = []
+        variable_dates = []
         if @current_token >= 0
           wide_range_selector = tokens[0]
           for i in 1..@current_token
@@ -128,7 +129,9 @@ module OpeningHoursConverter
           if !wide_range_selector.empty?
             wide_range_selector = wide_range_selector.strip
 
-            if !(@regex_handler.year_month_day_regex =~ wide_range_selector).nil?
+            if !(@regex_handler.variable_date_range_regex =~ wide_range_selector).nil?
+              variable_dates << get_variable_date_range(wide_range_selector)
+            elsif !(@regex_handler.year_month_day_regex =~ wide_range_selector).nil?
               years << get_year_month_day(wide_range_selector)
             elsif !(@regex_handler.year_month_regex =~ wide_range_selector).nil?
               years << get_year_month(wide_range_selector)
@@ -165,7 +168,11 @@ module OpeningHoursConverter
         # puts "years : #{years}"
 
         date_ranges = []
-        if !months.empty?
+        if !variable_dates.empty?
+          variable_dates.each do |variable_date|
+            date_ranges << OpeningHoursConverter::WideInterval.new.variable_day(variable_date[:from], variable_date[:to])
+          end
+        elsif !months.empty?
           months.each do |month|
             if !month[:from_day].nil?
               if !month[:to_day].nil?
@@ -735,6 +742,25 @@ module OpeningHoursConverter
 
       rules << current unless current.empty?
       rules
+    end
+
+    # "Jun Mo[1]-Sep Sa[1]" splits on the only "]-" it can hold, since an
+    # index list never contains a closing bracket.
+    def get_variable_date_range(wrs)
+      from, to = wrs.split(']-')
+      { from: get_variable_date("#{from}]"), to: get_variable_date(to) }
+    end
+
+    def get_variable_date(part)
+      month_name, weekday = part.strip.split(' ')
+      day = weekday[0...weekday.index('[')]
+      index = get_weekday_indexes(weekday[weekday.index('[') + 1...weekday.index(']')])
+
+      {
+        month: OSM_MONTHS.find_index(month_name.capitalize) + 1,
+        weekday: weekday_index(day),
+        index: index.first
+      }
     end
 
     # "Sa" and its three letter form "Sat" name the same weekday.

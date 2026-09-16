@@ -39,12 +39,18 @@ module OpeningHoursConverter
         if !@end.nil?
           result = "#{@start[:year]}#{@start[:year] == @end[:year] ? '' : "-#{@end[:year]}"} PH"
         end
+      when 'variable_day'
+        result = "#{variable_date_selector(@start)}-#{variable_date_selector(@end)}"
       when 'always'
         result = ''
       else
         result = ''
       end
       result
+    end
+
+    def variable_date_selector(bound)
+      "#{OSM_MONTHS[bound[:month] - 1]} #{OSM_DAYS[bound[:weekday]]}[#{bound[:index]}]"
     end
 
     def get_time_for_humans
@@ -162,6 +168,18 @@ module OpeningHoursConverter
       @start = { holiday: holiday, year: start_year }
       @end = { holiday: holiday, year: end_year } unless end_year.nil? || end_year == start_year
       @type = 'holiday'
+      self
+    end
+
+    # A monthday range whose bounds are named by an index rather than by a day
+    # number ("Jun Mo[1]-Sep Sa[1]"). Which days those are depends on the
+    # year, so the range stays symbolic until a year resolves it.
+    def variable_day(start_date, end_date)
+      raise(ArgumentError, 'start_date and end_date are required') if start_date.nil? || end_date.nil?
+
+      @start = start_date
+      @end = end_date
+      @type = 'variable_day'
       self
     end
 
@@ -647,6 +665,8 @@ module OpeningHoursConverter
         else
           OpeningHoursConverter::WideInterval.new.day(1, 1, @start[:year], 31, 12, @end[:year])
         end
+      when 'variable_day'
+        get_variable_days_for_year.first
       when 'holiday'
         if @start && @start[:year]
           if @end && @end[:year]
@@ -710,6 +730,27 @@ module OpeningHoursConverter
       weeks_as_days << OpeningHoursConverter::WideInterval.new.day(week[:from].day, week[:from].month, week[:from].year,
                                                                   week[:to].day, week[:to].month, week[:to].year)
     end
+    # Resolves the bounds against one year. A range whose end falls before its
+    # start wraps into the next year, as "Oct Su[-1]-Mar Mo[1]" does.
+    #
+    # The closing bound is the date the range stops at, not its last day:
+    # "Jun Mo[1]-Sep Sa[1]" ends on the eve of September's first Saturday.
+    def get_variable_days_for_year(year = Time.now.year)
+      from = resolve_variable_date(@start, year)
+      to = resolve_variable_date(@end, year)
+      to = resolve_variable_date(@end, year + 1) if to < from
+      to -= 1
+      return [] if to < from
+
+      [OpeningHoursConverter::WideInterval.new.day(from.day, from.month, from.year, to.day, to.month, to.year)]
+    rescue ArgumentError
+      []
+    end
+
+    def resolve_variable_date(bound, year)
+      OpeningHoursConverter::WeekIndex.nth_wday_of_month(bound[:index], bound[:weekday], bound[:month], year)
+    end
+
     def get_public_holidays_for_year(year = Time.now.year)
       OpeningHoursConverter::PublicHoliday.ph_for_year(year).map do |holiday|
         OpeningHoursConverter::WideInterval.new.day(holiday.day, holiday.month, holiday.year)

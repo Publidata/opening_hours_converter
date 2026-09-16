@@ -190,10 +190,20 @@ module OpeningHoursConverter
       value = current_token.value
       made_from = [current_token]
       @index += 1
+      # "Jun Mo[1]-Sep Sa[1]" names its bounds by an index instead of a day
+      # number. Both belong to the wide range token, so they are read here
+      # rather than left to the weekday handler.
+      variable_range = false
 
       while current_token?
         break if current_token_is_all_time?
         break if current_token_is_time?
+
+        if variable_date_bound? || (variable_range && indexed_weekday?)
+          variable_range = !variable_range
+          value, made_from, type = read_variable_date_bound(value, made_from, type)
+          next
+        end
 
         if current_token.hyphen? || current_token.comma? || current_token.slash?
           value, made_from, type = add_current_token_to(value, type, made_from)
@@ -410,6 +420,35 @@ module OpeningHoursConverter
       @index += 1
 
       token(value, type, start_index, made_from)
+    end
+
+    # The opening bound of a variable date range: an indexed weekday whose
+    # index is followed by "-" and another month.
+    def variable_date_bound?
+      return false unless indexed_weekday?
+
+      closing = @index + 2
+      closing += 1 while @unhandled_tokens[closing] && !@unhandled_tokens[closing].closing_square_bracket?
+      return false if @unhandled_tokens[closing].nil?
+
+      !@unhandled_tokens[closing + 1].nil? && @unhandled_tokens[closing + 1].hyphen? &&
+        !@unhandled_tokens[closing + 2].nil? && @unhandled_tokens[closing + 2].month?
+    end
+
+    def indexed_weekday?
+      current_token? && current_token.weekday? && next_token? && next_token.opening_square_bracket?
+    end
+
+    def read_variable_date_bound(value, made_from, type)
+      value, made_from, type = add_current_token_to(value, type, made_from, :variable_date, ' ')
+
+      while current_token?
+        closing = current_token.closing_square_bracket?
+        value, made_from, type = add_current_token_to(value, type, made_from)
+        break if closing
+      end
+
+      [value, made_from, type]
     end
 
     def current_token_is_time?

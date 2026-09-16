@@ -51,6 +51,7 @@ module OpeningHoursConverter
         case date_range.wide_interval.type
         when 'week' then expand_to_days(date_range, :get_weeks_for_year)
         when 'holiday' then expand_to_days(date_range, :get_public_holidays_for_year)
+        when 'variable_day' then expand_to_days(date_range, :get_variable_days_for_year)
         else [[clamp_open_ended_year(date_range), nil]]
         end
       end
