@@ -21,23 +21,36 @@ mode 2, so points in time count as valid, with nominatim `fr` /
 
 Four patterns are in the corpus precisely because `opening_hours.js` rejects
 them (`Xx 10:00-12:00`, `Jan 01 +1 day 10:00-12:00`, …). The gem rejects all
-four as well, so it does not silently invent an answer for nonsense.
+four as well, so it does not silently invent an answer for nonsense — and
+`Jan 01 +1 day` is still one of them now that day offsets read, since the
+specification allows an offset after a holiday or an occurrence, not after a
+monthday.
 
-| | at 1.16.0 | since #59 | since a timed `off` rule subtracts (#62) | since fallback rules are applied (#63) | since the three isolated selectors landed (#64) |
-|---|---|---|---|---|---|
-| matches the reference | 55 / 107 | 75 / 107 | 76 / 107 | 78 / 107 | 81 / 107 |
-| raises where it should not | 45 | 22 | 22 | 22 | 19 |
-| silently returns wrong intervals | 7 | 10 | 9 | 7 | 7 |
+| | at 1.16.0 | since #59 | since #62 | since #63 | since #64 | since day offsets |
+|---|---|---|---|---|---|---|
+| matches the reference | 55 / 107 | 75 / 107 | 76 / 107 | 78 / 107 | 81 / 107 | 85 / 107 |
+| raises where it should not | 45 | 22 | 22 | 22 | 19 | 12 |
+| silently returns wrong intervals | 7 | 10 | 9 | 7 | 7 | 10 |
 
-The last column is what the counts below describe. #59 closed 20 gaps, and
-raised the silent count while doing it: it taught the parser to read `||` and
-`unknown`, which the evaluator then ignored, so three strings that used to fail
-loudly answered incompletely instead. #63 took two of those three back.
-Findings 3 and 9.
+A column per change that moved the numbers: #62 a timed `off` rule that
+subtracts, #63 fallback rules that are applied, #64 the three isolated
+selectors. The last column is what the counts below describe.
+
+#59 closed 20 gaps, and raised the silent count while doing it: it taught the
+parser to read `||` and `unknown`, which the evaluator then ignored, so three
+strings that used to fail loudly answered incompletely instead. #63 took two of
+those three back. Findings 3 and 9.
 
 #62 closed finding 1, the one that mattered most: it was the only everyday
 string the gem answered wrongly without raising. #64 closed finding 8, whose
 three selectors each needed only a mechanism the gem already had.
+
+Day offsets closed the seven remaining `ParseError`s of findings 6 and 7, of
+which four now match. The other three moved into the silent column rather than
+out of the table: two are the `PH` offsets, which count from the fixed national
+list of finding 2 and so inherit its four surplus days, and the third is
+`Sa[1] -1 day 10:00-12:00`, where the reference is the one that is wrong — it
+is recorded as a divergence, below.
 
 Closed findings keep their number and their section rather than leaving the
 ones after them to shift, so what a commit or a pull request calls finding 3
@@ -155,30 +168,36 @@ what it expected. Whether the gem should support points in time at all is a
 scope decision (`opening_hours.js` gates them behind a mode); the crash is a
 bug either way.
 
-### 6. Holiday arithmetic and school holidays
+### 6. School holidays, and holiday arithmetic on a national list
 
-**Severity: medium. Loud.**
+**Partly closed. What is left is severity medium, loud for `SH` and silent for
+`PH`.**
 
 ```
-PH -1 day 10:00-12:00   PH +1 day 10:00-12:00
-easter +1 day 10:00-12:00   easter -2 days off
 SH 10:00-12:00   SH Mo-Fr 08:00-12:00
+PH -1 day 10:00-12:00   PH +1 day 10:00-12:00
 ```
 
-`easter` alone works; offsets from it, and from `PH`, do not. `SH` is not recognised at all. `SH` also has no answer without a
-regional calendar, so it shares the decision of finding 2.
+The offsets read. `easter +1 day 10:00-12:00` and `easter -2 days off` match
+the reference, and the two `PH` offsets select exactly the day before and the
+day after each holiday. They stay pending because of the days they count from,
+not because of the arithmetic: the list is the fixed national one of finding 2,
+so they open on 15 days where the reference opens on 11. Closing finding 2
+closes them with it, and nothing else about them is missing.
+
+`SH` is not recognised at all, and has no answer without a regional calendar
+either, so it shares finding 2's decision too.
 
 ### 7. Weekday-occurrence offsets
 
-**Severity: low. Loud.**
+**Closed.**
 
 ```
 Su[-1] +1 day 10:00-12:00   Sa[1] -1 day 10:00-12:00   Su[1] +2 days 10:00-12:00
 ```
 
-`Su[-1]` itself landed with #59. The `+1 day` suffix after it did not, and it
-is the natural next step from that work: the day offset is the same grammar as
-in finding 6.
+All three read. `Sa[1] -1 day 10:00-12:00` is recorded as a divergence rather
+than as supported, because the reference miscounts it; see below.
 
 ### 8. Three isolated selectors — closed
 
@@ -208,7 +227,7 @@ maybe, which today it has no way to express.
 
 ## Where the gem is right and the reference is wrong
 
-One entry in the fixture is marked `divergence` rather than `pending`:
+Two entries in the fixture are marked `divergence` rather than `pending`:
 
 ```
 Su 23:00-01:00
@@ -217,8 +236,21 @@ Su 23:00-01:00
 On the night the clocks go forward, 2026-03-29, `opening_hours.js` ends the
 interval at 00:00 instead of 01:00 — it advances by a fixed duration and loses
 the hour. The gem builds `Time` from wall clock components and returns
-23:00-01:00, which is what the string says. The fixture stores the gem's own
-output here, as a regression guard.
+23:00-01:00, which is what the string says.
+
+```
+Sa[1] -1 day 10:00-12:00
+```
+
+When the offset puts two occurrences in the same month, `opening_hours.js`
+enumerates only the later one. Over 2026 it drops 2026-07-03, the day before
+the first Saturday of July, while keeping 2026-07-31, the day before the first
+Saturday of August; 2024 and 2028 lose one and three days the same way. Asked
+about 2026-07-03 directly, its own `getState()` answers `true`, so the
+reference contradicts itself and only its interval enumeration is wrong. The
+gem returns all twelve days.
+
+The fixture stores the gem's own output for both, as a regression guard.
 
 This is the reason the corpus is not simply "whatever `opening_hours.js`
 prints": the reference is a reference, not an oracle.
@@ -227,10 +259,12 @@ prints": the reference is a reference, not an oracle.
 
 1. **Findings 2 and 4 together**, once the API question they share — where a
    region and a pair of coordinates are given to the gem — has an answer.
-2. **Findings 5, 6, 7 and 9**, in whatever order the callers' data argues for.
-   Answering 9 is also what closes the rest of finding 3. Findings 1, 3 and 8
-   are closed; finding 6 keeps `SH` and the two `PH` offsets, both of which
-   item 1 resolves.
+   Between them they hold every pattern still raising.
+2. **Findings 5 and 9**, in whatever order the callers' data argues for.
+   Answering 9 is also what closes the rest of finding 3.
+
+Findings 1, 3, 7 and 8 are closed. Finding 6 keeps only `SH` and the two `PH`
+offsets, all three of which item 1 resolves.
 
 ## What this analysis does not cover
 

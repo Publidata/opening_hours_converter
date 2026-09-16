@@ -30,6 +30,13 @@ const DIVERGENCE = {
     'opening_hours.js loses an hour on the spring-forward night (it ends the ' +
     '2026-03-29 interval at 00:00 instead of 01:00); the gem builds Time from ' +
     'wall clock components and stays right',
+  'Sa[1] -1 day 10:00-12:00':
+    'when the offset puts two occurrences in the same month, ' +
+    'opening_hours.js enumerates only the later one: it drops 2026-07-03 ' +
+    '(the day before the first Saturday of July) and keeps 2026-07-31 (the ' +
+    'day before the first Saturday of August). Its own getState() answers ' +
+    'true for 2026-07-03, so getOpenIntervals contradicts it; the gem ' +
+    'returns all 12 days',
 };
 
 const FEAT_BRANCH = 'feat/osm-nth-weekday-and-extended-grammar';
