@@ -13,7 +13,25 @@ module OpeningHoursConverter
 
     def parse(oh)
       result = []
+
+      # "||" is the OSM fallback-rule separator ("use the alternative when the
+      # primary rule doesn't apply"). It's a live-status concept, orthogonal to
+      # enumerating concrete open intervals over a date range, so only the
+      # primary rule is actually parsed; the fallback text is carried verbatim
+      # on the first DateRange purely so the builder can round-trip it.
+      fallback_suffix = nil
+      if oh.include?('||')
+        oh, fallback = oh.split('||', 2)
+        fallback_suffix = fallback.strip
+      end
+
+      # ";" separates rules, and so does "," when it stands between two rule
+      # sequences rather than inside a selector. The tokenizer drops that
+      # comma, so the blocks are split again on the tokens themselves.
       blocks = oh.split(';')
+               .map(&:strip)
+               .reject(&:empty?)
+               .flat_map { |block| split_into_rules(OpeningHoursConverter::Tokenizer.new(block).tokens) }
 
       comment = ''
       time_selector = nil
@@ -29,13 +47,9 @@ module OpeningHoursConverter
       dr_obj = nil
       res_dr_id = nil
 
-      blocks.each do |block|
-        block.strip!
-        next if block.empty?
+      blocks.each do |tokens, additional|
+        next if tokens.empty?
 
-        tokenizer = OpeningHoursConverter::Tokenizer.new(block)
-        tokens = tokenizer.tokens
-        # tokens = tokenize(block)
         @current_token = tokens.length - 1
 
         weekdays = {}
@@ -51,6 +65,15 @@ module OpeningHoursConverter
         while @current_token >= 0 && (is_rule_modifier?(tokens[@current_token]) || is_time?(tokens[@current_token])) || is_weekday?(tokens[@current_token])
           if is_rule_modifier?(tokens[@current_token])
             local_modifier = tokens[@current_token].downcase
+
+            # "open" only restates what a time selector already means, so it
+            # carries no weekday selector of its own and the rule is read as
+            # if it were absent.
+            if local_modifier == 'open'
+              @current_token -= 1
+              next
+            end
+
             @current_token -= 1
             begin
               weekday_selector = tokens[@current_token]
@@ -97,6 +120,7 @@ module OpeningHoursConverter
         months = []
         years = []
         holidays = []
+        variable_dates = []
         if @current_token >= 0
           wide_range_selector = tokens[0]
           for i in 1..@current_token
@@ -105,7 +129,9 @@ module OpeningHoursConverter
           if !wide_range_selector.empty?
             wide_range_selector = wide_range_selector.strip
 
-            if !(@regex_handler.year_month_day_regex =~ wide_range_selector).nil?
+            if !(@regex_handler.variable_date_range_regex =~ wide_range_selector).nil?
+              variable_dates << get_variable_date_range(wide_range_selector)
+            elsif !(@regex_handler.year_month_day_regex =~ wide_range_selector).nil?
               years << get_year_month_day(wide_range_selector)
             elsif !(@regex_handler.year_month_regex =~ wide_range_selector).nil?
               years << get_year_month(wide_range_selector)
@@ -142,7 +168,11 @@ module OpeningHoursConverter
         # puts "years : #{years}"
 
         date_ranges = []
-        if !months.empty?
+        if !variable_dates.empty?
+          variable_dates.each do |variable_date|
+            date_ranges << OpeningHoursConverter::WideInterval.new.variable_day(variable_date[:from], variable_date[:to])
+          end
+        elsif !months.empty?
           months.each do |month|
             if !month[:from_day].nil?
               if !month[:to_day].nil?
@@ -186,7 +216,7 @@ module OpeningHoursConverter
               date_range = if !year[:to].nil?
                              OpeningHoursConverter::WideInterval.new.year(year[:from], year[:to])
                            else
-                             OpeningHoursConverter::WideInterval.new.year(year[:from])
+                             OpeningHoursConverter::WideInterval.new.year(year[:from], nil, open_ended: !!year[:open_ended])
                            end
             end
             date_ranges << date_range
@@ -225,37 +255,29 @@ module OpeningHoursConverter
             result << dr_obj
           end
 
+          # What the block selects replaces what earlier blocks left on those
+          # weekdays, so every weekday it names is cleared before anything is
+          # written. The two passes are separate: clearing while writing would
+          # make "Sa[2],Sa[4]" drop its first index, the second entry wiping
+          # the Saturday the first one had just filled.
+          #
+          # An additional rule adds to what comes before it instead of
+          # replacing it, so it clears nothing.
+          unless additional
+            weekdays.each_key do |weekday_ranges|
+              weekday_ranges.each { |weekday_range| clear_weekdays(dr_obj, weekday_range) }
+            end
+          end
+
           weekdays.each do |weekday_ranges, weekday_object|
             weekday_ranges.each do |weekday_range|
-              if weekday_range[:from] <= weekday_range[:to]
-                for wd_rm in weekday_range[:from]..weekday_range[:to]
-                  if dr_obj.defines_typical_week?
-                    dr_obj.typical.remove_intervals_during_day(wd_rm)
-                  else
-                    dr_obj.typical.clear_intervals
-                  end
-                end
-              else
-                for wd_rm in weekday_range[:from]..6
-                  if dr_obj.defines_typical_week?
-                    dr_obj.typical.remove_intervals_during_day(wd_rm)
-                  else
-                    dr_obj.typical.clear_intervals
-                  end
-                end
-                for wd_rm in 0..weekday_range[:to]
-                  if dr_obj.defines_typical_week?
-                    dr_obj.typical.remove_intervals_during_day(wd_rm)
-                  else
-                    dr_obj.typical.clear_intervals
-                  end
-                end
-              end
-
               weekday_object[:modifiers]&.each do |modifier|
                 if modifier == 'closed' || modifier == 'off'
                   remove_interval(dr_obj, weekday_range)
                   add_off_interval(dr_obj, weekday_range)
+                elsif modifier == 'unknown'
+                  remove_interval(dr_obj, weekday_range)
+                  add_unknown_interval(dr_obj, weekday_range)
                 end
               end
 
@@ -268,6 +290,8 @@ module OpeningHoursConverter
           end
         end
       end
+
+      result.first.fallback_suffix = fallback_suffix if !result.empty? && fallback_suffix
 
       result
     end
@@ -308,6 +332,9 @@ module OpeningHoursConverter
     end
 
     def get_year(wrs)
+      open_ended = wrs.end_with?('+')
+      wrs = wrs.chomp('+') if open_ended
+
       single_year = wrs.gsub(/\:$/, '').split('-')
       year_from = single_year[0].to_i
       raise ArgumentError, "Invalid year : #{single_year[0]}" if year_from < 1
@@ -318,7 +345,7 @@ module OpeningHoursConverter
       else
         year_to = nil
       end
-      { from: year_from, to: year_to }
+      { from: year_from, to: year_to, open_ended: open_ended }
     end
 
     def get_year_week_with_modifier(wrs)
@@ -639,14 +666,19 @@ module OpeningHoursConverter
       else
         time_selector = time_selector.split(',')
         time_selector.each do |ts|
+          open_ended = ts.end_with?('+')
+          ts = ts.chomp('+') if open_ended
+
           single_time = ts.split('-')
           from = as_minutes(single_time[0])
-          to = if single_time.length > 1
+          to = if open_ended
+                 24 * 60
+               elsif single_time.length > 1
                  as_minutes(single_time[1])
                else
                  from
                end
-          times << { from: from, to: to }
+          times << { from: from, to: to, open_ended: open_ended }
         end
       end
       times
@@ -657,37 +689,137 @@ module OpeningHoursConverter
       wd_from = nil
       wd_to = nil
 
-      weekday_selector = weekday_selector.split(',')
+      weekday_selector = split_weekday_selector(weekday_selector)
 
       weekday_selector.each do |wd|
         if !(@regex_handler.holiday_regex =~ wd).nil?
-          weekdays << { from: -2, to: -2, index: nil }
+          weekdays << { from: PH_WEEKDAY, to: PH_WEEKDAY, index: nil }
+        elsif !(@regex_handler.easter_regex =~ wd).nil?
+          weekdays << { from: EASTER_WEEKDAY, to: EASTER_WEEKDAY, index: nil }
         elsif !(@regex_handler.week_day_regex =~ wd).nil?
           single_weekday = wd.split('-')
 
-          wd_from = OSM_DAYS.find_index(single_weekday[0].capitalize)
+          wd_from = weekday_index(single_weekday[0])
           wd_to = if single_weekday.length > 1
-                    OSM_DAYS.find_index(single_weekday[1].capitalize)
+                    weekday_index(single_weekday[1])
                   else
                     wd_from
                   end
 
           weekdays << { from: wd_from, to: wd_to, index: nil }
         elsif !(@regex_handler.week_day_with_modifier_regex =~ wd).nil?
-
-          from, to = wd[0...wd.index('[')].split('-')
+          day = wd[0...wd.index('[')]
           index = wd[wd.index('[') + 1...wd.index(']')]
 
-          wd_from = OSM_DAYS.find_index(from.capitalize)
-          wd_to = OSM_DAYS.find_index(to.capitalize)
+          wd_from = weekday_index(day)
 
-          weekdays << { from: wd_from, to: wd_from, index: index.to_i }
+          weekdays << { from: wd_from, to: wd_from, index: get_weekday_indexes(index) }
         else
           raise ArgumentError, "Invalid weekday interval : #{wd}"
         end
       end
 
       weekdays
+    end
+
+    # A time selector closes a rule sequence, so any selector standing right
+    # after one opens a new rule. That is what the additional rule separator
+    # means ("Jan We 11:00-12:00,Mo off" is two rules, and the second one
+    # carries no month), and it also reads the rules the data writes with no
+    # separator at all ("Feb: Mo[1,3] 09:00-19:00 Mar-Jun Th 09:00-19:00").
+    #
+    # A rule modifier and a comment belong to the rule they follow, and a
+    # second time selector only widens the current one.
+    # Returns [tokens, additional] pairs. Every rule but the first of a ";"
+    # block is an additional rule: it adds to what comes before it rather
+    # than replacing it, which is what "Sa,Su 18:00-24:00; Jan Fr 10:00-20:00,
+    # Sa 00:00-03:00" means, the Saturday of the first rule surviving.
+    def split_into_rules(tokens)
+      rules = []
+      current = []
+
+      tokens.each_with_index do |token, i|
+        current << token
+        following = tokens[i + 1]
+        next if following.nil? || !is_time?(token)
+        next if is_time?(following) || is_comment?(following) || is_rule_modifier?(following)
+
+        rules << [current, !rules.empty?]
+        current = []
+      end
+
+      rules << [current, !rules.empty?] unless current.empty?
+      rules
+    end
+
+    # "Jun Mo[1]-Sep Sa[1]" splits on the only "]-" it can hold, since an
+    # index list never contains a closing bracket.
+    def get_variable_date_range(wrs)
+      from, to = wrs.split(']-')
+      { from: get_variable_date("#{from}]"), to: get_variable_date(to) }
+    end
+
+    def get_variable_date(part)
+      month_name, weekday = part.strip.split(' ')
+      day = weekday[0...weekday.index('[')]
+      index = get_weekday_indexes(weekday[weekday.index('[') + 1...weekday.index(']')])
+
+      {
+        month: OSM_MONTHS.find_index(month_name.capitalize) + 1,
+        weekday: weekday_index(day),
+        index: index.first
+      }
+    end
+
+    # "Sa" and its three letter form "Sat" name the same weekday.
+    def weekday_index(name)
+      name = name.strip.capitalize
+      OSM_DAYS.find_index(name) || OSM_DAYS.find_index(name[0, 2])
+    end
+
+    # A weekday sequence is comma separated, but an index list is comma
+    # separated too ("Sa[1,3],Su[2]"), so only the commas outside the brackets
+    # separate weekdays.
+    def split_weekday_selector(weekday_selector)
+      weekday_selector.split(/,(?![^\[]*\])/)
+    end
+
+    # The OSM nth_entry list of a weekday index: "2", "1,3", "2-4", "-1".
+    # Always returns an array, so a single index and a list are handled alike
+    # downstream.
+    def get_weekday_indexes(raw)
+      raw.split(',').flat_map do |entry|
+        entry = entry.strip
+        if entry.start_with?('-')
+          [entry.to_i]
+        elsif entry.include?('-')
+          from, to = entry.split('-').map(&:to_i)
+          raise ArgumentError, "Invalid weekday index range : #{entry}" if to < from
+
+          (from..to).to_a
+        else
+          [entry.to_i]
+        end
+      end
+    end
+
+    def clear_weekdays(date_range, weekday_range)
+      if weekday_range[:from] <= weekday_range[:to]
+        clear_weekday_range(date_range, weekday_range[:from]..weekday_range[:to])
+      else
+        clear_weekday_range(date_range, weekday_range[:from]..6)
+        clear_weekday_range(date_range, 0..weekday_range[:to])
+      end
+    end
+
+    def clear_weekday_range(date_range, weekdays)
+      weekdays.each do |wd|
+        if date_range.defines_typical_week?
+          date_range.typical.remove_intervals_during_day(wd)
+        else
+          date_range.typical.clear_intervals
+        end
+      end
     end
 
     def remove_interval(date_range, weekdays)
@@ -737,14 +869,14 @@ module OpeningHoursConverter
 
       if weekdays[:from] <= weekdays[:to]
         for wd in weekdays[:from]..weekdays[:to]
-          add_interval_wd(typical, times, wd)
+          add_interval_wd(typical, times, wd, weekdays[:index])
         end
       else
         for wd in weekdays[:from]..6
-          add_interval_wd(typical, times, wd)
+          add_interval_wd(typical, times, wd, weekdays[:index])
         end
         for wd in 0..weekdays[:to]
-          add_interval_wd(typical, times, wd)
+          add_interval_wd(typical, times, wd, weekdays[:index])
         end
       end
     end
@@ -760,27 +892,50 @@ module OpeningHoursConverter
 
       if weekdays[:from] <= weekdays[:to]
         for wd in weekdays[:from]..weekdays[:to]
-          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true))
+          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true, weekdays[:index]))
         end
       else
         for wd in weekdays[:from]..6
-          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true))
+          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true, weekdays[:index]))
         end
         for wd in 0..weekdays[:to]
-          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true))
+          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true, weekdays[:index]))
         end
       end
     end
 
-    def add_interval_wd(typical, times, wd)
+    def add_unknown_interval(date_range, weekdays)
+      if date_range.typical.instance_of?(OpeningHoursConverter::Day)
+        if weekdays[:from] != 0 || weekdays[:to] != 0
+          weekdays = weekdays.dup
+          weekdays[:from] = 0
+          weekdays[:to] = 0
+        end
+      end
+
+      if weekdays[:from] <= weekdays[:to]
+        for wd in weekdays[:from]..weekdays[:to]
+          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true, weekdays[:index], true))
+        end
+      else
+        for wd in weekdays[:from]..6
+          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true, weekdays[:index], true))
+        end
+        for wd in 0..weekdays[:to]
+          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(wd, 0, wd, 24 * 60, true, weekdays[:index], true))
+        end
+      end
+    end
+
+    def add_interval_wd(typical, times, wd, index = nil)
       if times[:to] >= times[:from]
-        typical.add_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd, times[:to]))
+        typical.add_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd, times[:to], false, index, false, times[:open_ended]))
       else
         if wd < 6
-          typical.add_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd + 1, times[:to]))
+          typical.add_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd + 1, times[:to], false, index))
         else
-          typical.add_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd, 24 * 60))
-          typical.add_interval(OpeningHoursConverter::Interval.new(0, 0, 0, times[:to]))
+          typical.add_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd, 24 * 60, false, index))
+          typical.add_interval(OpeningHoursConverter::Interval.new(0, 0, 0, times[:to], false, index))
         end
       end
     end
@@ -875,7 +1030,11 @@ module OpeningHoursConverter
     end
 
     def is_weekday?(token)
-      !(@regex_handler.week_day_or_holiday_regex =~ token).nil?
+      !(@regex_handler.week_day_or_holiday_regex =~ token).nil? || is_weekday_with_modifier?(token) || is_easter?(token)
+    end
+
+    def is_easter?(token)
+      !(@regex_handler.easter_regex =~ token).nil?
     end
 
     def is_weekday_with_modifier?(token)

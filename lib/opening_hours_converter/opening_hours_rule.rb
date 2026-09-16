@@ -3,12 +3,13 @@ require 'opening_hours_converter/constants'
 module OpeningHoursConverter
   class OpeningHoursRule
     include Constants
-    attr_accessor :date, :time, :comment, :is_defined_off
+    attr_accessor :date, :time, :comment, :is_defined_off, :is_defined_unknown
 
     def initialize
       @date = []
       @time = []
       @is_defined_off = false
+      @is_defined_unknown = false
       @comment = ''
     end
 
@@ -21,7 +22,9 @@ module OpeningHoursConverter
         wd = @date[0].get_weekdays
         result += " #{wd}" if !wd.empty?
       end
-      if @is_defined_off
+      if @is_defined_unknown
+        result += ' unknown'
+      elsif @is_defined_off
         result += ' off'
       elsif !@time.empty?
         result += ' '
@@ -46,13 +49,14 @@ module OpeningHoursConverter
 
     def get_wide_selector
       if @date.length == 1 && @date[0].wide_interval.type == 'holiday'
+        holiday = @date[0].wide_interval.start[:holiday]
         if @date[0].wide_interval.start[:year].nil?
-          return 'PH'
+          return holiday
         else
           if @date[0].wide_interval.end && @date[0].wide_interval.end[:year]
-            return "#{@date[0].wide_interval.start[:year]}-#{@date[0].wide_interval.end[:year]} PH"
+            return "#{@date[0].wide_interval.start[:year]}-#{@date[0].wide_interval.end[:year]} #{holiday}"
           else
-            return "#{@date[0].wide_interval.start[:year]} PH"
+            return "#{@date[0].wide_interval.start[:year]} #{holiday}"
           end
         end
       end
@@ -145,7 +149,16 @@ module OpeningHoursConverter
         end
       end
 
-      result_to_string(result)
+      selector = result_to_string(result)
+      selector += '+' if open_ended_year?
+      selector
+    end
+
+    # "2020+" (from that year on, forever) has no upper bound to encode in
+    # the year/month/day array result_to_string reads, so it's appended here.
+    def open_ended_year?
+      @date.length == 1 && @date[0].wide_interval.type == 'year' &&
+        @date[0].wide_interval.open_ended && @date[0].wide_interval.end.nil?
     end
 
     def result_to_string(result)
@@ -272,8 +285,12 @@ module OpeningHoursConverter
       r[:end][:month] == 11 && ends_month?(r)
     end
 
+    def has_weekday_index?
+      @date.any? { |d| !d.weekday_index.nil? }
+    end
+
     def same_time?(o)
-      if o.nil? || o.time.length != @time.length || @is_defined_off != o.is_defined_off
+      if o.nil? || o.time.length != @time.length || @is_defined_off != o.is_defined_off || @is_defined_unknown != o.is_defined_unknown || has_weekday_index? || o.has_weekday_index?
         false
       else
         @time.each_with_index do |t, i|
@@ -338,6 +355,10 @@ module OpeningHoursConverter
 
     def add_ph_weekday
       @date.each(&:add_ph_weekday)
+    end
+
+    def add_easter_weekday
+      @date.each(&:add_easter_weekday)
     end
 
     def add_overwritten_weekday(weekday)

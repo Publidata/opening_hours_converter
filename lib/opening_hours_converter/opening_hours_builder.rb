@@ -19,7 +19,7 @@ module OpeningHoursConverter
         phs = []
 
         date_range.typical.intervals.each_with_index do |interval, interval_id|
-          next unless interval&.day_start == -2 && interval&.day_start == interval&.day_end
+          next unless interval&.day_start == PH_WEEKDAY && interval&.day_start == interval&.day_end
 
           if interval.is_off
             off_day_ph = true
@@ -28,6 +28,23 @@ module OpeningHoursConverter
           end
 
           phs << interval
+          date_range.typical.remove_interval(interval_id)
+        end
+
+        day_easter = false
+        off_day_easter = false
+        easters = []
+
+        date_range.typical.intervals.each_with_index do |interval, interval_id|
+          next unless interval&.day_start == EASTER_WEEKDAY && interval&.day_start == interval&.day_end
+
+          if interval.is_off
+            off_day_easter = true
+          else
+            day_easter = true
+          end
+
+          easters << interval
           date_range.typical.remove_interval(interval_id)
         end
 
@@ -120,6 +137,36 @@ module OpeningHoursConverter
             end
           end
 
+          if off_day_easter || day_easter
+            if date_range.typical.intervals.uniq == [nil]
+              oh_rule.date.first.weekdays = [EASTER_WEEKDAY]
+              if off_day_easter
+                oh_rule.is_defined_off = off_day_easter
+                easters = []
+              else
+                easters.reverse.each do |interval|
+                  oh_rule.add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, interval.end))
+                end
+              end
+            else
+              if times_are_compatible?(oh_rule, easters)
+                easter_intervals = get_compatible_intervals(oh_rule, easters)
+                oh_rule.add_easter_weekday if easter_intervals[:compatible].length > 0
+                rules << oh_rule if !oh_rule_added
+                oh_rule_added = true
+                easter_intervals[:incompatible].each do |interval|
+                  rules += build_off_easter(date_range) if off_day_easter
+                  rules += build_easter(date_range) if day_easter
+                end
+              else
+                rules << oh_rule if !oh_rule_added
+                oh_rule_added = true
+                rules += build_off_easter(date_range) if off_day_easter
+                rules += build_easter(date_range) if day_easter
+              end
+            end
+          end
+
           rules << oh_rule if !oh_rule_added
 
           next unless oh_rule == oh_rules.last && oh_rule.has_overwritten_weekday?
@@ -142,7 +189,9 @@ module OpeningHoursConverter
         result += rules.map(&:get).join('; ')
       end
 
-      result.strip
+      result = result.strip
+      result += " || #{date_ranges.first.fallback_suffix}" if date_ranges.first&.fallback_suffix
+      result
     end
 
     def times_are_compatible?(oh_rule, phs)
@@ -220,6 +269,53 @@ module OpeningHoursConverter
       [rule]
     end
 
+    def build_off_easter(date_range)
+      start_year = date_range.wide_interval.start&.key?(:year) ? date_range.wide_interval.start[:year] : date_range.wide_interval.start
+      end_year = date_range.wide_interval.end&.key?(:year) ? date_range.wide_interval.end[:year] : date_range.wide_interval.end
+
+      date_range = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.holiday('easter', start_year, end_year))
+
+      rule = OpeningHoursConverter::OpeningHoursRule.new
+      date = OpeningHoursConverter::OpeningHoursDate.new(date_range.wide_interval, [-1])
+      rule.add_date(date)
+      rule.is_defined_off = true
+
+      [rule]
+    end
+
+    def build_easter(date_range)
+      start_year = date_range.wide_interval.start&.key?(:year) ? date_range.wide_interval.start[:year] : date_range.wide_interval.start
+      end_year = date_range.wide_interval.end&.key?(:year) ? date_range.wide_interval.end[:year] : date_range.wide_interval.end
+      intervals = date_range.typical.get_intervals(true)
+
+      if date_range.wide_interval.type == 'week'
+        intervals.each do |interval|
+          date_range.typical.add_interval(OpeningHoursConverter::Interval.new(EASTER_WEEKDAY, interval.start, EASTER_WEEKDAY, interval.end, interval.is_off))
+        end
+      else
+        date_range = OpeningHoursConverter::DateRange.new(OpeningHoursConverter::WideInterval.new.holiday('easter', start_year, end_year))
+      end
+
+      for i in 0..6
+        intervals.each do |interval|
+          if !interval.nil?
+            date_range.typical.add_interval(OpeningHoursConverter::Interval.new(i, interval.start, i, interval.end, interval.is_off))
+          end
+        end
+      end
+      rule = OpeningHoursConverter::OpeningHoursRule.new
+      date = OpeningHoursConverter::OpeningHoursDate.new(date_range.wide_interval, [-1])
+      rule.add_date(date)
+
+      date_range.typical.intervals.each do |interval|
+        if !interval.nil?
+          rule.add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, interval.end))
+          rule.is_defined_off = rule.is_defined_off || interval.is_off
+        end
+      end
+      [rule]
+    end
+
     def build_day(date_range)
       intervals = date_range.typical.get_intervals(true)
 
@@ -240,7 +336,7 @@ module OpeningHoursConverter
     def build_week(date_range)
       result = []
 
-      intervals = date_range.typical.get_intervals(true)
+      intervals = clean_intervals_keeping_index(date_range.typical)
       days = create_time_intervals(date_range.wide_interval, intervals)
 
       days_status = Array.new(OSM_DAYS.length, 0)
@@ -385,6 +481,26 @@ module OpeningHoursConverter
       result
     end
 
+    # An index ("We[1]"), the "unknown" state, and an open-ended time
+    # ("18:00+") don't survive Week#get_intervals(true), which rebuilds
+    # intervals from a per-minute true/false/"off" grid that has no room for
+    # any of them. All three are pulled out first and passed through
+    # untouched instead; none of them can collide with anything the grid
+    # pass produces (an index never applies to more than a single day, and
+    # "unknown"/open-ended are only ever full-interval markers here).
+    def clean_intervals_keeping_index(typical)
+      special = typical.intervals.compact.select { |interval| carries_metadata?(interval) }
+      return typical.get_intervals(true) if special.empty?
+
+      plain = OpeningHoursConverter::Week.new
+      typical.intervals.compact.each { |interval| plain.add_interval(interval) unless carries_metadata?(interval) }
+      plain.get_intervals(true) + special
+    end
+
+    def carries_metadata?(interval)
+      !interval.index.nil? || interval.is_unknown || interval.open_ended
+    end
+
     def create_time_intervals(wide_interval, intervals)
       days = []
 
@@ -398,16 +514,26 @@ module OpeningHoursConverter
 
         begin
           if interval.day_start == interval.day_end
-            days[interval.day_start].add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, interval.end))
+            days[interval.day_start].add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, interval.end, interval.open_ended))
             days[interval.day_start].is_defined_off = days[interval.day_start].is_defined_off ? true : interval.is_off
+            days[interval.day_start].is_defined_unknown = days[interval.day_start].is_defined_unknown ? true : interval.is_unknown
+            if interval.index
+              # One weekday can carry several intervals, one per entry of its
+              # index list ("Sa[2],Sa[4]"), and the list is their union.
+              date = days[interval.day_start].date.first
+              date.weekday_index = Array(date.weekday_index) | interval.index
+            end
           elsif interval.day_end - interval.day_start == 1
             days[interval.day_start].add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, MINUTES_MAX))
             days[interval.day_start].is_defined_off = days[interval.day_start].is_defined_off ? true : interval.is_off
+            days[interval.day_start].is_defined_unknown = days[interval.day_start].is_defined_unknown ? true : interval.is_unknown
             days[interval.day_end].add_time(OpeningHoursConverter::OpeningHoursTime.new(0, interval.end))
             days[interval.day_end].is_defined_off = days[interval.day_end].is_defined_off ? true : interval.is_off
+            days[interval.day_end].is_defined_unknown = days[interval.day_end].is_defined_unknown ? true : interval.is_unknown
           else
             for j in interval.day_start..interval.day_end
               days[j].is_defined_off = days[j].is_defined_off ? true : interval.is_off
+              days[j].is_defined_unknown = days[j].is_defined_unknown ? true : interval.is_unknown
               if j == interval.day_start
                 days[j].add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, MINUTES_MAX))
               elsif j == interval.day_end

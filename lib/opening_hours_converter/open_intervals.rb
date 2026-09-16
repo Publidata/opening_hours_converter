@@ -51,9 +51,22 @@ module OpeningHoursConverter
         case date_range.wide_interval.type
         when 'week' then expand_to_days(date_range, :get_weeks_for_year)
         when 'holiday' then expand_to_days(date_range, :get_public_holidays_for_year)
-        else [[date_range, nil]]
+        when 'variable_day' then expand_to_days(date_range, :get_variable_days_for_year)
+        else [[clamp_open_ended_year(date_range), nil]]
         end
       end
+    end
+
+    # "2020+" applies from its start year through the end of the window:
+    # Year#build_day_array_from_date_range has no concept of an unbounded
+    # range, so it needs a concrete (if window-dependent) end year here.
+    def clamp_open_ended_year(date_range)
+      wide_interval = date_range.wide_interval
+      return date_range unless wide_interval.type == 'year' && wide_interval.open_ended && wide_interval.end.nil?
+
+      copy = date_range.dup
+      copy.update_range(OpeningHoursConverter::WideInterval.new.year(wide_interval.start[:year], @last_date.year))
+      copy
     end
 
     # An ISO week declared with a year can start in the previous year or end in
@@ -120,8 +133,22 @@ module OpeningHoursConverter
 
     def selects?(interval, date)
       return public_holiday?(date) if interval.day_start == PH_WEEKDAY
+      return easter?(date) if interval.day_start == EASTER_WEEKDAY
+      return false unless interval.day_start == reindex_sunday_week_to_monday_week(date.wday)
+      return true if interval.index.nil?
 
-      interval.day_start == reindex_sunday_week_to_monday_week(date.wday)
+      interval.index.any? { |index| nth_weekday_of_month?(index, interval.day_start, date) }
+    end
+
+    def easter?(date)
+      OpeningHoursConverter::PublicHoliday.easter(date.year).to_date == date
+    end
+
+    def nth_weekday_of_month?(index, weekday, date)
+      target = OpeningHoursConverter::WeekIndex.nth_wday_of_month(index, weekday, date.month, date.year)
+      target == date
+    rescue ArgumentError
+      false
     end
 
     def public_holiday?(date)

@@ -3,7 +3,7 @@
 module OpeningHoursConverter
   class RegexHandler
     def rule_modifier_regex
-      /^(open|closed|off)$/i
+      /^(open|closed|off|unknown)$/i
     end
 
     def week_key_regex
@@ -59,6 +59,10 @@ module OpeningHoursConverter
       compile(line(ph))
     end
 
+    def easter_regex
+      compile(line(easter))
+    end
+
     def time_regex
       compile(
         line(
@@ -68,7 +72,7 @@ module OpeningHoursConverter
                 group(time)
               ) + '|' + group(full_time)
             )
-          )
+          ) + '\\+?' # a trailing "+" marks an open-ended time ("18:00+")
         )
       )
     end
@@ -98,7 +102,17 @@ module OpeningHoursConverter
     def week_day_with_modifier_regex
       compile(
         line(
-          week_day + week_day_modifier
+          potential_list(week_day_sequence_item)
+        )
+      )
+    end
+
+    # A monthday range whose bounds are variable dates: "Jun Mo[1]-Sep Sa[1]"
+    # runs from the first Monday of June to the first Saturday of September.
+    def variable_date_range_regex
+      compile(
+        line(
+          variable_date + '-' + variable_date
         )
       )
     end
@@ -106,7 +120,8 @@ module OpeningHoursConverter
     def year_regex
       compile(
         line(
-          potential_range(year)
+          # a trailing "+" marks an open-ended year ("2020+" = 2020 onward)
+          group(potential_range(year), '\\+?')
         )
       )
     end
@@ -241,8 +256,25 @@ module OpeningHoursConverter
       group(pattern, group(group(comma, optional_pattern), '?'), '*')
     end
 
+    # A date named by an index rather than by a day number: "Jun Mo[1]".
+    def variable_date
+      group(month + space + week_day + week_day_modifier)
+    end
+
+    # A weekday of a sequence, with or without its index: "Mo", "Mo-Fr", "Sa[2]".
+    def week_day_sequence_item
+      group(potential_range(week_day) + group(group(week_day_modifier), '?'))
+    end
+
+    # The OSM nth_entry list: "[2]", "[1,3]", "[2-4]", "[-1]", "[1,3,5]".
     def week_day_modifier
-      '\\[' + group('[1-5]|\\-1') + '\\]'
+      '\\[' + potential_list(nth_entry) + '\\]'
+    end
+
+    # A single nth_entry: an index, a range of indexes, or an index counted
+    # back from the end of the month.
+    def nth_entry
+      group('\\-?[1-5]' + group(group('\\-[1-5]'), '?'))
     end
 
     def comma
@@ -283,8 +315,13 @@ module OpeningHoursConverter
       'PH'
     end
 
+    def easter
+      'easter'
+    end
+
+    # The three letter forms are not specification, but the data holds them.
     def week_day
-      group('Mo|Tu|We|Th|Fr|Sa|Su')
+      group('Mon?|Tue?|Wed?|Thu?|Fri?|Sat?|Sun?')
     end
 
     def month_day

@@ -3,10 +3,10 @@ require 'opening_hours_converter/constants'
 module OpeningHoursConverter
   class OpeningHoursDate
     include Constants
-    attr_accessor :weekdays, :weekdays_over
+    attr_accessor :weekdays, :weekdays_over, :weekday_index
     attr_reader :wide_interval
 
-    def initialize(wide_interval, weekdays)
+    def initialize(wide_interval, weekdays, weekday_index = nil)
       if wide_interval.nil? || weekdays.nil? || !wide_interval.is_a?(OpeningHoursConverter::WideInterval)
         raise ArgumentError
       end
@@ -14,14 +14,15 @@ module OpeningHoursConverter
       @wide_interval = wide_interval
       @weekdays = weekdays.sort
       @weekdays_over = []
+      @weekday_index = weekday_index
     end
 
     def get_weekdays
       result = ''
       weekdays = @weekdays.concat(@weekdays_over).sort.uniq
 
-      if !weekdays.empty? && weekdays[0] == -2
-        result = 'PH'
+      if !weekdays.empty? && (weekdays[0] == PH_WEEKDAY || weekdays[0] == EASTER_WEEKDAY)
+        result = weekdays[0] == PH_WEEKDAY ? 'PH' : 'easter'
         weekdays.shift
       end
 
@@ -94,6 +95,7 @@ module OpeningHoursConverter
       end
 
       result = '' if result == 'Mo-Su'
+      result += "[#{Array(@weekday_index).join(',')}]" if weekdays.length == 1 && !@weekday_index.nil?
       result
     end
 
@@ -105,7 +107,11 @@ module OpeningHoursConverter
     end
 
     def add_ph_weekday
-      add_weekday(-2)
+      add_weekday(PH_WEEKDAY)
+    end
+
+    def add_easter_weekday
+      add_weekday(EASTER_WEEKDAY)
     end
 
     def add_overwritten_weekday(weekday)

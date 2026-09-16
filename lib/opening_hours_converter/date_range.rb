@@ -1,11 +1,12 @@
 module OpeningHoursConverter
   class DateRange
-    attr_accessor :wide_interval, :typical, :comment
+    attr_accessor :wide_interval, :typical, :comment, :fallback_suffix
 
     def initialize(wide_interval = nil)
       @wide_interval = nil
       @typical = nil
       @comment = ''
+      @fallback_suffix = nil
       update_range(wide_interval)
     end
 
