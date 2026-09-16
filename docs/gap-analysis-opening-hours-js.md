@@ -23,19 +23,16 @@ Four patterns are in the corpus precisely because `opening_hours.js` rejects
 them (`Xx 10:00-12:00`, `Jan 01 +1 day 10:00-12:00`, …). The gem rejects all
 four as well, so it does not silently invent an answer for nonsense.
 
-| | on `master` (1.16.0) | on `feat/osm-nth-weekday-and-extended-grammar` |
+| | at 1.16.0 | since the nth-weekday selectors landed (#59) |
 |---|---|---|
 | matches the reference | 55 / 107 | 75 / 107 |
 | raises where it should not | 45 | 22 |
 | silently returns wrong intervals | 7 | 10 |
 
-The branch in flight raises the silent count because it teaches the parser to
-read `||` and `unknown`, which the evaluator then ignores: a string that used
-to fail loudly now answers, incompletely. Findings 3 and 9 below.
-
-The branch in flight closes 20 of the gaps on its own. The counts below, and
-the `status` of each fixture entry, are stated against `master`, the base of
-this branch; entries that branch already fixes carry a `fixed_by` field.
+The second column is what the counts below describe. #59 closed 20 gaps, and
+raised the silent count while doing it: it taught the parser to read `||` and
+`unknown`, which the evaluator then ignores, so three strings that used to fail
+loudly now answer incompletely. Findings 3 and 9.
 
 Two families are fully covered and stay that way: plain weekday and month
 selectors, week selectors including `week 1-53/2`, wrapping weekday ranges
@@ -86,14 +83,14 @@ configurable (and what its default is).
 
 ### 3. Fallback rules are parsed and then ignored
 
-**Severity: high. Silent on the branch in flight.**
+**Severity: high. Silent.**
 
 ```
 Mo-Fr 08:00-12:00 || Sa 10:00-12:00
 Jan-Mar Mo-Fr 08:00-12:00 || 10:00-11:00
 ```
 
-On `master` the `||` separator raises. On the branch in flight it parses, and
+Since #59 the `||` separator parses, and
 `OpeningHoursBuilder` even round-trips the string unchanged — but the fallback
 is never applied: all 52 Saturday intervals of the first pattern, and all 301
 intervals of the second, are missing. A rule that parses and rebuilds
@@ -140,8 +137,7 @@ easter +1 day 10:00-12:00   easter -2 days off
 SH 10:00-12:00   SH Mo-Fr 08:00-12:00
 ```
 
-`easter` alone works on the branch in flight; offsets from it, and from `PH`,
-do not. `SH` is not recognised at all. `SH` also has no answer without a
+`easter` alone works; offsets from it, and from `PH`, do not. `SH` is not recognised at all. `SH` also has no answer without a
 regional calendar, so it shares the decision of finding 2.
 
 ### 7. Weekday-occurrence offsets
@@ -152,9 +148,9 @@ regional calendar, so it shares the decision of finding 2.
 Su[-1] +1 day 10:00-12:00   Sa[1] -1 day 10:00-12:00   Su[1] +2 days 10:00-12:00
 ```
 
-`Su[-1]` itself lands with the branch in flight. The `+1 day` suffix after it
-does not, and it is the natural next step from that work: the day offset is
-the same grammar as in finding 6.
+`Su[-1]` itself landed with #59. The `+1 day` suffix after it did not, and it
+is the natural next step from that work: the day offset is the same grammar as
+in finding 6.
 
 ### 8. Three isolated selectors
 
@@ -163,7 +159,7 @@ the same grammar as in finding 6.
 | Pattern | What happens |
 |---|---|
 | `Mo 10:00-26:00` | `ParseError: Unsupported selector`. Hours past 24 are how the spec writes a night that runs long; `20:00-03:00` works, so only the notation is missing. |
-| `Mo 10:00-12:00+` | `ParseError`. Open end after a range. Plain `10:00+` works on the branch in flight. |
+| `Mo 10:00-12:00+` | `ParseError`. Open end after a range. Plain `10:00+` works. |
 | `2020-2030/2 Mo-Fr 08:00-12:00` | `ParseError`. A step in a year range. `week 1-53/2` already works, so the step logic exists and only the year selector is missing. |
 
 ### 9. `unknown` contributes nothing
@@ -200,8 +196,8 @@ prints": the reference is a reference, not an oracle.
 
 1. **Finding 1**, the timed `off` rule. Small, self-contained, and the only
    one that hands a caller a wrong answer for an everyday string.
-2. **Finding 3**, applying fallback rules, once the branch in flight has
-   landed — the parsing is already there.
+2. **Finding 3**, applying fallback rules. The parsing is already there, and
+   until the evaluator uses it the string parses and answers wrongly.
 3. **Finding 8**, the three isolated selectors. Each is a small addition to
    grammar that already exists.
 4. **Findings 2 and 4 together**, once the API question they share — where a

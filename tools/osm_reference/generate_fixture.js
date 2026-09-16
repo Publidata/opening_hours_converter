@@ -4,13 +4,21 @@ const path = require('path');
 
 const js = require('./results_js.json');
 const master = require('./results_ruby.json');
-const feat = require('./results_ruby_feat.json');
 const jsProbe = require('./results_js_probe.json');
 const masterProbe = require('./results_ruby_probe.json');
 const windows = require('./windows.json');
 
+// Optional: a run of a branch in flight, which annotates the entries that
+// branch already fixes. Absent once there is nothing in flight to compare to.
+let feat = null;
+try {
+  feat = require('./results_ruby_feat.json');
+} catch (e) {
+  if (e.code !== 'MODULE_NOT_FOUND') throw e;
+}
+
 const M = new Map(master.map((r) => [r.pattern, r]));
-const F = new Map(feat.map((r) => [r.pattern, r]));
+const F = feat ? new Map(feat.map((r) => [r.pattern, r])) : null;
 const JP = new Map(jsProbe.map((r) => [r.pattern, r]));
 const MP = new Map(masterProbe.map((r) => [r.pattern, r]));
 const W = new Map(windows.map((w) => [w.pattern, w]));
@@ -73,9 +81,8 @@ const counts = { supported: 0, pending: 0, invalid: 0, divergence: 0 };
 
 js.forEach((j) => {
   const rm = M.get(j.pattern);
-  const rf = F.get(j.pattern);
   const vm = verdict(j, rm);
-  const vf = verdict(j, rf);
+  const vf = F ? verdict(j, F.get(j.pattern)) : vm;
   const window = W.get(j.pattern);
 
   let status;
