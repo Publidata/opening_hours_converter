@@ -23,16 +23,22 @@ Four patterns are in the corpus precisely because `opening_hours.js` rejects
 them (`Xx 10:00-12:00`, `Jan 01 +1 day 10:00-12:00`, …). The gem rejects all
 four as well, so it does not silently invent an answer for nonsense.
 
-| | at 1.16.0 | since the nth-weekday selectors landed (#59) |
-|---|---|---|
-| matches the reference | 55 / 107 | 75 / 107 |
-| raises where it should not | 45 | 22 |
-| silently returns wrong intervals | 7 | 10 |
+| | at 1.16.0 | since the nth-weekday selectors landed (#59) | since a timed `off` rule subtracts |
+|---|---|---|---|
+| matches the reference | 55 / 107 | 75 / 107 | 76 / 107 |
+| raises where it should not | 45 | 22 | 22 |
+| silently returns wrong intervals | 7 | 10 | 9 |
 
-The second column is what the counts below describe. #59 closed 20 gaps, and
+The last column is what the counts below describe. #59 closed 20 gaps, and
 raised the silent count while doing it: it taught the parser to read `||` and
 `unknown`, which the evaluator then ignores, so three strings that used to fail
 loudly now answer incompletely. Findings 3 and 9.
+
+What the last column adds is finding 1, and it is the one that mattered most:
+it was the only everyday string the gem answered wrongly without raising.
+Closed findings keep their number and their section rather than leaving the
+ones after them to shift, so what a commit or a pull request calls finding 3
+stays finding 3.
 
 Two families are fully covered and stay that way: plain weekday and month
 selectors, week selectors including `week 1-53/2`, wrapping weekday ranges
@@ -44,23 +50,25 @@ ordering with `;`.
 Severity here is about what a caller sees. A raised `ParseError` is loud and
 can be handled; wrong intervals returned with no error cannot.
 
-### 1. A timed `off` rule inverts the day
+### 1. A timed `off` rule inverts the day — closed
 
-**Severity: critical. Silent.**
+**Severity: was critical. Was silent.**
 
 ```
 Mo-Fr 08:00-18:00; Mo-Fr 12:00-13:00 off
 ```
 
 The reference reads a lunch break: open 08:00-12:00 and 13:00-18:00, 522
-intervals over 2026. The gem returns the lunch break itself as the opening
-hours — 261 intervals of 12:00-13:00, and nothing else. `OpeningHoursBuilder`
-rebuilds the string as `Mo-Fr 12:00-13:00; Sa,Su off`, which shows where it
-goes: the `off` modifier is dropped, and the rule that was meant to subtract a
-window becomes the only window.
+intervals over 2026. The gem returned the lunch break itself as the opening
+hours — 261 intervals of 12:00-13:00, and nothing else.
 
-This is the one finding that produces a plausible-looking wrong answer for a
-very common shape. Present on both branches.
+The parser read the `off` as if it stood alone. A rule modifier takes the
+weekdays of the selector before it, and here that selector was a time, so the
+modifier fell back to closing the whole week and the times it was meant to
+close were added as the only opening. A modifier that follows a time selector
+now belongs to those hours: they are cut out of what earlier rules left open,
+and the day around them survives. `OpeningHoursBuilder` rebuilds the string as
+`Mo-Fr 08:00-12:00,13:00-18:00`, which says the same thing without the `off`.
 
 ### 2. Public holidays are a fixed national list
 
@@ -194,15 +202,13 @@ prints": the reference is a reference, not an oracle.
 
 ## Suggested order
 
-1. **Finding 1**, the timed `off` rule. Small, self-contained, and the only
-   one that hands a caller a wrong answer for an everyday string.
-2. **Finding 3**, applying fallback rules. The parsing is already there, and
+1. **Finding 3**, applying fallback rules. The parsing is already there, and
    until the evaluator uses it the string parses and answers wrongly.
-3. **Finding 8**, the three isolated selectors. Each is a small addition to
+2. **Finding 8**, the three isolated selectors. Each is a small addition to
    grammar that already exists.
-4. **Findings 2 and 4 together**, once the API question they share — where a
+3. **Findings 2 and 4 together**, once the API question they share — where a
    region and a pair of coordinates are given to the gem — has an answer.
-5. **Findings 5, 6, 7, 9**, in whatever order the callers' data argues for.
+4. **Findings 5, 6, 7, 9**, in whatever order the callers' data argues for.
 
 ## What this analysis does not cover
 

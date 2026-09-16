@@ -166,6 +166,17 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   it 'Tu-We 10:00-20:00;Tu off' do
     expect(parsed_rebuilt).to eql('Tu off; We 10:00-20:00')
   end
+  # An "off" rule naming hours closes those hours only, so what is left of the
+  # day is a break rather than a closed day.
+  it 'Mo-Fr 08:00-18:00; Mo-Fr 12:00-13:00 off' do
+    expect(parsed_rebuilt).to eql('Mo-Fr 08:00-12:00,13:00-18:00')
+  end
+  it 'Mo-Fr 08:00-18:00; We 12:00-13:00 off' do
+    expect(parsed_rebuilt).to eql('Mo,Tu,Th,Fr 08:00-18:00; We 08:00-12:00,13:00-18:00')
+  end
+  it 'Mo-Fr 08:00-18:00; Mo-Fr 17:00-18:00 closed' do
+    expect(parsed_rebuilt).to eql('Mo-Fr 08:00-17:00')
+  end
   it '24/7; Jun 08:00-18:00; Jun We off' do
     expect(parsed_rebuilt).to eql(test_string)
   end
