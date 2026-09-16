@@ -237,33 +237,17 @@ module OpeningHoursConverter
             result << dr_obj
           end
 
+          # What the block selects replaces what earlier blocks left on those
+          # weekdays, so every weekday it names is cleared before anything is
+          # written. The two passes are separate: clearing while writing would
+          # make "Sa[2],Sa[4]" drop its first index, the second entry wiping
+          # the Saturday the first one had just filled.
+          weekdays.each_key do |weekday_ranges|
+            weekday_ranges.each { |weekday_range| clear_weekdays(dr_obj, weekday_range) }
+          end
+
           weekdays.each do |weekday_ranges, weekday_object|
             weekday_ranges.each do |weekday_range|
-              if weekday_range[:from] <= weekday_range[:to]
-                for wd_rm in weekday_range[:from]..weekday_range[:to]
-                  if dr_obj.defines_typical_week?
-                    dr_obj.typical.remove_intervals_during_day(wd_rm)
-                  else
-                    dr_obj.typical.clear_intervals
-                  end
-                end
-              else
-                for wd_rm in weekday_range[:from]..6
-                  if dr_obj.defines_typical_week?
-                    dr_obj.typical.remove_intervals_during_day(wd_rm)
-                  else
-                    dr_obj.typical.clear_intervals
-                  end
-                end
-                for wd_rm in 0..weekday_range[:to]
-                  if dr_obj.defines_typical_week?
-                    dr_obj.typical.remove_intervals_during_day(wd_rm)
-                  else
-                    dr_obj.typical.clear_intervals
-                  end
-                end
-              end
-
               weekday_object[:modifiers]&.each do |modifier|
                 if modifier == 'closed' || modifier == 'off'
                   remove_interval(dr_obj, weekday_range)
@@ -692,9 +676,9 @@ module OpeningHoursConverter
         elsif !(@regex_handler.week_day_regex =~ wd).nil?
           single_weekday = wd.split('-')
 
-          wd_from = OSM_DAYS.find_index(single_weekday[0].capitalize)
+          wd_from = weekday_index(single_weekday[0])
           wd_to = if single_weekday.length > 1
-                    OSM_DAYS.find_index(single_weekday[1].capitalize)
+                    weekday_index(single_weekday[1])
                   else
                     wd_from
                   end
@@ -704,7 +688,7 @@ module OpeningHoursConverter
           day = wd[0...wd.index('[')]
           index = wd[wd.index('[') + 1...wd.index(']')]
 
-          wd_from = OSM_DAYS.find_index(day.capitalize)
+          wd_from = weekday_index(day)
 
           weekdays << { from: wd_from, to: wd_from, index: get_weekday_indexes(index) }
         else
@@ -713,6 +697,12 @@ module OpeningHoursConverter
       end
 
       weekdays
+    end
+
+    # "Sa" and its three letter form "Sat" name the same weekday.
+    def weekday_index(name)
+      name = name.strip.capitalize
+      OSM_DAYS.find_index(name) || OSM_DAYS.find_index(name[0, 2])
     end
 
     # A weekday sequence is comma separated, but an index list is comma
@@ -737,6 +727,25 @@ module OpeningHoursConverter
           (from..to).to_a
         else
           [entry.to_i]
+        end
+      end
+    end
+
+    def clear_weekdays(date_range, weekday_range)
+      if weekday_range[:from] <= weekday_range[:to]
+        clear_weekday_range(date_range, weekday_range[:from]..weekday_range[:to])
+      else
+        clear_weekday_range(date_range, weekday_range[:from]..6)
+        clear_weekday_range(date_range, 0..weekday_range[:to])
+      end
+    end
+
+    def clear_weekday_range(date_range, weekdays)
+      weekdays.each do |wd|
+        if date_range.defines_typical_week?
+          date_range.typical.remove_intervals_during_day(wd)
+        else
+          date_range.typical.clear_intervals
         end
       end
     end

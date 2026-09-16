@@ -11,6 +11,8 @@ module OpeningHoursConverter
       DIMANCHE: 6
     }.freeze
     OSM_DAYS = %w[Mo Tu We Th Fr Sa Su].freeze
+    # Not specification, but common enough in the data to be read.
+    OSM_DAYS_ABBREVIATIONS = %w[Mon Tue Wed Thu Fri Sat Sun].freeze
     IRL_DAYS = %w[Lundi Mardi Mercredi Jeudi Vendredi Samedi Dimanche].freeze
     OSM_MONTHS = %w[Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec].freeze
     IRL_MONTHS = %W[Janvier Fevrier Mars Avril Mai Juin Juillet Aout Septembre

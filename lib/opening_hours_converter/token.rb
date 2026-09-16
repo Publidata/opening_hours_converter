@@ -23,7 +23,9 @@ module OpeningHoursConverter
     end
 
     def weekday?
-      string? && OSM_DAYS.any? { |day| day.downcase == @value.downcase }
+      return false unless string?
+
+      (OSM_DAYS + OSM_DAYS_ABBREVIATIONS).any? { |day| day.downcase == @value.downcase }
     end
 
     def month?

@@ -214,6 +214,10 @@ module OpeningHoursConverter
           if previous_token.hyphen? || previous_token.comma?
             value, made_from, type = add_current_token_to(value, type, made_from, :multi_month)
             next
+          elsif previous_token.month?
+            # "Jan Mar May" is the same list as "Jan,Mar,May"
+            value, made_from, type = add_current_token_to(value, type, made_from, :multi_month, ',')
+            next
           else
             value, made_from, type = add_current_token_to(value, type, made_from, :month, ' ')
             next
@@ -280,7 +284,9 @@ module OpeningHoursConverter
         end
 
         if current_token.weekday?
-          value, made_from, type = add_current_token_to(value, type, made_from, :multi_weekday)
+          # "We[2,4] Sa[3]" is the same sequence as "We[2,4],Sa[3]"
+          leading = previous_token.comma? || previous_token.hyphen? ? '' : ','
+          value, made_from, type = add_current_token_to(value, type, made_from, :multi_weekday, leading)
           next
         end
 

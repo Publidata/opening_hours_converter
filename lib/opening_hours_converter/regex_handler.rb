@@ -304,8 +304,9 @@ module OpeningHoursConverter
       'easter'
     end
 
+    # The three letter forms are not specification, but the data holds them.
     def week_day
-      group('Mo|Tu|We|Th|Fr|Sa|Su')
+      group('Mon?|Tue?|Wed?|Thu?|Fri?|Sat?|Sun?')
     end
 
     def month_day
