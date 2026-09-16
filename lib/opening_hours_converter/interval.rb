@@ -16,7 +16,9 @@ module OpeningHoursConverter
       @start = min_start
       @end = min_end
       @is_off = is_off
-      @index = index
+      # The weekday index is an OSM nth_entry list ("Sa[1,3]"), so it is always
+      # held as an array; a lone index is wrapped rather than special-cased.
+      @index = index.nil? ? nil : Array(index)
       @is_unknown = is_unknown
       @open_ended = open_ended
 

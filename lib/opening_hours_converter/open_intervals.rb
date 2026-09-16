@@ -136,15 +136,15 @@ module OpeningHoursConverter
       return false unless interval.day_start == reindex_sunday_week_to_monday_week(date.wday)
       return true if interval.index.nil?
 
-      nth_weekday_of_month?(interval, date)
+      interval.index.any? { |index| nth_weekday_of_month?(index, interval.day_start, date) }
     end
 
     def easter?(date)
       OpeningHoursConverter::PublicHoliday.easter(date.year).to_date == date
     end
 
-    def nth_weekday_of_month?(interval, date)
-      target = OpeningHoursConverter::WeekIndex.nth_wday_of_month(interval.index, interval.day_start, date.month, date.year)
+    def nth_weekday_of_month?(index, weekday, date)
+      target = OpeningHoursConverter::WeekIndex.nth_wday_of_month(index, weekday, date.month, date.year)
       target == date
     rescue ArgumentError
       false

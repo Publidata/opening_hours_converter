@@ -95,7 +95,7 @@ module OpeningHoursConverter
       end
 
       result = '' if result == 'Mo-Su'
-      result += "[#{@weekday_index}]" if weekdays.length == 1 && !@weekday_index.nil?
+      result += "[#{Array(@weekday_index).join(',')}]" if weekdays.length == 1 && !@weekday_index.nil?
       result
     end
 

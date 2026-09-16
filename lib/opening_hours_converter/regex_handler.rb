@@ -102,7 +102,7 @@ module OpeningHoursConverter
     def week_day_with_modifier_regex
       compile(
         line(
-          week_day + week_day_modifier
+          potential_list(week_day_sequence_item)
         )
       )
     end
@@ -246,8 +246,20 @@ module OpeningHoursConverter
       group(pattern, group(group(comma, optional_pattern), '?'), '*')
     end
 
+    # A weekday of a sequence, with or without its index: "Mo", "Mo-Fr", "Sa[2]".
+    def week_day_sequence_item
+      group(potential_range(week_day) + group(group(week_day_modifier), '?'))
+    end
+
+    # The OSM nth_entry list: "[2]", "[1,3]", "[2-4]", "[-1]", "[1,3,5]".
     def week_day_modifier
-      '\\[' + group('[1-5]|\\-1') + '\\]'
+      '\\[' + potential_list(nth_entry) + '\\]'
+    end
+
+    # A single nth_entry: an index, a range of indexes, or an index counted
+    # back from the end of the month.
+    def nth_entry
+      group('\\-?[1-5]' + group(group('\\-[1-5]'), '?'))
     end
 
     def comma

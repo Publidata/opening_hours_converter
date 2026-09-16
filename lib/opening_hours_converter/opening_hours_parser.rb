@@ -682,7 +682,7 @@ module OpeningHoursConverter
       wd_from = nil
       wd_to = nil
 
-      weekday_selector = weekday_selector.split(',')
+      weekday_selector = split_weekday_selector(weekday_selector)
 
       weekday_selector.each do |wd|
         if !(@regex_handler.holiday_regex =~ wd).nil?
@@ -706,13 +706,39 @@ module OpeningHoursConverter
 
           wd_from = OSM_DAYS.find_index(day.capitalize)
 
-          weekdays << { from: wd_from, to: wd_from, index: index.to_i }
+          weekdays << { from: wd_from, to: wd_from, index: get_weekday_indexes(index) }
         else
           raise ArgumentError, "Invalid weekday interval : #{wd}"
         end
       end
 
       weekdays
+    end
+
+    # A weekday sequence is comma separated, but an index list is comma
+    # separated too ("Sa[1,3],Su[2]"), so only the commas outside the brackets
+    # separate weekdays.
+    def split_weekday_selector(weekday_selector)
+      weekday_selector.split(/,(?![^\[]*\])/)
+    end
+
+    # The OSM nth_entry list of a weekday index: "2", "1,3", "2-4", "-1".
+    # Always returns an array, so a single index and a list are handled alike
+    # downstream.
+    def get_weekday_indexes(raw)
+      raw.split(',').flat_map do |entry|
+        entry = entry.strip
+        if entry.start_with?('-')
+          [entry.to_i]
+        elsif entry.include?('-')
+          from, to = entry.split('-').map(&:to_i)
+          raise ArgumentError, "Invalid weekday index range : #{entry}" if to < from
+
+          (from..to).to_a
+        else
+          [entry.to_i]
+        end
+      end
     end
 
     def remove_interval(date_range, weekdays)

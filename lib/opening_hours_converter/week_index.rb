@@ -67,7 +67,8 @@ module OpeningHoursConverter
     end
 
     def self.nth_wday_of_month(n, wday, month, year = Time.now.year)
-      return last_wday_of_month(wday, month, year) if n == -1
+      raise ArgumentError, 'Index cannot be zero' if n.zero?
+      return nth_wday_of_month_from_end(-n, wday, month, year) if n.negative?
 
       first_day_of_month = Date.new(year, month, 1)
       first_wday_of_month = reindex_sunday_week_to_monday_week(first_day_of_month.wday)
@@ -92,6 +93,15 @@ module OpeningHoursConverter
           first_day_of_the_week = first_day_of_month - first_wday_of_month
           first_day_of_the_week + wday + (n - 1) * 7
         end
+      raise ArgumentError, 'Out of bound' unless date.month == month
+
+      date
+    end
+
+    # "Th[-2]" is the second to last Thursday: walk back a week per step from
+    # the last one.
+    def self.nth_wday_of_month_from_end(n, wday, month, year = Time.now.year)
+      date = last_wday_of_month(wday, month, year) - (n - 1) * 7
       raise ArgumentError, 'Out of bound' unless date.month == month
 
       date
