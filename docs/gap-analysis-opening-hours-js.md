@@ -23,19 +23,21 @@ Four patterns are in the corpus precisely because `opening_hours.js` rejects
 them (`Xx 10:00-12:00`, `Jan 01 +1 day 10:00-12:00`, …). The gem rejects all
 four as well, so it does not silently invent an answer for nonsense.
 
-| | at 1.16.0 | since the nth-weekday selectors landed (#59) | since a timed `off` rule subtracts |
-|---|---|---|---|
-| matches the reference | 55 / 107 | 75 / 107 | 76 / 107 |
-| raises where it should not | 45 | 22 | 22 |
-| silently returns wrong intervals | 7 | 10 | 9 |
+| | at 1.16.0 | since #59 | since a timed `off` rule subtracts (#62) | since fallback rules are applied |
+|---|---|---|---|---|
+| matches the reference | 55 / 107 | 75 / 107 | 76 / 107 | 78 / 107 |
+| raises where it should not | 45 | 22 | 22 | 22 |
+| silently returns wrong intervals | 7 | 10 | 9 | 7 |
 
 The last column is what the counts below describe. #59 closed 20 gaps, and
 raised the silent count while doing it: it taught the parser to read `||` and
-`unknown`, which the evaluator then ignores, so three strings that used to fail
-loudly now answer incompletely. Findings 3 and 9.
+`unknown`, which the evaluator then ignored, so three strings that used to fail
+loudly answered incompletely instead. Applying the fallback rule takes two of
+those three back. Findings 3 and 9.
 
-What the last column adds is finding 1, and it is the one that mattered most:
-it was the only everyday string the gem answered wrongly without raising.
+#62 closed finding 1, the one that mattered most: it was the only everyday
+string the gem answered wrongly without raising.
+
 Closed findings keep their number and their section rather than leaving the
 ones after them to shift, so what a commit or a pull request calls finding 3
 stays finding 3.
@@ -89,21 +91,36 @@ place to say which region it is computing for. The fixture records the
 Île-de-France answer as the target, which presupposes that a region becomes
 configurable (and what its default is).
 
-### 3. Fallback rules are parsed and then ignored
+### 3. Fallback rules are applied, except where the fallback is a bare comment
 
-**Severity: high. Silent.**
+**Severity: low, was high. Silent.**
 
 ```
 Mo-Fr 08:00-12:00 || Sa 10:00-12:00
 Jan-Mar Mo-Fr 08:00-12:00 || 10:00-11:00
 ```
 
-Since #59 the `||` separator parses, and
-`OpeningHoursBuilder` even round-trips the string unchanged — but the fallback
-is never applied: all 52 Saturday intervals of the first pattern, and all 301
-intervals of the second, are missing. A rule that parses and rebuilds
-correctly while contributing nothing is the shape most likely to pass review
-unnoticed.
+Both are now what the reference returns. Since #59 the `||` separator parsed
+and `OpeningHoursBuilder` round-tripped the string unchanged, but the rule
+behind it was dropped before it reached the evaluator, so all 52 Saturday
+intervals of the first pattern and all 301 intervals of the second were
+missing. Both sides of the `||` are parsed now, and a fallback rule writes the
+minutes the rules before it leave closed and none of the ones they open —
+including minutes an explicit `off` closed, which is what the reference does
+and what makes its own example, `Mo-Fr 12:00-14:00; PH off || "by
+appointment"`, mean anything.
+
+What is left of the finding is
+
+```
+Mo-Fr 08:00-12:00 || "call us"
+```
+
+where the fallback carries neither a time nor a modifier. The reference reports
+every minute outside Mo-Fr 08:00-12:00 as open-but-unknown, 523 intervals
+alternating between the two states. The gem covers exactly the same minutes,
+but as plain open, so it returns them as one run per year. Splitting them is
+finding 9, not this one.
 
 ### 4. Variable times
 
@@ -176,12 +193,15 @@ in finding 6.
 
 ```
 Mo-Fr 08:00-12:00; Sa unknown
+Mo-Fr 08:00-12:00 || "call us"
 ```
 
 The reference reports Saturday as a flagged interval — open, but not certain.
-The gem reads the rule and returns nothing for Saturday. Deciding this needs an
-answer to what `get_open_intervals` should return for a maybe, which today it
-has no way to express.
+The gem reads the rule and returns nothing for Saturday. A comment with no
+modifier is the same third state, so the second pattern is here too since
+finding 3 closed: the gem covers the right minutes and calls all of them open.
+Deciding this needs an answer to what `get_open_intervals` should return for a
+maybe, which today it has no way to express.
 
 ## Where the gem is right and the reference is wrong
 
@@ -202,13 +222,22 @@ prints": the reference is a reference, not an oracle.
 
 ## Suggested order
 
+<<<<<<< HEAD
 1. **Finding 3**, applying fallback rules. The parsing is already there, and
    until the evaluator uses it the string parses and answers wrongly.
+=======
+1. **Finding 1**, the timed `off` rule. Small, self-contained, and the only
+   one that hands a caller a wrong answer for an everyday string.
+>>>>>>> 98bf2b6 (feat: apply the fallback rule behind ||)
 2. **Finding 8**, the three isolated selectors. Each is a small addition to
    grammar that already exists.
 3. **Findings 2 and 4 together**, once the API question they share — where a
    region and a pair of coordinates are given to the gem — has an answer.
 4. **Findings 5, 6, 7, 9**, in whatever order the callers' data argues for.
+<<<<<<< HEAD
+=======
+   Answering 9 is what closes the rest of 3.
+>>>>>>> 98bf2b6 (feat: apply the fallback rule behind ||)
 
 ## What this analysis does not cover
 

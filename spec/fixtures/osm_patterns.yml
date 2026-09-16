@@ -1575,7 +1575,7 @@
 - family: fallback
   pattern: "Mo-Fr 08:00-12:00 || \"call us\""
   status: pending
-  reason: "the intervals an \"unknown\" rule contributes are missing"
+  reason: "the same minutes are covered, but opening_hours.js splits them where the state turns \"unknown\", which get_open_intervals has no way to express"
   year_count: 523
   probe_from: "2026-01-01 00:00"
   probe_to: "2026-01-15 00:00"
@@ -1604,8 +1604,7 @@
 
 - family: fallback
   pattern: "Mo-Fr 08:00-12:00 || Sa 10:00-12:00"
-  status: pending
-  reason: "over 2026, 52 expected interval(s) missing and 0 unexpected"
+  status: supported
   year_count: 313
   probe_from: "2026-01-01 00:00"
   probe_to: "2026-01-15 00:00"
@@ -1625,8 +1624,7 @@
 
 - family: fallback
   pattern: "Jan-Mar Mo-Fr 08:00-12:00 || 10:00-11:00"
-  status: pending
-  reason: "over 2026, 301 expected interval(s) missing and 0 unexpected"
+  status: supported
   year_count: 365
   probe_from: "2026-01-01 00:00"
   probe_to: "2026-01-15 00:00"

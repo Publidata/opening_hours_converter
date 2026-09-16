@@ -8,6 +8,11 @@ module OpeningHoursConverter
   # an earlier one on the minutes it selects, as the OpenStreetMap
   # specification requires: "Jul-Aug off; Mo-Fr 09:00-17:00" is open in July,
   # while "Mo-Fr 09:00-17:00; Jul-Aug off" is closed.
+  #
+  # A rule behind a "||" is the exception. It is a fallback: it speaks only for
+  # the minutes the rules before it leave closed, and never over the ones they
+  # open. "Mo-Fr 08:00-12:00 || Sa 10:00-12:00" opens on Saturday and changes
+  # nothing from Monday to Friday.
   class OpenIntervals
     include Constants
     include Utils
@@ -25,12 +30,20 @@ module OpeningHoursConverter
       @first_date = from.to_date - 1
       @last_date = to.to_date
       @masks = {}
+      @fallback = false
       @holidays = {}
     end
 
     def apply(date_ranges)
       expand(date_ranges).each { |date_range, bounds| apply_date_range(date_range, bounds) }
-      self
+
+      fallback = date_ranges.first&.fallback_ranges
+      return self if fallback.nil? || fallback.empty?
+
+      # Everything past a "||" is a fallback, and stays one: a chained
+      # "a || b || c" nests, c falling back on what a and b leave closed.
+      @fallback = true
+      apply(fallback)
     end
 
     def intervals
@@ -160,6 +173,10 @@ module OpeningHoursConverter
     # An interval runs from (day_start, start) to (day_end, end). Only midnight
     # crossings give day_end > day_start, and their remaining minutes are
     # written on the dates that follow.
+    #
+    # A fallback rule skips the minutes that are already open: what the rules
+    # before the "||" leave closed is what it answers for, whether they were
+    # silent about it or closed it with an "off".
     def write(date, interval)
       remaining = (interval.day_end - interval.day_start) * MINUTES_MAX + interval.end
       first_minute = interval.start
@@ -168,7 +185,8 @@ module OpeningHoursConverter
 
       while remaining > 0
         mask = mask_for(current)
-        ([first_minute, 0].max...[remaining, MINUTES_MAX].min).each { |minute| mask[minute] = open } unless mask.nil?
+        minutes = [first_minute, 0].max...[remaining, MINUTES_MAX].min
+        minutes.each { |minute| mask[minute] = open unless @fallback && mask[minute] } unless mask.nil?
         remaining -= MINUTES_MAX
         first_minute = 0
         current += 1
