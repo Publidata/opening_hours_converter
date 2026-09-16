@@ -69,7 +69,7 @@ module OpeningHoursConverter
           potential_list(
             group(
               potential_range(
-                group(time)
+                group(time), group(extended_time)
               ) + '|' + group(full_time)
             )
           ) + '\\+?' # a trailing "+" marks an open-ended time ("18:00+")
@@ -121,7 +121,7 @@ module OpeningHoursConverter
       compile(
         line(
           # a trailing "+" marks an open-ended year ("2020+" = 2020 onward)
-          group(potential_range(year), '\\+?')
+          group(potential_range(year), potential(year_step), '\\+?')
         )
       )
     end
@@ -229,6 +229,13 @@ module OpeningHoursConverter
       group(int_range(24)) + ':' + group(int_range(59))
     end
 
+    # The closing hour of a range may run past midnight, which is how the
+    # specification writes a night without naming the day it ends on:
+    # "10:00-26:00" closes at 02:00 the next morning.
+    def extended_time
+      group(int_range(48)) + ':' + group(int_range(59))
+    end
+
     def full_time
       '24/7'
     end
@@ -295,6 +302,12 @@ module OpeningHoursConverter
 
     def week_modifier
       '\/[1-9]'
+    end
+
+    # A step in a year range: "2020-2030/2" selects every other year, the same
+    # notation the week selector writes as "week 1-53/2".
+    def year_step
+      '\/[1-9][0-9]?'
     end
 
     def week_with_modifier

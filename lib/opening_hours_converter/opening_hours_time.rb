@@ -1,5 +1,9 @@
+require 'opening_hours_converter/constants'
+
 module OpeningHoursConverter
   class OpeningHoursTime
+    include Constants
+
     attr_reader :start, :end, :priority, :open_ended
 
     def initialize(minute_start = nil, minute_end = nil, open_ended = false)
@@ -10,7 +14,14 @@ module OpeningHoursConverter
 
     def get
       return 'off' if @start.nil? && @end.nil?
-      return "#{time_string(@start)}+" if @open_ended
+      # An open end names no closing time, so a time that already runs to
+      # midnight writes itself as the bare "18:00+"; one that closes earlier
+      # keeps the hours it does name ("10:00-12:00+").
+      if @open_ended
+        return "#{time_string(@start)}+" if @end.nil? || @end == MINUTES_MAX
+
+        return "#{time_string(@start)}-#{time_string(@end)}+"
+      end
       "#{time_string(@start)}#{@end.nil? ? '' : "-#{time_string(@end)}"}"
     end
 

@@ -3,7 +3,7 @@ require 'opening_hours_converter/constants'
 module OpeningHoursConverter
   class WideInterval
     include Constants
-    attr_accessor :start, :end, :type, :indexes, :open_ended
+    attr_accessor :start, :end, :type, :indexes, :open_ended, :step
 
     def initialize
       @start = nil
@@ -11,6 +11,7 @@ module OpeningHoursConverter
       @indexes = nil
       @type = nil
       @open_ended = false
+      @step = nil
     end
 
     def get_time_selector
@@ -34,6 +35,7 @@ module OpeningHoursConverter
       when 'year'
         result = (@start[:year]).to_s
         result += "-#{@end[:year]}" if !@end.nil?
+        result += "/#{@step}" if !@step.nil?
       when 'holiday'
         result = "#{@start[:year].nil? ? '' : "#{@start[:year]} "}PH"
         if !@end.nil?
@@ -152,13 +154,20 @@ module OpeningHoursConverter
       self
     end
 
-    def year(start_year, end_year = nil, open_ended: false)
+    def year(start_year, end_year = nil, open_ended: false, step: nil)
       raise(ArgumentError, 'start_year is required') if start_year.nil?
       @start = { year: start_year }
       @end = { year: end_year } unless end_year.nil? || end_year == start_year
       @open_ended = open_ended
+      @step = step
       @type = 'year'
       self
+    end
+
+    # The years the range spans. A year range can carry a step ("2020-2030/2"
+    # is every other year); every other kind of range covers all of them.
+    def covered_years
+      @start[:year].step(@end[:year], @step || 1)
     end
 
     def holiday(holiday, start_year = nil, end_year = nil)
