@@ -47,7 +47,7 @@ module OpeningHoursConverter
       dr_obj = nil
       res_dr_id = nil
 
-      blocks.each do |tokens|
+      blocks.each do |tokens, additional|
         next if tokens.empty?
 
         @current_token = tokens.length - 1
@@ -260,8 +260,13 @@ module OpeningHoursConverter
           # written. The two passes are separate: clearing while writing would
           # make "Sa[2],Sa[4]" drop its first index, the second entry wiping
           # the Saturday the first one had just filled.
-          weekdays.each_key do |weekday_ranges|
-            weekday_ranges.each { |weekday_range| clear_weekdays(dr_obj, weekday_range) }
+          #
+          # An additional rule adds to what comes before it instead of
+          # replacing it, so it clears nothing.
+          unless additional
+            weekdays.each_key do |weekday_ranges|
+              weekday_ranges.each { |weekday_range| clear_weekdays(dr_obj, weekday_range) }
+            end
           end
 
           weekdays.each do |weekday_ranges, weekday_object|
@@ -717,15 +722,18 @@ module OpeningHoursConverter
       weekdays
     end
 
-    # A time selector closes a rule sequence, so a wide range selector right
-    # after one opens a new rule. That covers the additional rule separator
-    # ("Jul-Aug Th[2,4] 09:00-19:00, Sep-Nov Th 09:00-19:00", whose comma the
-    # tokenizer drops) and the rules the data writes with no separator at all
-    # ("Feb: Mo[1,3] 09:00-19:00 Mar-Jun Th 09:00-19:00").
+    # A time selector closes a rule sequence, so any selector standing right
+    # after one opens a new rule. That is what the additional rule separator
+    # means ("Jan We 11:00-12:00,Mo off" is two rules, and the second one
+    # carries no month), and it also reads the rules the data writes with no
+    # separator at all ("Feb: Mo[1,3] 09:00-19:00 Mar-Jun Th 09:00-19:00").
     #
-    # A weekday after a time is left alone: "Jan We 11:00-12:00,Mo off" has
-    # always read January for both weekdays, and splitting there would take
-    # the month away from the second one.
+    # A rule modifier and a comment belong to the rule they follow, and a
+    # second time selector only widens the current one.
+    # Returns [tokens, additional] pairs. Every rule but the first of a ";"
+    # block is an additional rule: it adds to what comes before it rather
+    # than replacing it, which is what "Sa,Su 18:00-24:00; Jan Fr 10:00-20:00,
+    # Sa 00:00-03:00" means, the Saturday of the first rule surviving.
     def split_into_rules(tokens)
       rules = []
       current = []
@@ -734,13 +742,13 @@ module OpeningHoursConverter
         current << token
         following = tokens[i + 1]
         next if following.nil? || !is_time?(token)
-        next unless is_part_of_wide_interval?(following)
+        next if is_time?(following) || is_comment?(following) || is_rule_modifier?(following)
 
-        rules << current
+        rules << [current, !rules.empty?]
         current = []
       end
 
-      rules << current unless current.empty?
+      rules << [current, !rules.empty?] unless current.empty?
       rules
     end
 

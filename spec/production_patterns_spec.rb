@@ -121,9 +121,6 @@ RSpec.describe OpeningHoursConverter::OpenIntervals, 'production patterns' do
     ['Jan-Jun,Sep-Nov Sa[2,4] 09:00-12:00', 2026, 2027, 18, [2026, 1, 10, 9, 0], [2026, 1, 10, 12, 0]], # M-M,M-M D[N,N] T-T
     ['Jan: Tu[2,4] 09:00-19:00', 2026, 2027, 2, [2026, 1, 13, 9, 0], [2026, 1, 13, 19, 0]], # M: D[N,N] T-T — 565 records
     ['Jul: Th[1,3,5] 00:00-23:59', 2026, 2027, 3, [2026, 7, 2, 0, 0], [2026, 7, 2, 23, 59]], # M: D[N,N,N] T-T, including a 5th occurrence
-    # No time selector at all, so the helper leaves the string untouched (it
-    # holds a ":") and the whole day is expected, midnight to midnight.
-    ['Feb,Apr,Jun,Sep: Tu[3]', 2026, 2027, 4, [2026, 2, 17, 0, 0], [2026, 2, 18, 0, 0]], # M,M: D[N]
     ['Mar 1-Nov 30 Mo[1] 13:00-16:00', 2026, 2027, 9, [2026, 3, 2, 13, 0], [2026, 3, 2, 16, 0]], # M N-M N D[N] T-T
     ['Sep 16-Jun 14 Sa[1] 09:00-12:00,13:00-17:00', 2026, 2027, 18, [2026, 1, 3, 9, 0], [2026, 1, 3, 12, 0]], # M N-M N D[N] T-T,T-T, range wrapping the year
     ['2026 Th[4] 05:00-12:00', 2026, 2027, 12, [2026, 1, 22, 5, 0], [2026, 1, 22, 12, 0]], # Y D[N] T-T
@@ -165,8 +162,7 @@ RSpec.describe OpeningHoursConverter::OpenIntervals, 'production patterns' do
     ['Dec-Jan We [2,4] 09:00-19:00', 2026, 2027, 4, [2026, 1, 14, 9, 0], [2026, 1, 14, 19, 0]], # M-M D [N,N] T-T, space before the bracket
     ['Dec-Feb Mo [2, 4]  09:00-19:00', 2026, 2027, 6, [2026, 1, 12, 9, 0], [2026, 1, 12, 19, 0]], # M-M D [N, N]  T-T, spaces before the bracket, inside the list and before the time
     ['We[2,4] Sa[3] 09:30-12:30', 2026, 2027, 36, [2026, 1, 14, 9, 30], [2026, 1, 14, 12, 30]], # D[N,N] D[N] T-T, days separated by a space instead of a comma
-    ['Sat[1] 09:00-13:00', 2026, 2027, 12, [2026, 1, 3, 9, 0], [2026, 1, 3, 13, 0]], # D[N] T-T with a three-letter weekday
-    ['Feb: Mo[1,3] 09:00-19:00 Mar-Jun Th 09:00-19:00', 2026, 2027, 31, [2026, 2, 2, 9, 0], [2026, 2, 2, 19, 0]] # two rules with no separator between them
+    ['Sat[1] 09:00-13:00', 2026, 2027, 12, [2026, 1, 3, 9, 0], [2026, 1, 3, 13, 0]] # D[N] T-T with a three-letter weekday
   ].freeze
 
   supported.each do |opening_hours, first_year, last_year, count, start_at, end_at|
@@ -195,6 +191,33 @@ RSpec.describe OpeningHoursConverter::OpenIntervals, 'production patterns' do
   end
 
   describe 'known divergence from the reference' do
+    it 'ends a day with no time selector a minute before midnight' do
+      # The reference reads a whole day as midnight to midnight; this library
+      # reads it as 00:00-23:59 everywhere, which its own round-trip tests
+      # pin down ("We" rebuilds as "We 00:00-23:59"). The gap only shows on a
+      # value that holds a ":" without holding a time, since every other
+      # timeless value has "00:00-23:59" appended by the helper above and the
+      # two implementations then agree.
+      result = intervals('Feb,Apr,Jun,Sep: Tu[3]', Time.new(2026, 1, 1), Time.new(2027, 1, 1))
+
+      expect(result.size).to eql(4)
+      expect(result.first).to eql({ start: Time.new(2026, 2, 17, 0, 0), end: Time.new(2026, 2, 17, 23, 59) })
+    end
+
+    it 'reads selectors written with no separator as separate rules' do
+      # "Feb: Mo[1,3] 09:00-19:00 Mar-Jun Th 09:00-19:00" holds two rule
+      # sequences and no separator between them. The reference merges them
+      # into a single rule, the union of both months applying to the union of
+      # both weekdays, which opens Thursdays in February and Mondays in June,
+      # and warns three times that the value is "probably an error". Reading
+      # it as the two rules it was written as gives 19 intervals where the
+      # reference gives 31.
+      result = intervals('Feb: Mo[1,3] 09:00-19:00 Mar-Jun Th 09:00-19:00', Time.new(2026, 1, 1), Time.new(2027, 1, 1))
+
+      expect(result.size).to eql(19)
+      expect(result.first).to eql({ start: Time.new(2026, 2, 2, 9, 0), end: Time.new(2026, 2, 2, 19, 0) })
+    end
+
     it 'opens a single date whose weekday selector the parser dropped' do
       # 2022-01-01 is a Saturday, so opening_hours.js returns nothing here. The
       # parser turns a single date into a Day typical and discards the weekday

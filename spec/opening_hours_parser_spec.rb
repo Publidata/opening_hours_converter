@@ -12,6 +12,12 @@ require 'opening_hours_converter'
 #   expect(parsed_rebuilt).to eql("slightly different outcome")
 # TODO: write a matcher that warns when "slightly different outcome" is not
 #       different. That way we know we are introducing unexpected duplication.
+#
+# A comma between two rule sequences separates them the way the specification
+# says: the second rule carries no wide range of its own, and it adds to what
+# comes before it rather than replacing it. "Jan We 11:00-12:00,Mo off" is
+# January for Wednesday and the whole year for Monday, and the Saturday of
+# "Sa,Su 18:00-24:00; Jan Fr 10:00-20:00,Sa 00:00-03:00" keeps its evening.
 
 RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#merge_groups' do
   it 'merge tokens' do
@@ -221,7 +227,7 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
     expect(parsed_rebuilt).to eql('Sa,Su 18:00-24:00; Jan Mo,Tu off; Jan Fr 10:00-20:00,21:00-24:00; Jan Sa 00:00-03:00,18:00-24:00')
   end
   it 'Sa,Su 00:00-04:00,18:00-24:00; Jan Mo-Tu off,Fr 10:00-20:00,21:00-24:00,Sa 00:00-03:00' do
-    expect(parsed_rebuilt).to eql('Sa,Su 00:00-04:00,18:00-24:00; Jan Mo,Tu off; Jan Fr 10:00-20:00,21:00-24:00; Jan Sa 00:00-03:00')
+    expect(parsed_rebuilt).to eql('Sa,Su 00:00-04:00,18:00-24:00; Jan Mo,Tu off; Jan Fr 10:00-20:00,21:00-24:00')
   end
   it 'Jan Mo-Tu off; Jan Su 10:00-20:00,21:00-03:00' do
     expect(parsed_rebuilt).to eql('Jan Mo 00:00-03:00; Jan Tu off; Jan Su 10:00-20:00,21:00-24:00')
@@ -260,10 +266,10 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
     expect(parsed_rebuilt).to eql(test_string)
   end
   it 'Jan We 11:00-12:00,Mo 20:00-03:00' do
-    expect(parsed_rebuilt).to eql('Jan Mo 20:00-24:00; Jan Tu 00:00-03:00; Jan We 11:00-12:00')
+    expect(parsed_rebuilt).to eql('Jan We 11:00-12:00; Mo 20:00-24:00; Tu 00:00-03:00')
   end
   it 'Jan We 11:00-12:00,Mo off' do
-    expect(parsed_rebuilt).to eql('Jan Mo off; Jan We 11:00-12:00')
+    expect(parsed_rebuilt).to eql('Jan We 11:00-12:00; Mo off')
   end
   it 'Jan Su off,Mo-Sa 11:00-12:00' do
     expect(parsed_rebuilt).to eql('Jan Mo-Sa 11:00-12:00; Jan Su off')
@@ -323,7 +329,7 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
     expect(parsed_rebuilt).to eql('Su-Tu,Th,Fr off; We 14:30-18:00; Sa 10:00-12:00; Oct 21-Nov 06 off "Vacances de la Toussaint"; Jan 01-08,Dec 23-31 off "Vacances de Noël"; Feb 24-Mar 12 off "Vacances d\'hiver"; Apr 21-May 07 off "Vacances de printemps"; Jul 07-Sep 04 off "Vacances d\'été"')
   end
   it 'Mo,Th,Fr,Sa,Su off; Tu 16:00-19:00, We 14:30-18:30; Oct 21-Nov 03 Tu 16:30-18:30,Mo,We,Th,Fr,Sa,Su off "Vacances de la Toussaint"; Feb 24-Mar 12 Tu 16:30-18:30,Mo,We,Th,Fr,Sa,Su off "Vacances d\'hiver"; Apr 21-May 07 Tu 16:30-18:30,Mo,We,Th,Fr,Sa,Su off "Vacances de printemps"; Dec 23-Jan 08 Tu 16:30-18:30,Mo,We,Th,Fr,Sa,Su off "Vacancs de Noël"; Jul 07-Sep 04 Tu 16:30-18:30,Mo,We,Th,Fr,Sa,Su off "Vacances d\'été";' do
-    expect(parsed_rebuilt).to eql('Th-Mo off; Tu 16:00-19:00; We 14:30-18:30; Oct 21-Nov 03 We-Mo off "Vacances de la Toussaint"; Oct 21-Nov 03 Tu 16:30-18:30 "Vacances de la Toussaint"; Feb 24-Mar 12 We-Mo off "Vacances d\'hiver"; Feb 24-Mar 12 Tu 16:30-18:30 "Vacances d\'hiver"; Apr 21-May 07 We-Mo off "Vacances de printemps"; Apr 21-May 07 Tu 16:30-18:30 "Vacances de printemps"; Jan 01-08,Dec 23-31 We-Mo off "Vacancs de Noël"; Jan 01-08,Dec 23-31 Tu 16:30-18:30 "Vacancs de Noël"; Jul 07-Sep 04 We-Mo off "Vacances d\'été"; Jul 07-Sep 04 Tu 16:30-18:30 "Vacances d\'été"')
+    expect(parsed_rebuilt).to eql('Th-Mo off; Tu 16:00-19:00; We 14:30-18:30; Feb 24-Mar 12,Apr 21-May 07,Jul 07-Sep 04,Oct 21-Nov 03 Tu 16:30-18:30; We-Mo off "Vacances de la Toussaint"')
   end
   it 'Sa,Su off;Mo-Fr 16:00-18:00;Sa 10:00-12:00;Oct 21-Nov 06 We 16:00-18:00 "Vacances de la Toussaint"; Oct 21-Nov 06 Sa 10:00-12:00 "Vacances de la Toussaint"; Oct 21-Nov 06 Su,Mo,Tu,Th,Fr off "Vacances de la Toussaint";Dec 23-Jan 08 We 16:00-18:00 "Vacances de Noël"; Dec 23-Jan 08 Sa 10:00-12:00 "Vacances de Noël"; Dec 23-Jan 08 Su,Mo,Tu,Th,Fr off "Vacances de Noël";Feb 24-Mar 12 We 16:00-18:00 "Vacances d\'hiver";Feb 24-Mar 12 Sa 10:00-12:00 "Vacances d\'hiver";Feb 24-Mar 12 Su,Mo,Tu,Th,Fr off "Vacances d\'hiver";Apr 21-May 07 We 16:00-18:00 "Vacances de printemps";Apr 21-May 07 Sa 10:00-12:00 "Vacances de printemps";Apr 21-May 07 Su,Mo,Tu,Th,Fr off  "Vacances de printemps"; Jul 07-Sep 04 We 16:00-18:00 "Vacances d\'été";Jul 07-Sep 04 Sa 10:00-12:00 "Vacances d\'été";Jul 07-Sep 04 Su,Mo,Tu,Th,Fr off "Vacances d\'été";' do
     expect(parsed_rebuilt).to eql('Mo-Fr 16:00-18:00; Sa 10:00-12:00; Su off; Oct 21-Nov 06 Su-Tu,Th,Fr off "Vacances de la Toussaint"; Oct 21-Nov 06 We 16:00-18:00 "Vacances de la Toussaint"; Oct 21-Nov 06 Sa 10:00-12:00 "Vacances de la Toussaint"; Jan 01-08,Dec 23-31 Su-Tu,Th,Fr off "Vacances de Noël"; Jan 01-08,Dec 23-31 We 16:00-18:00 "Vacances de Noël"; Jan 01-08,Dec 23-31 Sa 10:00-12:00 "Vacances de Noël"; Feb 24-Mar 12 Su-Tu,Th,Fr off "Vacances d\'hiver"; Feb 24-Mar 12 We 16:00-18:00 "Vacances d\'hiver"; Feb 24-Mar 12 Sa 10:00-12:00 "Vacances d\'hiver"; Apr 21-May 07 Su-Tu,Th,Fr off "Vacances de printemps"; Apr 21-May 07 We 16:00-18:00 "Vacances de printemps"; Apr 21-May 07 Sa 10:00-12:00 "Vacances de printemps"; Jul 07-Sep 04 Su-Tu,Th,Fr off "Vacances d\'été"; Jul 07-Sep 04 We 16:00-18:00 "Vacances d\'été"; Jul 07-Sep 04 Sa 10:00-12:00 "Vacances d\'été"')
@@ -335,7 +341,7 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
     expect(parsed_rebuilt).to eql('Tu 15:30-18:00; We 10:00-12:00,14:30-18:00; Fr 16:00-18:00; Sa 10:00-12:30')
   end
   it 'Su,Mo off  "Espaces Adultes et Musique & Cinéma";Tu,We 10:00-18:30  "Espaces Adultes et Musique & Cinéma";Th 9:00-13:00  "Espaces Adultes et Musique & Cinéma";Fr 13:00-18:30,Sa 10:00-18:00  "Espaces Adultes et Musique & Cinéma";' do
-    expect(parsed_rebuilt).to eql('Mo,Su off "Espaces Adultes et Musique & Cinéma"; Tu,We 10:00-18:30 "Espaces Adultes et Musique & Cinéma"; Th 09:00-13:00 "Espaces Adultes et Musique & Cinéma"; Fr 13:00-18:30 "Espaces Adultes et Musique & Cinéma"; Sa 10:00-18:00 "Espaces Adultes et Musique & Cinéma"')
+    expect(parsed_rebuilt).to eql('Mo,Su off "Espaces Adultes et Musique & Cinéma"; Tu,We 10:00-18:30 "Espaces Adultes et Musique & Cinéma"; Th 09:00-13:00 "Espaces Adultes et Musique & Cinéma"; Sa 10:00-18:00 "Espaces Adultes et Musique & Cinéma"; Fr 13:00-18:30')
   end
   it 'Tu,Fr 16:00-18:30 "Espace Jeunesse";We 10:00-12:30,14:00-18:30 "Espace Jeunesse";Sa 10:00-12:30,14:00-18:00 "Espace Jeunesse";Th,Su,Mo off "Espace Jeunesse";' do
     expect(parsed_rebuilt).to eql('Mo,Th,Su off "Espace Jeunesse"; Tu,Fr 16:00-18:30 "Espace Jeunesse"; We 10:00-12:30,14:00-18:30 "Espace Jeunesse"; Sa 10:00-12:30,14:00-18:00 "Espace Jeunesse"')
@@ -344,7 +350,7 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
     expect(parsed_rebuilt).to eql('Mo,Th,Su off; Tu,Fr 13:30-18:00 "Espaces Adultes et Jeunesse"; We 10:00-12:30,14:00-18:30 "Espaces Adultes et Jeunesse"; Sa 10:00-12:30,14:00-18:00 "Espaces Adultes et Jeunesse"')
   end
   it 'Th,Fr,Sa,Su off; Mo,Tu 16:30-18:00; We 10:00-12:30,14:30-18:00; Oct 21-Nov 06 We 14:30-18:00,Mo,Tu,Th,Fr,Sa,Su off "Vacances de la Toussaint"; Feb 24-Mar 12 We 14:30-18:00,Mo,Tu,Th,Fr,Sa,Su off  "Vacances d\'hiver"; Apr 21-May 07 We 14:30-18:00,Mo,Tu,Th,Fr,Sa,Su off  "Vacances de printemps"; Dec 23-Jan 08 off "Vacances de Noël";Jul 07-Sep 04 off "Vacances d\'été";' do
-    expect(parsed_rebuilt).to eql('Mo,Tu 16:30-18:00; We 10:00-12:30,14:30-18:00; Th-Su off; Oct 21-Nov 06 Th-Tu off "Vacances de la Toussaint"; Oct 21-Nov 06 We 14:30-18:00 "Vacances de la Toussaint"; Feb 24-Mar 12 Th-Tu off "Vacances d\'hiver"; Feb 24-Mar 12 We 14:30-18:00 "Vacances d\'hiver"; Apr 21-May 07 Th-Tu off "Vacances de printemps"; Apr 21-May 07 We 14:30-18:00 "Vacances de printemps"; Jan 01-08,Dec 23-31 off "Vacances de Noël"; Jul 07-Sep 04 off "Vacances d\'été"')
+    expect(parsed_rebuilt).to eql('Mo,Tu 16:30-18:00; We 10:00-12:30,14:30-18:00; Th-Su off; Feb 24-Mar 12,Apr 21-May 07,Oct 21-Nov 06 We 14:30-18:00; Th-Tu off "Vacances de la Toussaint"; Jan 01-08,Dec 23-31 off "Vacances de Noël"; Jul 07-Sep 04 off "Vacances d\'été"')
   end
   it 'Mo 14:30-19:30; Tu-Fr 09:00-12:30,14:30-19:30; Sa 09:00-12:00; 2017 Dec 24-25 Mo 00:00-09:00,14:30-19:30 "Pharmacie de garde"; 2017 Dec 24-25 Su 09:00-24:00 "Pharmacie de garde"' do
     expect(parsed_rebuilt).to eql('Mo 14:30-19:30; Tu-Fr 09:00-12:30,14:30-19:30; Sa 09:00-12:00; 2017 Dec 24-25 Mo 00:00-09:00,14:30-19:30 "Pharmacie de garde"; 2017 Dec 24-25 Su 09:00-24:00 "Pharmacie de garde"')
