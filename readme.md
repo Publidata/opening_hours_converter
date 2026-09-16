@@ -63,6 +63,12 @@ Then run all the tests with:
 rspec spec --format=documentation
 ```
 
+`spec/osm_patterns_spec.rb` holds one example per selector of the OSM
+specification, checked against opening_hours.js. The selectors the gem does not
+read yet are in it as pending examples;
+[docs/gap-analysis-opening-hours-js.md](docs/gap-analysis-opening-hours-js.md)
+explains what each one is worth and in what order to take them.
+
 ## Credits
 
 Done with [YoHours](https://framagit.org/PanierAvide/YoHours) as inspiration and with constant help from the [Evaluation tool](http://openingh.openstreetmap.de/evaluation_tool/)/[repository](https://github.com/opening-hours/opening_hours.js).

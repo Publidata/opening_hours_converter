@@ -1,0 +1,8 @@
+{
+  "name": "osm-reference",
+  "private": true,
+  "description": "Generates spec/fixtures/osm_patterns.yml from opening_hours.js",
+  "dependencies": {
+    "opening_hours": "3.14.0"
+  }
+}

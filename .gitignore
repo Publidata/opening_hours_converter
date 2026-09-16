@@ -10,3 +10,10 @@ tmp/*
 # precision that does not exist in the gem command, which is used to install
 # gems in practice."
 Gemfile.lock
+
+# tools/osm_reference works against a local install of opening_hours.js
+tools/osm_reference/node_modules
+tools/osm_reference/package-lock.json
+tools/osm_reference/results_*.json
+tools/osm_reference/windows.json
+tools/osm_reference/osm_patterns.yml
