@@ -292,6 +292,13 @@ module OpeningHoursConverter
       @index += 1
 
       while current_token?
+        # Read before the hyphen branch: the "-" of "Sa[1] -1 day" opens an
+        # offset, not a weekday range.
+        if day_offset?
+          value, made_from, type = read_day_offset(value, made_from, type)
+          next
+        end
+
         break if current_token.integer?
 
         if current_token.hyphen? || current_token.comma?
@@ -385,6 +392,8 @@ module OpeningHoursConverter
       made_from = [current_token]
       @index += 1
 
+      value, made_from, type = read_day_offset(value, made_from, type) if day_offset?
+
       if current_token.comma?
         value, made_from, type = add_current_token_to(value, type, made_from)
 
@@ -432,6 +441,24 @@ module OpeningHoursConverter
       @index += 1
 
       token(value, type, start_index, made_from)
+    end
+
+    # A day offset counts days from the date a selector names: "easter +1 day"
+    # is Easter Monday, "Su[-1] +1 day" the Monday after the last Sunday of the
+    # month. Always the same three tokens, whichever selector it follows.
+    def day_offset?
+      return false unless current_token?
+      return false unless current_token.hyphen? || (current_token.string? && current_token.value == '+')
+      return false unless next_token? && next_token.integer?
+
+      unit = @unhandled_tokens[@index + 2]
+      !unit.nil? && unit.day_unit?
+    end
+
+    def read_day_offset(value, made_from, type)
+      value, made_from, type = add_current_token_to(value, type, made_from, :day_offset, ' ')
+      value, made_from, type = add_current_token_to(value, type, made_from)
+      add_current_token_to(value, type, made_from, nil, ' ')
     end
 
     # The opening bound of a variable date range: an indexed weekday whose

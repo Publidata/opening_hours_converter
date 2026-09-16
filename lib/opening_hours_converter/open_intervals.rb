@@ -149,6 +149,10 @@ module OpeningHoursConverter
     end
 
     def selects?(interval, date)
+      # A day offset shifts the date the selector names onto another one, so
+      # the selector is asked about the day it counts from rather than the day
+      # the interval is written on.
+      date -= interval.day_offset
       return public_holiday?(date) if interval.day_start == PH_WEEKDAY
       return easter?(date) if interval.day_start == EASTER_WEEKDAY
       return false unless interval.day_start == reindex_sunday_week_to_monday_week(date.wday)

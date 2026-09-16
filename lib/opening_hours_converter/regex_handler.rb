@@ -63,6 +63,13 @@ module OpeningHoursConverter
       compile(line(easter))
     end
 
+    # The day offset a selector can carry: "easter +1 day", "PH -2 days",
+    # "Su[-1] +1 day". Only the suffix is matched, so what precedes it is the
+    # selector itself.
+    def day_offset_regex
+      compile(space + group('[-+]\\d+') + space + 'days?' + end_of_line)
+    end
+
     def time_regex
       compile(
         line(
