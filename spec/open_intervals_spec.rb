@@ -88,6 +88,62 @@ RSpec.describe OpeningHoursConverter::OpenIntervals do
 
       expect(result).to eql([])
     end
+
+    # An off rule naming hours closes those hours and leaves the rest of the
+    # day open, which is how the specification writes a lunch break.
+    it 'cuts the hours a timed off rule names out of the day' do
+      result = pairs('Mo-Fr 08:00-18:00; Mo-Fr 12:00-13:00 off', Time.new(2026, 6, 1), Time.new(2026, 6, 3))
+
+      expect(result).to eql(
+        [
+          [Time.new(2026, 6, 1, 8, 0), Time.new(2026, 6, 1, 12, 0)],
+          [Time.new(2026, 6, 1, 13, 0), Time.new(2026, 6, 1, 18, 0)],
+          [Time.new(2026, 6, 2, 8, 0), Time.new(2026, 6, 2, 12, 0)],
+          [Time.new(2026, 6, 2, 13, 0), Time.new(2026, 6, 2, 18, 0)]
+        ]
+      )
+    end
+
+    it 'leaves the weekdays a timed off rule does not name alone' do
+      result = pairs('Mo-Fr 08:00-18:00; We 12:00-13:00 off', Time.new(2026, 6, 2), Time.new(2026, 6, 4))
+
+      expect(result).to eql(
+        [
+          [Time.new(2026, 6, 2, 8, 0), Time.new(2026, 6, 2, 18, 0)],
+          [Time.new(2026, 6, 3, 8, 0), Time.new(2026, 6, 3, 12, 0)],
+          [Time.new(2026, 6, 3, 13, 0), Time.new(2026, 6, 3, 18, 0)]
+        ]
+      )
+    end
+
+    it 'shortens a day when the hours it closes end it' do
+      result = pairs('Mo-Fr 08:00-18:00; Mo-Fr 17:00-18:00 off', Time.new(2026, 6, 1), Time.new(2026, 6, 2))
+
+      expect(result).to eql([[Time.new(2026, 6, 1, 8, 0), Time.new(2026, 6, 1, 17, 0)]])
+    end
+
+    it 'closes hours reaching into two windows of the same day' do
+      result = pairs('Mo-Fr 08:00-12:00,14:00-18:00; Mo-Fr 11:00-15:00 off',
+                     Time.new(2026, 6, 1), Time.new(2026, 6, 2))
+
+      expect(result).to eql(
+        [
+          [Time.new(2026, 6, 1, 8, 0), Time.new(2026, 6, 1, 11, 0)],
+          [Time.new(2026, 6, 1, 15, 0), Time.new(2026, 6, 1, 18, 0)]
+        ]
+      )
+    end
+
+    it 'closes hours of a single date' do
+      result = pairs('Jan 01 08:00-18:00; Jan 01 12:00-13:00 off', Time.new(2026, 1, 1), Time.new(2026, 1, 2))
+
+      expect(result).to eql(
+        [
+          [Time.new(2026, 1, 1, 8, 0), Time.new(2026, 1, 1, 12, 0)],
+          [Time.new(2026, 1, 1, 13, 0), Time.new(2026, 1, 1, 18, 0)]
+        ]
+      )
+    end
   end
 
   describe 'intervals crossing midnight' do

@@ -54,6 +54,7 @@ module OpeningHoursConverter
 
         weekdays = {}
         comment = ''
+        closing = false
 
         # get comment
         if @current_token >= 0 && is_comment?(tokens[@current_token])
@@ -70,6 +71,17 @@ module OpeningHoursConverter
             # carries no weekday selector of its own and the rule is read as
             # if it were absent.
             if local_modifier == 'open'
+              @current_token -= 1
+              next
+            end
+
+            # "Mo-Fr 12:00-13:00 off" closes the hours it names, not the days:
+            # the modifier belongs to the time selector standing before it, and
+            # the branch reading that selector below is the one that applies
+            # it. A modifier with no time selector of its own ("Sa off") keeps
+            # closing whole days.
+            if %w[closed off].include?(local_modifier) && @current_token > 0 && is_time?(tokens[@current_token - 1])
+              closing = true
               @current_token -= 1
               next
             end
@@ -100,17 +112,23 @@ module OpeningHoursConverter
               local_times.concat get_times("00:00-23:59")
             end
 
+            # Times a "off" modifier closes are kept apart from the ones that
+            # open, since they are cut out of what earlier rules left rather
+            # than added to it.
+            times_key = closing ? :closed_times : :times
+            closing = false
+
             begin
               weekday_selector = tokens[@current_token]
               weekdays_and_holidays = get_weekdays(weekday_selector)
             rescue StandardError
               weekdays[[{ from: 0, to: 6, index: nil }]] ||= {}
-              weekdays[[{ from: 0, to: 6, index: nil }]][:times] ||= []
-              weekdays[[{ from: 0, to: 6, index: nil }]][:times].concat(local_times)
+              weekdays[[{ from: 0, to: 6, index: nil }]][times_key] ||= []
+              weekdays[[{ from: 0, to: 6, index: nil }]][times_key].concat(local_times)
             else
               weekdays[weekdays_and_holidays] ||= {}
-              weekdays[weekdays_and_holidays][:times] ||= []
-              weekdays[weekdays_and_holidays][:times].concat(local_times)
+              weekdays[weekdays_and_holidays][times_key] ||= []
+              weekdays[weekdays_and_holidays][times_key].concat(local_times)
               @current_token -= 1
             end
           end
@@ -262,15 +280,23 @@ module OpeningHoursConverter
           # the Saturday the first one had just filled.
           #
           # An additional rule adds to what comes before it instead of
-          # replacing it, so it clears nothing.
+          # replacing it, so it clears nothing. Neither does a rule closing
+          # named hours: it subtracts a window from the day, which is only
+          # meaningful if the day survives.
           unless additional
-            weekdays.each_key do |weekday_ranges|
+            weekdays.each do |weekday_ranges, weekday_object|
+              next if weekday_object[:closed_times]
+
               weekday_ranges.each { |weekday_range| clear_weekdays(dr_obj, weekday_range) }
             end
           end
 
           weekdays.each do |weekday_ranges, weekday_object|
             weekday_ranges.each do |weekday_range|
+              weekday_object[:closed_times]&.each do |time_range|
+                remove_time_range(dr_obj.typical, weekday_range, time_range)
+              end
+
               weekday_object[:modifiers]&.each do |modifier|
                 if modifier == 'closed' || modifier == 'off'
                   remove_interval(dr_obj, weekday_range)
@@ -850,6 +876,59 @@ module OpeningHoursConverter
         else
           typical.remove_interval(OpeningHoursConverter::Interval.new(wd, times[:from], wd + 1, 24 * 60))
           typical.remove_interval(OpeningHoursConverter::Interval.new(0, 0, 0, times[:to]))
+        end
+      end
+    end
+
+    # The times a rule closes ("Mo-Fr 12:00-13:00 off") are cut out of what
+    # earlier rules left open on those weekdays, which is what leaves a lunch
+    # break rather than a closed day.
+    def remove_time_range(typical, weekdays, times)
+      if typical.instance_of?(OpeningHoursConverter::Day)
+        remove_time_range_wd(typical, times, 0)
+      elsif weekdays[:from] <= weekdays[:to]
+        for wd in weekdays[:from]..weekdays[:to]
+          remove_time_range_wd(typical, times, wd)
+        end
+      else
+        for wd in weekdays[:from]..6
+          remove_time_range_wd(typical, times, wd)
+        end
+        for wd in 0..weekdays[:to]
+          remove_time_range_wd(typical, times, wd)
+        end
+      end
+    end
+
+    def remove_time_range_wd(typical, times, wd)
+      if times[:to] >= times[:from]
+        remove_minutes(typical, wd, times[:from], times[:to])
+      else
+        remove_minutes(typical, wd, times[:from], MINUTES_MAX)
+        remove_minutes(typical, wd < 6 ? wd + 1 : 0, 0, times[:to])
+      end
+    end
+
+    # What the window covers on that weekday is taken out of every interval
+    # reaching it: an interval inside the window disappears, one straddling it
+    # is split in two, and one only touching its edge is left alone. An open
+    # end belongs to the half that still runs to the end of the day.
+    def remove_minutes(typical, wd, from, to)
+      typical.intervals.dup.each_with_index do |interval, id|
+        next if interval.nil? || interval.is_off
+        next unless (interval.day_start..interval.day_end).cover?(wd)
+
+        start_minute = interval.day_start == wd ? interval.start : 0
+        end_minute = interval.day_end == wd ? interval.end : MINUTES_MAX
+        next if from >= end_minute || to <= start_minute
+
+        typical.remove_interval(id)
+
+        if wd > interval.day_start || from > interval.start
+          typical.add_interval(OpeningHoursConverter::Interval.new(interval.day_start, interval.start, wd, from, false, interval.index))
+        end
+        if wd < interval.day_end || to < interval.end
+          typical.add_interval(OpeningHoursConverter::Interval.new(wd, to, interval.day_end, interval.end, false, interval.index, false, interval.open_ended))
         end
       end
     end

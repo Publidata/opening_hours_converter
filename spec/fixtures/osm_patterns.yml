@@ -1418,8 +1418,7 @@
 
 - family: modifier_off
   pattern: "Mo-Fr 08:00-18:00; Mo-Fr 12:00-13:00 off"
-  status: pending
-  reason: "over 2026, 522 expected interval(s) missing and 261 unexpected"
+  status: supported
   year_count: 522
   probe_from: "2026-01-01 00:00"
   probe_to: "2026-01-15 00:00"
