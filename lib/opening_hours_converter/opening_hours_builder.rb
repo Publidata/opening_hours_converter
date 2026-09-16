@@ -517,7 +517,12 @@ module OpeningHoursConverter
             days[interval.day_start].add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, interval.end, interval.open_ended))
             days[interval.day_start].is_defined_off = days[interval.day_start].is_defined_off ? true : interval.is_off
             days[interval.day_start].is_defined_unknown = days[interval.day_start].is_defined_unknown ? true : interval.is_unknown
-            days[interval.day_start].date.first.weekday_index = interval.index if interval.index
+            if interval.index
+              # One weekday can carry several intervals, one per entry of its
+              # index list ("Sa[2],Sa[4]"), and the list is their union.
+              date = days[interval.day_start].date.first
+              date.weekday_index = Array(date.weekday_index) | interval.index
+            end
           elsif interval.day_end - interval.day_start == 1
             days[interval.day_start].add_time(OpeningHoursConverter::OpeningHoursTime.new(interval.start, MINUTES_MAX))
             days[interval.day_start].is_defined_off = days[interval.day_start].is_defined_off ? true : interval.is_off

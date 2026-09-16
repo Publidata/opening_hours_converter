@@ -430,4 +430,34 @@ RSpec.describe OpeningHoursConverter::OpeningHoursParser, '#parse' do
   it "2020 Jan 01,2021 Jan 01 off" do
     expect(parsed_rebuilt).to eql(test_string)
   end
+
+  # The nth_entry list of a weekday index. A range of entries and the three
+  # letter weekday are read and written back in their canonical form; the rest
+  # round-trips unchanged.
+  it "Th[1,3] 06:00-23:59" do
+    expect(parsed_rebuilt).to eql(test_string)
+  end
+  it "Sa[1,2,3,4] 14:00-18:30" do
+    expect(parsed_rebuilt).to eql(test_string)
+  end
+  it "Sa[-1] 09:00-12:00" do
+    expect(parsed_rebuilt).to eql(test_string)
+  end
+  it "Th[-2] 09:00-12:00" do
+    expect(parsed_rebuilt).to eql(test_string)
+  end
+  it "We[2-4] 05:30-13:00" do
+    expect(parsed_rebuilt).to eql('We[2,3,4] 05:30-13:00')
+  end
+  it "Sat[1] 09:00-13:00" do
+    expect(parsed_rebuilt).to eql('Sa[1] 09:00-13:00')
+  end
+  # One weekday named twice carries the union of both indexes; writing back
+  # only the last one used to drop the first silently.
+  it "Sa[2],Sa[4] 09:00-13:00" do
+    expect(parsed_rebuilt).to eql('Sa[2,4] 09:00-13:00')
+  end
+  it "We[1],Tu[3] 05:30-13:00" do
+    expect(parsed_rebuilt).to eql('Tu[3] 05:30-13:00; We[1] 05:30-13:00')
+  end
 end
