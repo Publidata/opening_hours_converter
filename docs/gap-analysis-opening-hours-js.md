@@ -23,20 +23,21 @@ Four patterns are in the corpus precisely because `opening_hours.js` rejects
 them (`Xx 10:00-12:00`, `Jan 01 +1 day 10:00-12:00`, …). The gem rejects all
 four as well, so it does not silently invent an answer for nonsense.
 
-| | at 1.16.0 | since #59 | since a timed `off` rule subtracts (#62) | since fallback rules are applied |
-|---|---|---|---|---|
-| matches the reference | 55 / 107 | 75 / 107 | 76 / 107 | 78 / 107 |
-| raises where it should not | 45 | 22 | 22 | 22 |
-| silently returns wrong intervals | 7 | 10 | 9 | 7 |
+| | at 1.16.0 | since #59 | since a timed `off` rule subtracts (#62) | since fallback rules are applied (#63) | since the three isolated selectors landed (#64) |
+|---|---|---|---|---|---|
+| matches the reference | 55 / 107 | 75 / 107 | 76 / 107 | 78 / 107 | 81 / 107 |
+| raises where it should not | 45 | 22 | 22 | 22 | 19 |
+| silently returns wrong intervals | 7 | 10 | 9 | 7 | 7 |
 
 The last column is what the counts below describe. #59 closed 20 gaps, and
 raised the silent count while doing it: it taught the parser to read `||` and
 `unknown`, which the evaluator then ignored, so three strings that used to fail
-loudly answered incompletely instead. Applying the fallback rule takes two of
-those three back. Findings 3 and 9.
+loudly answered incompletely instead. #63 took two of those three back.
+Findings 3 and 9.
 
 #62 closed finding 1, the one that mattered most: it was the only everyday
-string the gem answered wrongly without raising.
+string the gem answered wrongly without raising. #64 closed finding 8, whose
+three selectors each needed only a mechanism the gem already had.
 
 Closed findings keep their number and their section rather than leaving the
 ones after them to shift, so what a commit or a pull request calls finding 3
@@ -44,7 +45,9 @@ stays finding 3.
 
 Two families are fully covered and stay that way: plain weekday and month
 selectors, week selectors including `week 1-53/2`, wrapping weekday ranges
-(`Fr-Mo`), month-day ranges across the new year (`Dec 25-Jan 05`), and rule
+(`Fr-Mo`), month-day ranges across the new year (`Dec 25-Jan 05`), time
+selectors including hours past 24 (`10:00-26:00`) and open ends
+(`10:00-12:00+`), year ranges including a step (`2020-2030/2`), and rule
 ordering with `;`.
 
 ## The gaps, worst first
@@ -177,15 +180,15 @@ Su[-1] +1 day 10:00-12:00   Sa[1] -1 day 10:00-12:00   Su[1] +2 days 10:00-12:00
 is the natural next step from that work: the day offset is the same grammar as
 in finding 6.
 
-### 8. Three isolated selectors
+### 8. Three isolated selectors — closed
 
-**Severity: low. Loud.**
+**Severity: was low. Was loud.**
 
-| Pattern | What happens |
+| Pattern | What it needed |
 |---|---|
-| `Mo 10:00-26:00` | `ParseError: Unsupported selector`. Hours past 24 are how the spec writes a night that runs long; `20:00-03:00` works, so only the notation is missing. |
-| `Mo 10:00-12:00+` | `ParseError`. Open end after a range. Plain `10:00+` works. |
-| `2020-2030/2 Mo-Fr 08:00-12:00` | `ParseError`. A step in a year range. `week 1-53/2` already works, so the step logic exists and only the year selector is missing. |
+| `Mo 10:00-26:00` | Hours past 24, how the spec writes a night that runs long. Folded onto the wrapping range `10:00-02:00` the gem already had. |
+| `Mo 10:00-12:00+` | An open end after a range. The minutes past the named end carry their own state, so the reference's two adjacent intervals do not merge into one. |
+| `2020-2030/2 Mo-Fr 08:00-12:00` | A step in a year range, built on the mechanism the week selector already used for `week 1-53/2`. |
 
 ### 9. `unknown` contributes nothing
 
@@ -222,22 +225,12 @@ prints": the reference is a reference, not an oracle.
 
 ## Suggested order
 
-<<<<<<< HEAD
-1. **Finding 3**, applying fallback rules. The parsing is already there, and
-   until the evaluator uses it the string parses and answers wrongly.
-=======
-1. **Finding 1**, the timed `off` rule. Small, self-contained, and the only
-   one that hands a caller a wrong answer for an everyday string.
->>>>>>> 98bf2b6 (feat: apply the fallback rule behind ||)
-2. **Finding 8**, the three isolated selectors. Each is a small addition to
-   grammar that already exists.
-3. **Findings 2 and 4 together**, once the API question they share — where a
+1. **Findings 2 and 4 together**, once the API question they share — where a
    region and a pair of coordinates are given to the gem — has an answer.
-4. **Findings 5, 6, 7, 9**, in whatever order the callers' data argues for.
-<<<<<<< HEAD
-=======
-   Answering 9 is what closes the rest of 3.
->>>>>>> 98bf2b6 (feat: apply the fallback rule behind ||)
+2. **Findings 5, 6, 7 and 9**, in whatever order the callers' data argues for.
+   Answering 9 is also what closes the rest of finding 3. Findings 1, 3 and 8
+   are closed; finding 6 keeps `SH` and the two `PH` offsets, both of which
+   item 1 resolves.
 
 ## What this analysis does not cover
 

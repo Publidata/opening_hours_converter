@@ -60,6 +60,11 @@ module OpeningHoursConverter
           end
         end
       end
+      # A year range with a step ("2020-2030/2") leaves the years it skips out
+      # of the day array, which would come back as the list of years they are
+      # rather than as the range they were written as.
+      return @date[0].wide_interval.get_time_selector if stepped_year?
+
       years = OpeningHoursConverter::Year.build_day_array_from_dates(@date)
       year_start = -1
       month_start = -1
@@ -152,6 +157,11 @@ module OpeningHoursConverter
       selector = result_to_string(result)
       selector += '+' if open_ended_year?
       selector
+    end
+
+    def stepped_year?
+      @date.length == 1 && @date[0].wide_interval.type == 'year' &&
+        !@date[0].wide_interval.step.nil?
     end
 
     # "2020+" (from that year on, forever) has no upper bound to encode in

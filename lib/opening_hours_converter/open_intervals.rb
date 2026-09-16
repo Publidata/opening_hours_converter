@@ -17,6 +17,10 @@ module OpeningHoursConverter
     include Constants
     include Utils
 
+    # The state of a minute an open-ended time covers, told apart from a plain
+    # open minute so that the two never run into a single interval.
+    OPEN_ENDED = :open_ended
+
     def self.call(opening_hours_string, from, to)
       date_ranges = OpeningHoursConverter::OpeningHoursParser.new.parse(opening_hours_string)
       new(from, to).apply(date_ranges).intervals
@@ -191,6 +195,19 @@ module OpeningHoursConverter
         first_minute = 0
         current += 1
       end
+
+      write_open_end(date, interval) if interval.open_ended && !interval.is_off
+    end
+
+    # An open end names no closing time ("10:00-12:00+"), so the rest of the
+    # day stays open without being certain. It is written as a state of its
+    # own, which keeps it from merging with the hours the string does name:
+    # the reference reports the two as two intervals.
+    def write_open_end(date, interval)
+      mask = mask_for(date + (interval.day_end - interval.day_start))
+      return if mask.nil?
+
+      (interval.end...MINUTES_MAX).each { |minute| mask[minute] = OPEN_ENDED }
     end
 
     def mask_for(date)
@@ -200,10 +217,13 @@ module OpeningHoursConverter
     end
 
     # Walks the window as a continuous timeline, so a run of open minutes that
-    # spans midnight comes out as a single interval.
+    # spans midnight comes out as a single interval. A minute carries the state
+    # that opened it rather than a plain flag, so an open end closes the
+    # interval before it instead of extending it.
     def runs
       result = []
       start = nil
+      state = nil
 
       (@first_date..(@last_date + 1)).each do |date|
         mask = @masks[date]
@@ -213,16 +233,16 @@ module OpeningHoursConverter
 
           result << { start: start, end: time_at(date, 0) }
           start = nil
+          state = nil
           next
         end
 
         (0...MINUTES_MAX).each do |minute|
-          if mask[minute]
-            start ||= time_at(date, minute)
-          elsif start
-            result << { start: start, end: time_at(date, minute) }
-            start = nil
-          end
+          next if mask[minute] == state
+
+          result << { start: start, end: time_at(date, minute) } if start
+          start = mask[minute] ? time_at(date, minute) : nil
+          state = mask[minute]
         end
       end
 

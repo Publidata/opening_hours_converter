@@ -171,6 +171,12 @@ module OpeningHoursConverter
                 next
               end
             end
+
+          elsif previous_token.slash?
+            # a step in a year range ("2020-2030/2" is every other year), the
+            # notation the week selector already reads as "week 1-53/2"
+            value, made_from, type = add_current_token_to(value, type, made_from, :modified_year)
+            next
           end
         end
 
@@ -361,6 +367,12 @@ module OpeningHoursConverter
 
       raise ParseError unless current_token.time?
       value, made_from, type = add_current_token_to(value, type, made_from)
+
+      # open end after a range ("10:00-12:00+" — open until 12:00 for certain,
+      # and beyond it for as long as it lasts)
+      if current_token? && current_token.string? && current_token.value == '+'
+        value, made_from, type = add_current_token_to(value, type, made_from, :open_ended)
+      end
 
       token(value, type, start_index, made_from)
     end

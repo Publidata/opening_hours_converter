@@ -33,7 +33,7 @@ module OpeningHoursConverter
             years = process_single_year(date_range.wide_interval, years)
           end
         else
-          for year in date_range.wide_interval.start[:year]..date_range.wide_interval.end[:year]
+          date_range.wide_interval.covered_years.each do |year|
             years[year] ||= Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
           end
           process_multiple_years(date_range.wide_interval, years)
@@ -143,7 +143,7 @@ module OpeningHoursConverter
               years = process_single_year(date.wide_interval, years)
             end
           else
-            for year in date.wide_interval.start[:year]..date.wide_interval.end[:year]
+            date.wide_interval.covered_years.each do |year|
               years[year] ||= Array.new(OSM_MONTHS.length) { |i| Array.new(MONTH_END_DAY[i]) { false } }
             end
             process_multiple_years(date.wide_interval, years)
@@ -276,7 +276,7 @@ module OpeningHoursConverter
 
     def self.process_multiple_years(wide_interval, years)
       if wide_interval.type == "year"
-        for year in wide_interval.start[:year]..wide_interval.end[:year]
+        wide_interval.covered_years.each do |year|
           years[year].each_with_index do |month,i|
             month.each_with_index do |day,j|
               years[year][i][j] = true

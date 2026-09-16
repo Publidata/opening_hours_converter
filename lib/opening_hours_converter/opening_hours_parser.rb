@@ -234,7 +234,7 @@ module OpeningHoursConverter
               end
             elsif !year[:from].nil?
               date_range = if !year[:to].nil?
-                             OpeningHoursConverter::WideInterval.new.year(year[:from], year[:to])
+                             OpeningHoursConverter::WideInterval.new.year(year[:from], year[:to], step: year[:step])
                            else
                              OpeningHoursConverter::WideInterval.new.year(year[:from], nil, open_ended: !!year[:open_ended])
                            end
@@ -366,6 +366,9 @@ module OpeningHoursConverter
       open_ended = wrs.end_with?('+')
       wrs = wrs.chomp('+') if open_ended
 
+      # "2020-2030/2" steps through the range two years at a time
+      wrs, step = wrs.split('/')
+
       single_year = wrs.gsub(/\:$/, '').split('-')
       year_from = single_year[0].to_i
       raise ArgumentError, "Invalid year : #{single_year[0]}" if year_from < 1
@@ -376,7 +379,7 @@ module OpeningHoursConverter
       else
         year_to = nil
       end
-      { from: year_from, to: year_to, open_ended: open_ended }
+      { from: year_from, to: year_to, open_ended: open_ended, step: step&.to_i }
     end
 
     def get_year_week_with_modifier(wrs)
@@ -702,13 +705,20 @@ module OpeningHoursConverter
 
           single_time = ts.split('-')
           from = as_minutes(single_time[0])
-          to = if open_ended
-                 24 * 60
-               elsif single_time.length > 1
+          to = if single_time.length > 1
                  as_minutes(single_time[1])
+               elsif open_ended
+                 # "18:00+" names no closing time at all, so the whole rest of
+                 # the day is what it covers; "10:00-12:00+" names one, and
+                 # only the hours past it are uncertain.
+                 24 * 60
                else
                  from
                end
+          # An hour past 24 names the morning after: "10:00-26:00" is the
+          # night "10:00-02:00" already reads, so it is folded onto the same
+          # wrapping range rather than given a mechanism of its own.
+          to -= 24 * 60 if to > 24 * 60
           times << { from: from, to: to, open_ended: open_ended }
         end
       end
