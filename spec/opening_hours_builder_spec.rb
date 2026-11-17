@@ -502,6 +502,39 @@ RSpec.describe OpeningHoursConverter::OpeningHoursBuilder, '#build' do
     dr[0].typical.add_interval(OpeningHoursConverter::Interval.new(2, 0*60, 2, 10*60))
     expect(OpeningHoursConverter::OpeningHoursBuilder.new.build(dr)).to eql("Mo 08:00-23:59; Tu off; We 00:00-10:00")
   end
+
+  describe 'a Dec 31 date merged with dates of the next years' do
+    # The run left open on Dec 31 was closed on Jan 1 with the year of Jan 1,
+    # so "2025 Dec 31" came out as "2025 Dec 31-2026 Dec 31": every day of 2026.
+    def rebuild(oh)
+      OpeningHoursConverter::OpeningHoursBuilder.new.build(OpeningHoursConverter::OpeningHoursParser.new.parse(oh))
+    end
+
+    it 'keeps Dec 31 a single day' do
+      expect(rebuild('2025 Dec 31 05:00-12:00; 2026 May 13 05:00-12:00'))
+        .to eql('2025 Dec 31,2026 May 13 05:00-12:00')
+    end
+
+    it 'keeps Dec 31 a single day among other rules' do
+      oh = 'Th 05:00-12:00; PH off; 2025 Dec 31 05:00-12:00; 2026 May 13 05:00-12:00; ' \
+           '2027 May 05 05:00-12:00; 2027 Nov 10 05:00-12:00'
+      expect(rebuild(oh)).to eql('Th 05:00-12:00; PH off; 2025 Dec 31,2026 May 13,2027 May 05,Nov 10 05:00-12:00')
+    end
+
+    it 'still merges Dec 31 with the Jan 1 that follows it' do
+      expect(rebuild('2025 Dec 31 05:00-12:00; 2026 Jan 01 05:00-12:00'))
+        .to eql('2025 Dec 31-2026 Jan 01 05:00-12:00')
+    end
+
+    it 'still spans the years of a range ending on Dec 30' do
+      expect(rebuild('2025 Dec 31-2026 Dec 30 05:00-12:00; 2027 May 13 05:00-12:00'))
+        .to eql('2025 Dec 31-2026 Dec 30 05:00-12:00; 2027 May 13 05:00-12:00')
+    end
+
+    it 'reads its own output back to the same days' do
+      built = rebuild('2026 Dec 31 05:00-12:00; 2027 May 13 05:00-12:00')
+      expect(built).to eql('2026 Dec 31,2027 May 13 05:00-12:00')
+      expect(rebuild(built)).to eql(built)
+    end
+  end
 end
-
-

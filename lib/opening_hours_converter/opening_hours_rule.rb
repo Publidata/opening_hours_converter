@@ -124,7 +124,11 @@ module OpeningHoursConverter
               month_start = -1
               day_start = -1
             elsif !day_bool && year_start >= 0
-              end_res = {}
+              # A run left open on Dec 31 (the next year is in the array) and
+              # closed on Jan 1 ended on Dec 31 of the year before, not of this
+              # one: "2025 Dec 31" merged with "2026 May 13" must not come out
+              # as "2025 Dec 31-2026 Dec 31".
+              end_year = day == 0 && month == 0 ? year - 1 : year
 
               end_res = if day == 0
                           if month == 0
@@ -136,15 +140,15 @@ module OpeningHoursConverter
                           { day: day - 1, month: month }
                         end
 
-              if year_start == year
-                result[year] ||= []
-                result[year] << { start: { day: day_start, month: month_start }, end: end_res }
+              if year_start == end_year
+                result[end_year] ||= []
+                result[end_year] << { start: { day: day_start, month: month_start }, end: end_res }
               else
                 result['multi_year'] ||= {}
-                result['multi_year']["#{year_start}-#{year}"] ||= []
-                end_res[:year] = year
-                result['multi_year']["#{year_start}-#{year}"] << { start: { day: day_start, month: month_start, year: year_start },
-                                                                   end: end_res }
+                result['multi_year']["#{year_start}-#{end_year}"] ||= []
+                end_res[:year] = end_year
+                result['multi_year']["#{year_start}-#{end_year}"] << { start: { day: day_start, month: month_start, year: year_start },
+                                                                       end: end_res }
               end
               year_start = -1
               month_start = -1
